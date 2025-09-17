@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마법 그림책 - 로그인</title>
+    <link rel="stylesheet" href="style.css"> <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Jua&display=swap" rel="stylesheet">
+    <style>
+        /* 로그인 페이지 전용 스타일 */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--background-light); /* style.css의 변수 사용 */
+            margin: 0;
+            flex-direction: column;
+        }
+        .login-container {
+            background-color: var(--card-bg); /* style.css의 변수 사용 */
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+        .login-container h2 {
+            font-family: 'Jua', sans-serif;
+            color: var(--secondary-color); /* style.css의 변수 사용 */
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        .login-container img.logo {
+            width: 80%; /* 로고 크기 조정 */
+            max-width: 250px;
+            margin-bottom: 30px;
+        }
+        .login-container input {
+            width: calc(100% - 20px);
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color); /* style.css의 변수 사용 */
+            border-radius: 8px;
+            font-family: 'Jua', sans-serif;
+            font-size: 1.1em;
+        }
+        .login-container button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 25px;
+            font-family: 'Jua', sans-serif;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .login-container .btn-login {
+            background-color: var(--primary-color); /* style.css의 변수 사용 */
+            color: var(--text-dark);
+            margin-bottom: 15px;
+        }
+        .login-container .btn-login:hover {
+            background-color: darken(var(--primary-color), 10%);
+        }
+        .login-container .admin-link {
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+        .login-container .admin-link a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .login-container .admin-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <img src="images/magic_storybook_logo_english.png" alt="Magic Storybook Logo" class="logo">
+        <h2>로그인</h2>
+        <input type="text" id="loginId" placeholder="이름 (ID)">
+        <input type="password" id="loginPwd" placeholder="비밀번호">
+        <button class="btn-login" onclick="handleLogin()">로그인</button>
+        <p class="admin-link">관리자이신가요? <a href="admin.html">관리자 페이지로 이동</a></p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 로그인 상태 확인 (app.html에서 로그아웃 시 session에서 제거되므로)
+            const loggedInUser = sessionStorage.getItem('loggedInUser');
+            if (loggedInUser) {
+                // 이미 로그인되어 있다면 운영 화면으로 바로 이동
+                window.location.href = 'app.html';
+            }
+        });
+
+        function handleLogin() {
+            const id = document.getElementById('loginId').value.trim();
+            const pwd = document.getElementById('loginPwd').value.trim();
+
+            if (!id || !pwd) {
+                alert('이름과 비밀번호를 입력해주세요.');
+                return;
+            }
+
+            // localStorage에서 사용자 정보 불러오기
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const user = users.find(u => u.name === id && u.password === pwd);
+
+            if (user) {
+                // 로그인 성공: sessionStorage에 사용자 정보 저장
+                sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+                alert(`${user.name}님, 환영합니다!`);
+                window.location.href = 'app.html'; // 운영 화면으로 리다이렉션
+            } else {
+                alert('이름 또는 비밀번호가 올바르지 않습니다.');
+            }
+        }
+    </script>
+</body>
+</html>

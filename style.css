@@ -1,0 +1,860 @@
+/* 기본 설정 */
+:root {
+    --primary-color: #FFD400; /* 메인 노란색 */
+    --secondary-color: #FF6B6B; /* 포인트 빨간색 */
+    --accent-color: #6BB7FF; /* 포인트 파란색 */
+    --background-light: #F8F8F8;
+    --text-dark: #333;
+    --text-light: #FFF;
+    --border-color: #E0E0E0;
+    --card-bg: #FFFFFF;
+    --success-color: #4CAF50;
+    --warning-color: #FFC107;
+    --header-bg: #8A2BE2; /* 보라색 계열 */
+    --ribbon-color: #8A2BE2; /* 로고 리본 색상과 통일 */
+}
+
+body {
+    font-family: 'Nanum Pen Script', 'Jua', sans-serif;
+    margin: 0;
+    background-color: var(--background-light);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px;
+}
+
+/* 헤더 (app.html) */
+.main-header {
+    background-color: var(--header-bg); /* 보라색 계열로 변경 */
+    padding: 15px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.main-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; 
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    font-size: 1.8em;
+    color: var(--text-light); /* 로고 텍스트 색상 변경 */
+    font-weight: bold;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.logo img {
+    height: 40px; 
+    margin-right: 10px;
+}
+
+.main-nav {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px; 
+}
+
+.nav-button {
+    background-color: rgba(255, 255, 255, 0.7);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-family: 'Jua', sans-serif;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.nav-button:hover,
+.nav-button.active {
+    background-color: var(--card-bg);
+    color: var(--ribbon-color); /* 포인트 색상 변경 */
+    font-weight: bold;
+}
+
+.header-right {
+    margin-left: auto; 
+    margin-top: 5px; 
+    display: flex;
+    gap: 10px;
+}
+
+.season-calendar-button, .logout-button {
+    background-color: var(--accent-color);
+    color: var(--text-light);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-family: 'Jua', sans-serif;
+    font-size: 1em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    transition: background-color 0.3s;
+}
+
+.season-calendar-button:hover, .logout-button:hover {
+    background-color: darken(var(--accent-color), 10%);
+}
+
+/* 섹션 공통 스타일 */
+.app-section {
+    padding: 30px 0;
+    display: none; 
+}
+
+.app-section.active {
+    display: block; 
+}
+
+.app-section h2 {
+    font-family: 'Jua', sans-serif;
+    font-size: 2em;
+    text-align: center;
+    margin-bottom: 30px;
+    color: var(--secondary-color);
+}
+
+/* 스토리 카드 그리드 */
+.story-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 25px;
+}
+
+.story-card {
+    background-color: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 15px;
+}
+
+.story-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+}
+
+.story-card img {
+    width: 100%;
+    height: 180px; 
+    object-fit: cover; 
+    display: block;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.story-card .card-info {
+    padding: 10px 15px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.story-card .story-title {
+    font-family: 'Jua', sans-serif;
+    font-size: 1.2em;
+    color: var(--text-dark);
+    display: block;
+    margin-bottom: 5px;
+}
+
+.story-card .story-date {
+    font-size: 0.85em;
+    color: #888;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.story-card .play-audio {
+    background: var(--accent-color);
+    color: var(--text-light);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.1em;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s;
+    margin: 0 auto;
+}
+
+.story-card .play-audio:hover {
+    background-color: darken(var(--accent-color), 10%);
+}
+
+.upload-card {
+    background-color: #e6f7ff;
+    color: var(--accent-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+    min-height: 250px; 
+}
+
+.upload-card i {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+.upload-card p {
+    font-family: 'Jua', sans-serif;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+/* 좋아요/댓글 버튼 */
+.story-card .interaction {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.interaction button {
+    background: none;
+    border: none;
+    color: #777;
+    font-size: 0.9em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.interaction .like-button .fas.fa-heart {
+    color: var(--secondary-color);
+}
+
+/* 선생님 도구함 */
+.teacher-dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr; 
+    gap: 25px;
+    min-height: 500px;
+}
+
+.tool-box {
+    background-color: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+}
+
+.tool-box h3 {
+    font-family: 'Jua', sans-serif;
+    font-size: 1.5em;
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.artwork-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.artwork-item {
+    display: flex;
+    align-items: center;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    cursor: grab;
+}
+
+.artwork-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.artwork-item .ai-icon {
+    margin-left: auto;
+    color: var(--success-color);
+}
+
+.storybook-layout {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 15px;
+    min-height: 300px; 
+    border: 2px dashed var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+    align-items: center; 
+    justify-items: center; 
+}
+
+.page-slot {
+    width: 100%;
+    padding-top: 100%; 
+    position: relative;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.9em;
+    color: #aaa;
+    overflow: hidden;
+}
+.page-slot img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.page-slot .slot-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Jua', sans-serif;
+    color: #888;
+}
+
+.page-preview {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.page-preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.preview-text {
+    font-family: 'Nanum Pen Script', sans-serif;
+    font-size: 1.3em;
+    color: #555;
+    margin-bottom: 15px;
+    flex-grow: 1; 
+}
+
+.edit-story-btn {
+    background-color: var(--primary-color);
+    color: var(--text-dark);
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Jua', sans-serif;
+    font-size: 0.9em;
+}
+
+/* 버튼 공통 */
+.btn-primary {
+    background-color: var(--secondary-color);
+    color: var(--text-light);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.1em;
+    transition: background-color 0.3s;
+}
+.btn-primary:hover {
+    background-color: #e05e5e;
+}
+
+.btn-secondary {
+    background-color: #ccc;
+    color: var(--text-dark);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.1em;
+    transition: background-color 0.3s;
+}
+.btn-secondary:hover {
+    background-color: #b3b3b3;
+}
+
+.mt-1 { margin-top: 10px; }
+.mt-3 { margin-top: 30px; }
+
+
+/* 우리들의 사계절 */
+.season-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.season-card {
+    background-color: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    text-align: center;
+}
+
+.season-card h3 {
+    font-family: 'Jua', sans-serif;
+    color: var(--primary-color);
+    font-size: 1.8em;
+    margin-bottom: 15px;
+}
+
+.season-card img {
+    max-width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.season-card p {
+    font-family: 'Nanum Pen Script', sans-serif;
+    font-size: 1.2em;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.btn-view-book {
+    background-color: var(--accent-color);
+    color: var(--text-light);
+    border: none;
+    padding: 10px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.1em;
+    transition: background-color 0.3s;
+}
+.btn-view-book:hover {
+    background-color: darken(var(--accent-color), 10%);
+}
+
+
+/* 모달 스타일 */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.4); 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    margin: auto;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    text-align: center;
+}
+.modal-content.large-modal {
+    max-width: 900px; /* AI 결과 모달처럼 더 넓은 모달 */
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: var(--text-dark);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-content h2 {
+    font-family: 'Jua', sans-serif;
+    color: var(--secondary-color);
+    margin-bottom: 25px;
+}
+
+.upload-area {
+    margin-bottom: 20px;
+}
+
+.file-upload-label {
+    display: block;
+    background-color: var(--accent-color);
+    color: var(--text-light);
+    padding: 15px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.2em;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.file-upload-label:hover {
+    background-color: darken(var(--accent-color), 10%);
+}
+#drawingFileInput {
+    display: none; /* 실제 파일 인풋 숨기기 */
+}
+
+.drawing-preview {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 10px;
+    max-width: 250px;
+    height: 200px;
+    margin: 0 auto 15px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+}
+.drawing-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 5px;
+}
+
+
+.modal-content input[type="text"],
+.modal-content textarea {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-family: 'Nanum Pen Script', sans-serif;
+    font-size: 1.1em;
+}
+
+.modal-content textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+.button-group .btn-primary,
+.button-group .btn-secondary {
+    width: calc(50% - 10px);
+    margin: 0; /* 그룹 내부 여백 제거 */
+}
+
+/* AI 변환 결과 모달 */
+.ai-transform-compare {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap; /* 반응형 */
+}
+
+.ai-transform-box {
+    flex: 1;
+    min-width: 250px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 15px;
+    background-color: #fdfdfd;
+}
+.ai-transform-box h3 {
+    font-family: 'Jua', sans-serif;
+    font-size: 1.3em;
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+.ai-transform-box img {
+    max-width: 100%;
+    height: 200px;
+    object-fit: contain;
+    border-radius: 8px;
+    background-color: #eee;
+}
+
+.ai-transform-animation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+    text-align: center;
+}
+.ai-transform-animation .wizard-gif {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 10px;
+    display: none; /* 기본 숨김, AI 변환 중일 때만 표시 */
+}
+.ai-transform-animation #aiStatusText {
+    font-family: 'Jua', sans-serif;
+    color: var(--accent-color);
+    font-size: 1.1em;
+    display: none; /* 기본 숨김 */
+}
+
+/* 토글 스위치 */
+.toggle-switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+input:checked + .slider {
+  background-color: var(--primary-color);
+}
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--primary-color);
+}
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+.slider.round {
+  border-radius: 34px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
+.toggle-label {
+    font-family: 'Jua', sans-serif;
+    font-size: 1.1em;
+    color: #555;
+}
+
+/* 작품 상세 보기 모달 */
+.detail-content {
+    text-align: left;
+    margin-top: 20px;
+}
+.detail-image-area {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.detail-image-area img {
+    max-width: 45%;
+    height: 250px;
+    object-fit: contain;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: #f8f8f8;
+}
+.detail-story-text {
+    font-family: 'Nanum Pen Script', sans-serif;
+    font-size: 1.5em;
+    line-height: 1.8;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #eee;
+    margin-bottom: 15px;
+}
+.detail-info {
+    font-size: 0.9em;
+    color: #777;
+    text-align: right;
+}
+
+
+/* 반응형 디자인 */
+@media (max-width: 992px) {
+    .main-header .container {
+        flex-direction: column;
+    }
+    .main-nav {
+        width: 100%;
+        justify-content: center;
+        margin-top: 15px;
+    }
+    .header-right {
+        width: 100%;
+        text-align: center;
+        margin-top: 15px;
+    }
+    .teacher-dashboard {
+        grid-template-columns: 1fr; 
+    }
+    .storybook-layout {
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 10px;
+    }
+    .ai-transform-compare {
+        flex-direction: column;
+    }
+    .ai-transform-box {
+        width: 100%;
+    }
+    .ai-transform-animation {
+        margin: 20px 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .logo {
+        font-size: 1.5em;
+    }
+    .logo img {
+        height: 35px;
+    }
+    .nav-button, .season-calendar-button, .logout-button {
+        font-size: 0.9em;
+        padding: 8px 12px;
+    }
+    .story-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+    .story-card img {
+        height: 150px;
+    }
+    .app-section h2 {
+        font-size: 1.8em;
+    }
+    .modal-content {
+        padding: 20px;
+    }
+    .modal-content .btn-primary,
+    .modal-content .btn-secondary {
+        width: 100%;
+        margin: 5px 0;
+    }
+    .detail-image-area img {
+        max-width: 90%; 
+        height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .nav-button {
+        width: calc(50% - 10px); 
+        margin-bottom: 10px;
+    }
+    .season-calendar-button, .logout-button {
+        width: calc(50% - 10px);
+        margin-bottom: 10px;
+    }
+    .story-grid {
+        grid-template-columns: 1fr; 
+    }
+    .story-card img {
+        height: 200px;
+    }
+    .upload-card {
+        min-height: 200px;
+    }
+    .teacher-dashboard {
+        grid-template-columns: 1fr; 
+    }
+    .storybook-layout {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .ai-transform-box {
+        min-width: unset; 
+    }
+}

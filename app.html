@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마법 그림책</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Jua&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <header class="main-header">
+            <div class="container">
+                <h1 class="logo">
+                    <img src="images/magic_storybook_logo_english.png" alt="Magic Storybook Logo">
+                    <span>마법 그림책</span>
+                </h1>
+                <nav class="main-nav">
+                    <button class="nav-button active" data-target="my-story"><i class="fas fa-book-open"></i> 내 그림 이야기</button>
+                    <button class="nav-button" data-target="class-story"><i class="fas fa-users"></i> 우리 반 이야기</button>
+                    <button class="nav-button" data-target="teacher-tools" id="teacherToolsNavButton" style="display: none;"><i class="fas fa-pencil-alt"></i> 선생님 도구함</button>
+                </nav>
+                <div class="header-right">
+                    <button class="season-calendar-button" data-target="season-calendar"><i class="fas fa-calendar-alt"></i> 우리들의 사계절</button>
+                    <button class="logout-button" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="content-area container">
+            <section id="my-story" class="app-section active">
+                <h2>내 그림 이야기</h2>
+                <div class="story-grid">
+                    <div class="story-card upload-card" onclick="openUploadModal()">
+                        <i class="fas fa-plus-circle"></i>
+                        <p>새 그림 올리기</p>
+                    </div>
+                    </div>
+            </section>
+
+            <section id="class-story" class="app-section">
+                <h2>우리 반 이야기</h2>
+                <div class="story-grid">
+                    </div>
+            </section>
+
+            <section id="teacher-tools" class="app-section" style="display: none;"> <h2>선생님 도구함</h2>
+                <div class="teacher-dashboard">
+                    <div class="tool-box">
+                        <h3>작품 목록</h3>
+                        <div class="artwork-list">
+                            </div>
+                    </div>
+                    <div class="tool-box">
+                        <h3>동화책 페이지 구성</h3>
+                        <div class="storybook-layout" id="storybook-dropzone">
+                            <div class="page-slot"><span class="slot-label">표지</span></div>
+                            <div class="page-slot"></div>
+                            <div class="page-slot"></div>
+                            <div class="page-slot"></div>
+                            <div class="page-slot"></div>
+                            <div class="page-slot"><span class="slot-label">뒷표지</span></div>
+                        </div>
+                        <button class="btn-primary mt-3" onclick="previewStorybook()">동화책 미리보기</button>
+                        <button class="btn-secondary mt-1" onclick="exportStorybook()">PDF 내보내기</button>
+                    </div>
+                    <div class="tool-box page-preview-box">
+                        <h3>페이지 미리보기</h3>
+                        <div class="page-preview" id="current-page-preview">
+                            <img src="images/placeholder_preview.png" alt="미리보기 이미지">
+                            <p class="preview-text">선택된 페이지의 그림과 이야기가 여기에 표시됩니다.</p>
+                            <button class="edit-story-btn"><i class="fas fa-edit"></i> 이야기 편집</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="season-calendar" class="app-section">
+                <h2>우리들의 사계절</h2>
+                <div class="season-gallery">
+                    <div class="season-card">
+                        <h3>봄 이야기</h3>
+                        <img src="images/season_spring_thumb.png" alt="봄 썸네일">
+                        <p>새싹처럼 피어나는 우리들의 첫 이야기</p>
+                        <button class="btn-view-book">보기</button>
+                    </div>
+                    <div class="season-card">
+                        <h3>여름 이야기</h3>
+                        <img src="images/season_summer_thumb.png" alt="여름 썸네일">
+                        <p>햇살 가득 신나는 여름의 추억</p>
+                        <button class="btn-view-book">보기</button>
+                    </div>
+                    </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeUploadModal()">&times;</span>
+            <h2>새 그림 올리기</h2>
+            <div class="upload-area">
+                <input type="file" id="drawingFileInput" accept="image/*" onchange="previewOriginalDrawing(event)">
+                <label for="drawingFileInput" class="file-upload-label">
+                    <i class="fas fa-camera"></i>
+                    <p>그림 사진 찍기/업로드</p>
+                </label>
+                <div id="originalDrawingPreview" class="drawing-preview">
+                    <img id="previewImage" src="images/placeholder_preview.png" alt="원본 그림 미리보기">
+                </div>
+            </div>
+            
+            <input type="text" id="drawingTitleInput" placeholder="그림 제목을 입력해주세요" class="mt-3">
+            <textarea id="drawingStoryInput" placeholder="그림에 대한 이야기를 들려주세요 (여기에 입력하거나 녹음 버튼 사용)"></textarea>
+            
+            <div class="button-group">
+                <button class="btn-secondary" onclick="startRecording()"><i class="fas fa-microphone"></i> 이야기 녹음 시작</button>
+                <button class="btn-primary" onclick="processDrawingWithAI()"><i class="fas fa-magic"></i> 마법 변신!</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiResultModal" class="modal">
+        <div class="modal-content large-modal">
+            <span class="close-button" onclick="closeAIResultModal()">&times;</span>
+            <h2>마법 변신 결과!</h2>
+            <div class="ai-transform-compare">
+                <div class="ai-transform-box">
+                    <h3>원본 그림</h3>
+                    <img id="aiOriginalImg" src="" alt="원본 그림">
+                </div>
+                <div class="ai-transform-animation">
+                    <img src="images/nanobabana_wizard.gif" alt="마법 중" class="wizard-gif" id="wizardGif">
+                    <p id="aiStatusText">마법이 걸리고 있어요!</p>
+                </div>
+                <div class="ai-transform-box">
+                    <h3>AI 마법 변신!</h3>
+                    <img id="aiGeneratedImg" src="images/placeholder_preview.png" alt="AI 변환 그림">
+                </div>
+            </div>
+            
+            <div class="toggle-switch-container mt-3">
+                <label class="switch">
+                    <input type="checkbox" id="compareToggle">
+                    <span class="slider round"></span>
+                </label>
+                <span class="toggle-label">원본 그림과 비교하기</span>
+            </div>
+
+            <button class="btn-primary mt-3" onclick="selectAIImage()">마법 그림 선택하기</button>
+            <button class="btn-secondary mt-1" onclick="regenerateAIImage()">다시 마법 걸기</button>
+        </div>
+    </div>
+
+    <div id="storyDetailModal" class="modal">
+        <div class="modal-content large-modal">
+            <span class="close-button" onclick="closeStoryDetailModal()">&times;</span>
+            <h2 id="detailStoryTitle">작품 상세 보기</h2>
+            <div class="detail-content">
+                <div class="detail-image-area">
+                    <img id="detailOriginalImg" src="" alt="원본 그림">
+                    <img id="detailAiImg" src="" alt="AI 변환 그림">
+                </div>
+                <p id="detailStoryText" class="detail-story-text"></p>
+                <p class="detail-info">작성일: <span id="detailStoryDate"></span></p>
+            </div>
+            <div class="button-group mt-3">
+                 <button class="btn-primary" onclick="alert('친구에게 공유 기능 개발 중!')">친구에게 공유</button>
+                 <button class="btn-secondary" onclick="closeStoryDetailModal()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
