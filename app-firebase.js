@@ -75,17 +75,16 @@ window.initializeApp = async function() {
     }
 };
 
-// 권한에 따른 UI 설정
+// 권한에 따른 UI 설정 (수정됨)
 function setupUIByRole() {
     const teacherToolsNavButton = document.getElementById('teacherToolsNavButton');
-    const teacherToolsSection = document.getElementById('teacher-tools');
 
+    // 교사, 원장, 관리자 권한일 경우 '선생님 도구함' 버튼을 보여줍니다.
     if (currentUser.role === 'teacher' || currentUser.role === 'director' || currentUser.role === 'admin') {
         teacherToolsNavButton.style.display = 'flex';
-        teacherToolsSection.style.display = 'block';
     } else {
+        // 그 외의 권한(원생 등)은 버튼을 숨깁니다.
         teacherToolsNavButton.style.display = 'none';
-        teacherToolsSection.style.display = 'none';
     }
 }
 
