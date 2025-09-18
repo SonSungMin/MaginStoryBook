@@ -232,6 +232,20 @@ class FirebaseService {
         }
     }
 
+    async updateUser(userId, updateData) {
+        try {
+            await updateDoc(doc(this.db, 'users', userId), {
+                ...updateData,
+                updatedAt: serverTimestamp()
+            });
+            console.log('사용자 정보 업데이트 완료:', userId);
+        } catch (error) {
+            console.error('사용자 정보 업데이트 오류:', error);
+            throw error;
+        }
+    }
+
+    
     async updateUserRole(userId, newRole) {
         try {
             await updateDoc(doc(this.db, 'users', userId), {
