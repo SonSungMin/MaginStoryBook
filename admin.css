@@ -141,7 +141,7 @@
     display: flex; /* Flexbox 레이아웃 적용 */
     justify-content: space-between; /* 요소들 사이의 간격을 균등하게 배분 */
     align-items: center; /* 세로 중앙 정렬 */
-    gap: 5px; /* 요소 사이의 최소 간격 설정 */
+    gap: 15px; /* 요소 사이의 최소 간격 설정 */
     font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', Dotum, sans-serif;
     font-size: 12px;
     line-height: 1.7;
@@ -153,6 +153,8 @@
     flex-shrink: 1; /* 공간이 부족할 때 줄어들도록 설정 */
     min-width: 0; /* flex item의 너비가 내용보다 작아질 수 있도록 허용 */
     color: #333;
+    /* 이 부분의 줄 간격을 1.2로 대폭 줄여 간격을 최소화합니다. */
+    line-height: 1.2;
 }
 
 .data-list li .item-info strong {
@@ -160,7 +162,8 @@
     color: #000;
     font-weight: 600;
     display: block; /* 기관명은 한 줄을 모두 차지 */
-    margin-bottom: 0;
+    /* 기관명 바로 아래의 여백을 2px로 최소화합니다. */
+    margin-bottom: 2px;
 }
 
 .data-list li .item-info i {
@@ -221,6 +224,7 @@
     }
 
 }
+
 
 
 
