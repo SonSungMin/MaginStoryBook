@@ -133,31 +133,57 @@
 .data-list li {
     background-color: #fcfcfc;
     border: 1px solid #eee;
-    padding: 12px 15px;
-    margin-bottom: 10px;
+    padding: 15px 20px; /* 패딩 증가 */
+    margin-bottom: 12px; /* 간격 증가 */
     border-radius: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 1em;
+    /* 가독성 높은 폰트로 재정의 */
+    font-family: 'Malgun Gothic', 'Dotum', sans-serif;
+    font-size: 1.05em; /* 폰트 크기 증가 */
+    line-height: 1.6; /* 줄 간격 조정 */
 }
 .data-list li .item-info {
     flex-grow: 1;
+    color: #333; /* 기본 텍스트 색상 */
 }
+
+.data-list li .item-info strong {
+    font-size: 1.2em; /* 기관명 폰트 크기 강조 */
+    color: #000;
+    font-weight: 600; /* 굵기 조정 */
+}
+
+.data-list li .item-info i {
+    color: #888; /* 아이콘 색상 */
+    margin-right: 5px;
+    width: 14px; /* 아이콘 너비 고정 */
+    text-align: center;
+}
+
+.data-list li .item-meta {
+    font-size: 0.9em;
+    color: #666;
+    text-align: right;
+    margin-left: 20px;
+    min-width: 150px; /* 최소 너비 확보 */
+}
+
 .data-list li button {
     background: none;
     border: none;
     color: var(--secondary-color);
     cursor: pointer;
-    margin-left: 10px;
-    font-size: 0.9em;
+    margin-left: 20px; /* 간격 조정 */
+    font-size: 1em; /* 아이콘 크기 조정 */
     padding: 5px;
     border-radius: 5px;
 }
+
 .data-list li button:hover {
     background-color: #ffe0e0;
 }
-
 /* 반응형 */
 @media (max-width: 768px) {
     .admin-header .container {
@@ -183,3 +209,4 @@
     }
 
 }
+
