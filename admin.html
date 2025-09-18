@@ -18,22 +18,22 @@
 
     <div class="admin-container container">
         <div class="admin-nav">
-            <button class="admin-nav-button active" data-target="manage-establishments">사용처 관리</button>
+            <button class="admin-nav-button active" data-target="manage-establishments">교육기관 관리</button>
             <button class="admin-nav-button" data-target="manage-members">구성원 관리</button>
             <button class="admin-nav-button" data-target="manage-permissions">권한 관리</button>
         </div>
 
         <section id="manage-establishments" class="admin-section active">
-            <h2>사용처 등록 및 관리</h2>
+            <h2>교육기관 등록 및 관리</h2>
             <div class="form-group">
                 <input type="text" id="establishmentName" placeholder="상호">
                 <input type="text" id="establishmentAddress" placeholder="주소 (시/군/구 포함)">
-                <input type="text" id="establishmentAdminName" placeholder="사용처 관리자 이름 (ID)">
-                <input type="password" id="establishmentAdminPwd" placeholder="사용처 관리자 비밀번호">
-                <button class="btn-primary" onclick="addEstablishment()">사용처 등록</button>
+                <input type="text" id="establishmentAdminName" placeholder="교육기관 관리자 이름 (ID)">
+                <input type="password" id="establishmentAdminPwd" placeholder="교육기관 관리자 비밀번호">
+                <button class="btn-primary" onclick="addEstablishment()">교육기관 등록</button>
             </div>
             <div class="data-list">
-                <h3>등록된 사용처</h3>
+                <h3>등록된 교육기관</h3>
                 <ul id="establishmentList">
                 </ul>
             </div>
@@ -43,7 +43,7 @@
             <h2>구성원 등록</h2>
             <div class="form-group">
                 <select id="memberEstablishment" onchange="filterMembersByEstablishment()">
-                    <option value="">-- 사용처 선택 --</option>
+                    <option value="">-- 교육기관 선택 --</option>
                 </select>
                 <input type="text" id="memberName" placeholder="구성원 성명 (ID)">
                 <input type="date" id="memberBirthdate" placeholder="생년월일">
@@ -129,5 +129,6 @@
     <script src="admin-firebase.js"></script>
 </body>
 </html>
+
 
 
