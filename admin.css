@@ -130,44 +130,47 @@
     list-style: none;
     padding: 0;
 }
+
+/* 데이터 목록 */
 .data-list li {
     background-color: #fcfcfc;
     border: 1px solid #eee;
-    padding: 15px 20px; /* 패딩 증가 */
-    margin-bottom: 12px; /* 간격 증가 */
+    padding: 18px 20px; /* 위아래 여백 추가 */
+    margin-bottom: 12px;
     border-radius: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    /* 가독성 높은 폰트로 재정의 */
-    font-family: 'Malgun Gothic', 'Dotum', sans-serif;
-    font-size: 1.15em; /* 폰트 크기 증가 */
-    line-height: 1.6; /* 줄 간격 조정 */
+    /* 더욱 깔끔한 정자 폰트 및 크기 상향 */
+    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', Dotum, sans-serif;
+    font-size: 16px; /* 폰트 크기를 16px로 명확하게 지정하여 확대 */
+    line-height: 1.7; /* 줄 간격을 넓혀 가독성 확보 */
 }
+
 .data-list li .item-info {
     flex-grow: 1;
-    color: #333; /* 기본 텍스트 색상 */
+    color: #333;
 }
 
 .data-list li .item-info strong {
-    font-size: 1.2em; /* 기관명 폰트 크기 강조 */
+    font-size: 1.25em; /* 기관명 강조 (16px 기준 20px) */
     color: #000;
-    font-weight: 600; /* 굵기 조정 */
+    font-weight: 600;
 }
 
 .data-list li .item-info i {
-    color: #888; /* 아이콘 색상 */
-    margin-right: 5px;
-    width: 14px; /* 아이콘 너비 고정 */
+    color: #888;
+    margin-right: 6px; /* 아이콘 오른쪽 여백 조정 */
+    width: 15px;
     text-align: center;
 }
 
 .data-list li .item-meta {
-    font-size: 0.9em;
+    font-size: 0.9em; /* 관리자명 폰트 크기 (16px 기준 14.4px) */
     color: #666;
     text-align: right;
     margin-left: 20px;
-    min-width: 150px; /* 최소 너비 확보 */
+    min-width: 150px;
 }
 
 .data-list li button {
@@ -175,15 +178,17 @@
     border: none;
     color: var(--secondary-color);
     cursor: pointer;
-    margin-left: 20px; /* 간격 조정 */
-    font-size: 1em; /* 아이콘 크기 조정 */
+    margin-left: 20px;
+    font-size: 1.1em; /* 아이콘 크기 조정 */
     padding: 5px;
     border-radius: 5px;
+    transition: background-color 0.2s; /* 부드러운 효과 추가 */
 }
 
 .data-list li button:hover {
     background-color: #ffe0e0;
 }
+
 /* 반응형 */
 @media (max-width: 768px) {
     .admin-header .container {
@@ -209,5 +214,6 @@
     }
 
 }
+
 
 
