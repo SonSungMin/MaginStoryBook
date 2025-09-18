@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderClassStoryCards() {
         classStoryGrid.innerHTML = ''; // 모두 지움
 
-        // 우리 반 이야기: 모든 구성원의 작품 표시 (실제로는 같은 사용처 구성원만)
+        // 우리 반 이야기: 모든 구성원의 작품 표시 (실제로는 같은 교육기관 구성원만)
         myStories.forEach(story => {
             const storyCard = createStoryCardElement(story, true); // class-story용 (좋아요/댓글)
             classStoryGrid.appendChild(storyCard);
@@ -487,4 +487,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 초기화 및 시작 ---
     loadStories(); // 데이터 불러오기
     activateSection('my-story'); // '내 그림 이야기' 섹션으로 시작 (로그인 후 기본)
+
 });
