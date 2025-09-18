@@ -133,58 +133,60 @@
 
 /* === START: 레이아웃 변경 핵심 CSS === */
 
-/* 데이터 목록 아이템 (li) - CSS Grid 적용 */
+/* 데이터 목록 아이템 (li) - Flexbox 기반 */
 .data-list li {
     background-color: #fcfcfc;
     border: 1px solid #eee;
-    padding: 12px 20px;
-    margin-bottom: 12px;
+    padding: 10px 15px; /* 패딩 축소 */
+    margin-bottom: 10px; /* 간격 축소 */
     border-radius: 8px;
     font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', Dotum, sans-serif;
-    display: grid;
-    grid-template-columns: 1fr auto; /* 왼쪽은 남는 공간 모두, 오른쪽은 컨텐츠 크기만큼 */
-    grid-template-rows: auto auto; /* 2개의 행 */
-    gap: 2px 15px; /* 행 간격, 열 간격 */
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap; /* 좁은 화면에서 줄바꿈 허용 */
 }
 
-/* 그리드 아이템 클래스 */
+.item-content {
+    flex-grow: 1;
+    min-width: 200px; /* 최소 너비 보장 */
+}
+
 .item-main-info {
-    grid-column: 1 / 2;
-    grid-row: 1 / 2;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     color: #000;
 }
-.item-main-info span {
-    font-size: 14px;
+.item-main-info > span {
+    font-size: 13px;
     font-weight: normal;
     color: #555;
 }
 
-.item-buttons {
-    grid-column: 2 / 3;
-    grid-row: 1 / 2;
-    justify-self: end; /* 버튼 그룹을 오른쪽 끝으로 정렬 */
-}
-
 .item-sub-info {
-    grid-column: 1 / 2;
-    grid-row: 2 / 3;
     font-size: 13px;
     color: #666;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2px; /* 간격 축소 */
 }
 
-.item-meta-info {
-    grid-column: 2 / 3;
-    grid-row: 2 / 3;
-    font-size: 13px;
-    color: #666;
-    justify-self: end; /* 오른쪽 끝으로 정렬 */
-    white-space: nowrap;
+.item-actions {
+    flex-shrink: 0;
+    margin-left: 15px;
 }
 
-/* 버튼 그룹 (기존 스타일 재활용) */
+/* '구성원 권한 현황' 전용 스타일 (넓은 화면) */
+.data-list li.permission-item .item-actions {
+    align-self: flex-start; /* 버튼을 위로 정렬 */
+}
+.data-list li.permission-item .item-sub-info {
+    /* 이 항목에서는 meta-info가 없으므로 100% 너비 사용 */
+    justify-content: flex-start;
+}
+
+
+/* 버튼 그룹 */
 .button-group-list {
     display: flex;
     gap: 5px;
@@ -195,12 +197,38 @@
     border: 1px solid #ddd;
     background-color: #f8f8f8;
     cursor: pointer;
-    padding: 6px 10px;
+    padding: 5px 8px; /* 버튼 패딩 축소 */
     font-size: 12px;
     font-family: 'Malgun Gothic', 'Dotum', sans-serif;
     transition: background-color 0.2s;
     white-space: nowrap;
 }
+
+/* 좁은 화면 (모바일) 반응형 스타일 */
+@media (max-width: 576px) {
+    .data-list li {
+        flex-direction: column; /* 세로로 쌓기 */
+        align-items: stretch; /* 아이템을 꽉 채우기 */
+        padding: 12px;
+    }
+
+    .item-content {
+        width: 100%;
+        margin-bottom: 8px; /* 내용과 버튼 사이 간격 */
+    }
+
+    .item-actions {
+        margin-left: 0;
+        align-self: flex-end; /* 버튼 그룹을 오른쪽으로 정렬 */
+    }
+
+    /* '구성원 권한 현황' 모바일 스타일 */
+    .data-list li.permission-item .item-actions {
+        /* 다른 항목과 동일하게 오른쪽 아래로 정렬 */
+        align-self: flex-end;
+    }
+}
+
 /* === END: 레이아웃 변경 핵심 CSS === */
 
 
@@ -308,5 +336,4 @@
         width: 100%;
         min-width: unset;
     }
-
 }
