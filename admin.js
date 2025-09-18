@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
         users.push({ id: 'user-' + Date.now(), name: 'admin', password: 'admin', role: 'admin', establishmentId: 'global' });
         saveUsers();
     }
-    // 초기 사용처 (없으면 생성)
+    // 초기 교육기관 (없으면 생성)
     if (establishments.length === 0) {
          establishments.push({ id: 'est-1', name: '코드그림유치원', address: '서울시 강남구', adminName: 'admin', adminPwd: 'admin' });
          saveEstablishments();
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- 1. 사용처 관리 ---
+    // --- 1. 교육기관 관리 ---
     window.addEstablishment = function() {
         const name = establishmentNameInput.value.trim();
         const address = establishmentAddressInput.value.trim();
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         if (users.some(user => user.name === adminName)) {
-            alert('사용처 관리자 이름(ID)이 이미 존재합니다. 다른 이름을 사용해주세요.');
+            alert('교육기관 관리자 이름(ID)이 이미 존재합니다. 다른 이름을 사용해주세요.');
             return;
         }
 
@@ -111,17 +111,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         saveEstablishments();
 
-        // 사용처 관리자 계정 생성
+        // 교육기관 관리자 계정 생성
         users.push({
             id: 'user-' + Date.now(),
             name: adminName,
             password: adminPwd, // 실제 구현 시 암호화 필요
-            role: 'director', // 사용처 관리자는 원장 또는 별도의 'est_admin' 권한
+            role: 'director', // 교육기관 관리자는 원장 또는 별도의 'est_admin' 권한
             establishmentId: newEstablishmentId
         });
         saveUsers();
 
-        alert('사용처가 등록되었습니다!');
+        alert('교육기관가 등록되었습니다!');
         establishmentNameInput.value = '';
         establishmentAddressInput.value = '';
         establishmentAdminNameInput.value = '';
@@ -145,13 +145,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.deleteEstablishment = function(id) {
-        if (!confirm('정말 이 사용처를 삭제하시겠습니까? 관련 구성원도 모두 삭제됩니다.')) return;
+        if (!confirm('정말 이 교육기관를 삭제하시겠습니까? 관련 구성원도 모두 삭제됩니다.')) return;
         
         establishments = establishments.filter(est => est.id !== id);
         users = users.filter(user => user.establishmentId !== id); // 관련 구성원 모두 삭제
         saveEstablishments();
         saveUsers();
-        alert('사용처 및 관련 구성원이 삭제되었습니다.');
+        alert('교육기관 및 관련 구성원이 삭제되었습니다.');
         renderEstablishmentList();
         renderMemberPermissionOptions(); // 권한 관리 목록도 갱신
         renderMemberList();
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 2. 구성원 등록 ---
     function renderEstablishmentOptions() {
-        memberEstablishmentSelect.innerHTML = '<option value="">-- 사용처 선택 --</option>';
+        memberEstablishmentSelect.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
         establishments.forEach(est => {
             const option = document.createElement('option');
             option.value = est.id;
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         if (users.some(u => u.name === name && u.establishmentId === establishmentId)) {
-            alert(`해당 사용처에 이미 '${name}'이라는 이름의 구성원이 있습니다.`);
+            alert(`해당 교육기관에 이미 '${name}'이라는 이름의 구성원이 있습니다.`);
             return;
         }
 
@@ -290,5 +290,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- 초기화 및 시작 ---
-    activateAdminSection('manage-establishments'); // 기본으로 사용처 관리 섹션 활성화
+    activateAdminSection('manage-establishments'); // 기본으로 교육기관 관리 섹션 활성화
+
 });
