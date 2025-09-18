@@ -2,6 +2,8 @@
 
 let establishments = [];
 let users = [];
+let establishmentListener = null;
+let userListener = null;
 
 // DOM 요소 캐싱
 const adminNavButtons = document.querySelectorAll('.admin-nav-button');
@@ -48,6 +50,9 @@ window.initializeAdminPage = async function() {
         // 초기 데이터 로드
         await loadData();
         
+        // 실시간 리스너 설정
+        setupRealtimeListeners();
+        
         // 이벤트 리스너 등록
         setupEventListeners();
         
@@ -65,6 +70,57 @@ window.initializeAdminPage = async function() {
         alert('페이지 로드 중 오류가 발생했습니다: ' + error.message);
     }
 };
+
+// 실시간 리스너 설정
+function setupRealtimeListeners() {
+    console.log('실시간 리스너 설정 중...');
+    
+    // 사용처 실시간 업데이트
+    establishmentListener = window.firebaseService.setupEstablishmentListener((newEstablishments) => {
+        console.log('사용처 실시간 업데이트 받음:', newEstablishments);
+        establishments = newEstablishments;
+        
+        // 현재 활성화된 섹션이 사용처 관리라면 리스트 업데이트
+        const activeSection = document.querySelector('.admin-section.active');
+        if (activeSection && activeSection.id === 'manage-establishments') {
+            renderEstablishmentList();
+        }
+        
+        // 구성원 등록의 사용처 선택 옵션도 업데이트
+        renderEstablishmentOptions();
+    });
+    
+    // 사용자 실시간 업데이트
+    userListener = window.firebaseService.setupUserListener((newUsers) => {
+        console.log('사용자 실시간 업데이트 받음:', newUsers);
+        users = newUsers;
+        
+        // 현재 활성화된 섹션에 따라 리스트 업데이트
+        const activeSection = document.querySelector('.admin-section.active');
+        if (activeSection) {
+            if (activeSection.id === 'manage-members') {
+                renderMemberList();
+            } else if (activeSection.id === 'manage-permissions') {
+                renderMemberPermissionOptions();
+                renderPermissionList();
+            }
+        }
+    });
+    
+    console.log('실시간 리스너 설정 완료');
+}
+
+// 페이지 언로드 시 리스너 정리
+window.addEventListener('beforeunload', () => {
+    if (establishmentListener) {
+        establishmentListener();
+        console.log('사용처 리스너 정리');
+    }
+    if (userListener) {
+        userListener();
+        console.log('사용자 리스너 정리');
+    }
+});
 
 // 데이터 로드
 async function loadData() {
