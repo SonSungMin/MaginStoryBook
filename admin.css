@@ -161,9 +161,30 @@
     font-size: 1.25em;
     color: #000;
     font-weight: 600;
-    display: block; /* 기관명은 한 줄을 모두 차지 */
-    /* 기관명 바로 아래의 여백을 2px로 최소화합니다. */
-    margin-bottom: 2px;
+    /* display: block; 속성 제거하여 전화번호와 한 줄에 표시되도록 함 */
+}
+
+/* (신규 추가) 전화번호 스타일 */
+.data-list li .item-info .phone-number {
+    font-size: 0.8em; /* 기관명보다 작은 글씨 */
+    font-weight: 500; /* 보통 굵기 */
+    color: #555;
+    margin-left: 8px; /* 기관명과의 간격 */
+    white-space: nowrap; /* 전화번호는 줄바꿈되지 않도록 함 */
+}
+
+/* (신규 추가) 전화번호 안의 아이콘 스타일 */
+.data-list li .item-info .phone-number i {
+    font-size: 0.9em;
+    color: #777;
+}
+
+/* (신규 추가) 주소 스타일 */
+.data-list li .item-info .address-line {
+    display: block; /* 주소는 항상 다음 줄에 표시되도록 함 */
+    margin-top: 4px; /* 윗줄(기관명)과의 간격 */
+    font-size: 0.95em; /* 주소 글씨 크기 살짝 조정 */
+    color: #666;
 }
 
 .data-list li .item-info i {
@@ -224,6 +245,7 @@
     }
 
 }
+
 
 
 
