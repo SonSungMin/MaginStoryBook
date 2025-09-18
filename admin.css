@@ -176,20 +176,6 @@
     margin-left: 15px;
 }
 
-/* '구성원 권한 현황' 전용 스타일 */
-.data-list li.permission-item .item-main-info {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-}
-.data-list li.permission-item .item-sub-info {
-    justify-content: flex-start;
-    width: 100%;
-}
-.data-list li.permission-item .item-actions {
-    align-self: flex-start; /* 버튼을 위로 정렬 */
-}
-
 /* 버튼 그룹 */
 .button-group-list {
     display: flex;
@@ -225,15 +211,6 @@
         margin-left: 0;
         align-self: flex-end; /* 버튼 그룹을 오른쪽으로 정렬 */
     }
-    
-    .data-list li.permission-item .item-main-info {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .data-list li.permission-item .item-actions {
-        align-self: flex-end; /* 다른 항목과 동일하게 오른쪽 아래로 정렬 */
-    }
 }
 
 /* === END: 레이아웃 변경 핵심 CSS === */
@@ -245,26 +222,26 @@
 
 .button-group-list .btn-edit {
     color: #337ab7;
+    border-color: #337ab7;
 }
 .button-group-list .btn-edit:hover {
     background-color: #eaf2fa;
-    border-color: #337ab7;
 }
 
 .button-group-list .btn-reset-pwd {
     color: #f0ad4e;
+    border-color: #f0ad4e;
 }
 .button-group-list .btn-reset-pwd:hover {
     background-color: #fdf8e1;
-    border-color: #f0ad4e;
 }
 
 .button-group-list button {
     color: var(--secondary-color);
+    border-color: var(--secondary-color);
 }
 .button-group-list button:hover {
     background-color: #ffe0e0;
-    border-color: var(--secondary-color);
 }
 
 
