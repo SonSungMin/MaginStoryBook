@@ -16,6 +16,22 @@
         </div>
     </div>
 
+    <div id="editMemberModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeEditMemberModal()">&times;</span>
+            <h2>구성원 정보 수정</h2>
+            <input type="hidden" id="editMemberId">
+            <div class="form-group" style="flex-direction: column;">
+                <input type="text" id="editMemberName" placeholder="구성원 성명 (ID)">
+                <input type="date" id="editMemberBirthdate" placeholder="생년월일">
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" onclick="saveMemberChanges()">변경사항 저장</button>
+                <button class="btn-secondary" onclick="closeEditMemberModal()">취소</button>
+            </div>
+        </div>
+    </div>
+    
     <div id="editEstablishmentModal" class="modal">
         <div class="modal-content">
             <span class="close-button" onclick="closeEditModal()">&times;</span>
@@ -159,5 +175,6 @@
     </script>
 </body>
 </html>
+
 
 
