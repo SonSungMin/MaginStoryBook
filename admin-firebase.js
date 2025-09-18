@@ -72,8 +72,6 @@ const permissionList = document.getElementById('permissionList');
 // 페이지 초기화 함수
 window.initializeAdminPage = async function() {
     console.log('관리자 페이지 초기화 시작...');
-
-    initializeAddressOptions(); // 주소 옵션 초기화 함수 호출
     
     // Firebase 서비스 대기
     let retryCount = 0;
@@ -91,6 +89,8 @@ window.initializeAdminPage = async function() {
 
     try {
         console.log('Firebase 서비스 연결됨');
+
+        initializeAddressOptions(); // 주소 옵션 초기화 함수 호출
         
         // 초기 데이터 로드
         await loadData();
