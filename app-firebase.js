@@ -45,8 +45,9 @@ const imageToCrop = document.getElementById('imageToCrop');
 
 // 앱 초기화 함수
 window.initializeApp = async function() {
-    if (!window.firebaseService) {
-        console.error('Firebase 서비스가 로드되지 않았습니다.');
+    // 각 서비스 클라이언트는 app.html에서 이미 초기화됨
+    if (!window.firebaseService || !window.supabaseStorageService) {
+        console.error('필요한 서비스가 모두 로드되지 않았습니다.');
         return;
     }
 
@@ -400,29 +401,30 @@ window.closeAIResultModal = function() {
 };
 window.selectAIImage = async function() {
     try {
-        // 실제 구현에서는 Firebase Storage에 이미지 업로드
-        const timestamp = Date.now();
-        const originalImagePath = `images/${currentUser.id}/${timestamp}_original.jpg`;
-        const aiImagePath = `images/${currentUser.id}/${timestamp}_ai.jpg`;
-
-        // 원본 이미지 업로드 (실제 파일)
-        let originalImageResult = null;
-        if (currentOriginalFile) {
-            originalImageResult = await window.firebaseService.uploadImage(currentOriginalFile, originalImagePath);
+        if (!currentOriginalFile) {
+            alert('업로드할 그림 파일이 없습니다.');
+            return;
         }
 
-        // AI 이미지는 시뮬레이션이므로 URL만 저장
+        // 1. Supabase Storage에 이미지 업로드
+        const timestamp = Date.now();
+        const fileExtension = currentOriginalFile.name.split('.').pop();
+        // 경로: public/[사용자ID]/[타임스탬프]_[파일명]
+        const originalImagePath = `public/${currentUser.id}/${timestamp}_original.${fileExtension}`;
+
+        const originalImageUrl = await window.supabaseStorageService.uploadImage(currentOriginalFile, originalImagePath);
+
+        // 2. AI 이미지는 시뮬레이션 URL 사용
         const aiImageUrl = aiGeneratedImg.src;
 
-        // Firestore에 작품 데이터 저장
-        const newStoryId = await window.firebaseService.createStory({
+        // 3. Firebase Firestore에 작품 정보 저장 (이미지 URL은 Supabase에서 받은 것으로)
+        await window.firebaseService.createStory({
             uploaderId: currentUser.id,
             uploaderName: currentUser.name,
             establishmentId: currentUser.establishmentId,
             title: currentDrawingTitle,
             storyText: currentDrawingStory,
-            originalImgUrl: originalImageResult ? originalImageResult.url : currentOriginalDrawingSrc,
-            originalImgPath: originalImageResult ? originalImageResult.path : null,
+            originalImgUrl: originalImageUrl, // ◀◀◀ Supabase URL 저장
             aiImgUrl: aiImageUrl,
             aiProcessed: true
         });
@@ -433,7 +435,6 @@ window.selectAIImage = async function() {
         // 데이터 새로고침
         await loadStories();
         renderMyStoryCards();
-        
         if (currentUser.role === 'teacher' || currentUser.role === 'director' || currentUser.role === 'admin') {
             renderTeacherArtworkList();
         }
