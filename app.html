@@ -141,6 +141,7 @@
             </div>
         </div>
     </div>
+
     <div id="aiResultModal" class="modal">
         <div class="modal-content large-modal">
             <span class="close-button" onclick="closeAIResultModal()">&times;</span>
@@ -172,6 +173,7 @@
             <button class="btn-secondary mt-1" onclick="regenerateAIImage()">다시 마법 걸기</button>
         </div>
     </div>
+
     <div id="storyDetailModal" class="modal">
         <div class="modal-content large-modal">
             <span class="close-button" onclick="closeStoryDetailModal()">&times;</span>
@@ -210,7 +212,11 @@
             <p>데이터를 불러오는 중...</p>
         </div>
     </div>
-    
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> 
+    <script src="app-firebase.js"></script> 
+    <script src="supabase-storage-service.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="app-firebase.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     
@@ -302,4 +308,5 @@
     </script>
 </body>
 </html>
+
 
