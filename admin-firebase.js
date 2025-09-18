@@ -1,5 +1,48 @@
 // admin-firebase.js - Firebase 연동된 관리자 페이지 스크립트
 
+const addressData = {
+    "서울특별시": ["강남구", "강동구", "강북구", "강서구", "관악구", "광진구", "구로구", "금천구", "노원구", "도봉구", "동대문구", "동작구", "마포구", "서대문구", "서초구", "성동구", "성북구", "송파구", "양천구", "영등포구", "용산구", "은평구", "종로구", "중구", "중랑구"],
+    "부산광역시": ["강서구", "금정구", "기장군", "남구", "동구", "동래구", "부산진구", "북구", "사상구", "사하구", "서구", "수영구", "연제구", "영도구", "중구", "해운대구"],
+    "대구광역시": ["남구", "달서구", "달성군", "동구", "북구", "서구", "수성구", "중구"],
+    "인천광역시": ["강화군", "계양구", "남동구", "동구", "미추홀구", "부평구", "서구", "연수구", "옹진군", "중구"],
+    "광주광역시": ["광산구", "남구", "동구", "북구", "서구"],
+    "대전광역시": ["대덕구", "동구", "서구", "유성구", "중구"],
+    "울산광역시": ["남구", "동구", "북구", "울주군", "중구"],
+    "세종특별자치시": ["세종시"],
+    "경기도": ["수원시", "고양시", "용인시", "성남시", "부천시", "화성시", "안산시", "남양주시", "안양시", "평택시", "의정부시", "파주시", "시흥시", "김포시", "광명시", "광주시", "군포시", "하남시", "오산시", "이천시", "안성시", "의왕시", "양평군", "여주시", "동두천시", "과천시", "가평군", "연천군"],
+    // (이하 다른 시/도 데이터 추가 가능)
+};
+
+// 페이지가 로드될 때 '시/도' 드롭다운 메뉴를 채우는 함수
+function initializeAddressOptions() {
+    const sidoSelect = document.getElementById('establishmentSido');
+    sidoSelect.innerHTML = '<option value="">-- 시/도 선택 --</option>';
+    for (const sido in addressData) {
+        const option = document.createElement('option');
+        option.value = sido;
+        option.textContent = sido;
+        sidoSelect.appendChild(option);
+    }
+}
+
+// '시/도' 선택 시 '시/군/구' 드롭다운 메뉴를 업데이트하는 함수
+window.updateSigunguOptions = function() {
+    const sidoSelect = document.getElementById('establishmentSido');
+    const sigunguSelect = document.getElementById('establishmentSigungu');
+    const selectedSido = sidoSelect.value;
+
+    sigunguSelect.innerHTML = '<option value="">-- 시/군/구 선택 --</option>';
+    if (selectedSido && addressData[selectedSido]) {
+        addressData[selectedSido].forEach(sigungu => {
+            const option = document.createElement('option');
+            option.value = sigungu;
+            option.textContent = sigungu;
+            sigunguSelect.appendChild(option);
+        });
+    }
+}
+
+
 let establishments = [];
 let users = [];
 let establishmentListener = null;
@@ -29,6 +72,8 @@ const permissionList = document.getElementById('permissionList');
 // 페이지 초기화 함수
 window.initializeAdminPage = async function() {
     console.log('관리자 페이지 초기화 시작...');
+
+    initializeAddressOptions(); // 주소 옵션 초기화 함수 호출
     
     // Firebase 서비스 대기
     let retryCount = 0;
@@ -186,86 +231,69 @@ function activateAdminSection(targetId) {
 // ===================
 // 1. 사용처 관리
 // ===================
-
 window.addEstablishment = async function() {
-    const name = establishmentNameInput.value.trim();
-    const address = establishmentAddressInput.value.trim();
-    const adminName = establishmentAdminNameInput.value.trim();
-    const adminPwd = establishmentAdminPwdInput.value.trim();
+    const name = document.getElementById('establishmentName').value.trim();
+    const sido = document.getElementById('establishmentSido').value;
+    const sigungu = document.getElementById('establishmentSigungu').value;
+    const addressDetail = document.getElementById('establishmentAddressDetail').value.trim();
+    const adminName = document.getElementById('establishmentAdminName').value.trim();
+    const adminPwd = document.getElementById('establishmentAdminPwd').value.trim();
 
-    if (!name || !address || !adminName || !adminPwd) {
+    if (!name || !sido || !sigungu || !addressDetail || !adminName || !adminPwd) {
         alert('모든 필드를 입력해주세요.');
         return;
     }
 
-    // Firebase 서비스 확인
-    if (!window.firebaseService) {
-        alert('Firebase 서비스가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
-        return;
-    }
-
     try {
-        console.log('사용처 등록 시작:', { name, address, adminName });
-        
-        // 중복 확인
         const nameExists = await window.firebaseService.checkEstablishmentExists(name);
         if (nameExists) {
-            alert('이미 존재하는 상호입니다.');
+            alert('이미 존재하는 교육기관명입니다.');
             return;
         }
 
         const userExists = await window.firebaseService.checkUserExists(adminName);
         if (userExists) {
-            alert('사용처 관리자 이름(ID)이 이미 존재합니다. 다른 이름을 사용해주세요.');
+            alert('관리자 이름(ID)이 이미 존재합니다. 다른 이름을 사용해주세요.');
             return;
         }
 
-        // 사용처 생성
+        // 주소 정보를 객체로 저장
+        const address = {
+            sido: sido,
+            sigungu: sigungu,
+            detail: addressDetail
+        };
+
         const establishmentId = await window.firebaseService.createEstablishment({
             name,
-            address,
+            address, // 주소 객체 전달
             adminName,
             adminPwd
         });
-        console.log('사용처 생성 완료:', establishmentId);
 
-        // 사용처 관리자 계정 생성
-        const userId = await window.firebaseService.createUser({
+        await window.firebaseService.createUser({
             name: adminName,
             password: adminPwd,
             role: 'director',
             establishmentId: establishmentId
         });
-        console.log('관리자 계정 생성 완료:', userId);
 
-        alert('사용처가 등록되었습니다!');
+        alert('교육기관이 등록되었습니다!');
         
         // 폼 초기화
-        establishmentNameInput.value = '';
-        establishmentAddressInput.value = '';
-        establishmentAdminNameInput.value = '';
-        establishmentAdminPwdInput.value = '';
-        
-        // 데이터 새로고침 및 즉시 리스트 업데이트
-        //console.log('데이터 새로고침 시작...');
-        //await loadData();
-        //renderEstablishmentList();
-        
-        // 다른 섹션들도 업데이트
-        //renderEstablishmentOptions();
-        //renderMemberPermissionOptions();
-        
-        // 실시간 리스너가 자동으로 목록을 갱신하므로 별도의 호출이 필요 없습니다.
-        // 폼 초기화 후 함수를 종료합니다.
-        console.log('사용처 등록 완료. 실시간 리스너가 화면을 업데이트합니다.');
-        
-        console.log('사용처 등록 완료');
+        document.getElementById('establishmentName').value = '';
+        document.getElementById('establishmentSido').value = '';
+        document.getElementById('establishmentSigungu').innerHTML = '<option value="">-- 시/군/구 선택 --</option>';
+        document.getElementById('establishmentAddressDetail').value = '';
+        document.getElementById('establishmentAdminName').value = '';
+        document.getElementById('establishmentAdminPwd').value = '';
         
     } catch (error) {
-        console.error('사용처 등록 오류:', error);
-        alert('사용처 등록 중 오류가 발생했습니다: ' + error.message);
+        console.error('교육기관 등록 오류:', error);
+        alert('교육기관 등록 중 오류가 발생했습니다: ' + error.message);
     }
 };
+
 
 function renderEstablishmentList() {
     console.log('사용처 리스트 렌더링 시작:', establishments);
@@ -281,12 +309,14 @@ function renderEstablishmentList() {
         return;
     }
     
-    establishments.forEach((est, index) => {
-        console.log(`사용처 ${index + 1}:`, est);
+    establishments.forEach(est => {
         const li = document.createElement('li');
+        // 주소 객체를 포맷에 맞게 문자열로 변환하여 표시
+        const fullAddress = est.address ? `${est.address.sido} ${est.address.sigungu} ${est.address.detail}` : '주소 정보 없음';
+
         li.innerHTML = `
             <span class="item-info">
-                <strong>${est.name || '이름 없음'}</strong> (${est.address || '주소 없음'})<br>
+                <strong>${est.name || '이름 없음'}</strong> (${fullAddress})<br>
                 관리자: ${est.adminName || '관리자 없음'} (ID: ${est.adminName || '없음'})
             </span>
             <button onclick="deleteEstablishment('${est.id}')"><i class="fas fa-trash"></i> 삭제</button>
