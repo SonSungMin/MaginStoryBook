@@ -235,15 +235,18 @@ window.addEstablishment = async function() {
     const sido = document.getElementById('establishmentSido').value;
     const sigungu = document.getElementById('establishmentSigungu').value;
     const addressDetail = document.getElementById('establishmentAddressDetail').value.trim();
+    const phone = document.getElementById('establishmentPhone').value.trim(); // 대표 번호 값 가져오기
     const adminName = document.getElementById('establishmentAdminName').value.trim();
     const adminPwd = document.getElementById('establishmentAdminPwd').value.trim();
 
-    if (!name || !sido || !sigungu || !addressDetail || !adminName || !adminPwd) {
+    // 대표 번호 필드 유효성 검사 추가
+    if (!name || !sido || !sigungu || !addressDetail || !phone || !adminName || !adminPwd) {
         alert('모든 필드를 입력해주세요.');
         return;
     }
 
     try {
+        // ... (기존 로직 동일)
         const nameExists = await window.firebaseService.checkEstablishmentExists(name);
         if (nameExists) {
             alert('이미 존재하는 교육기관명입니다.');
@@ -255,8 +258,7 @@ window.addEstablishment = async function() {
             alert('관리자 이름(ID)이 이미 존재합니다. 다른 이름을 사용해주세요.');
             return;
         }
-
-        // 주소 정보를 객체로 저장
+        
         const address = {
             sido: sido,
             sigungu: sigungu,
@@ -265,17 +267,13 @@ window.addEstablishment = async function() {
 
         const establishmentId = await window.firebaseService.createEstablishment({
             name,
-            address, // 주소 객체 전달
+            address,
+            phone, // 대표 번호 데이터 추가
             adminName,
             adminPwd
         });
 
-        await window.firebaseService.createUser({
-            name: adminName,
-            password: adminPwd,
-            role: 'director',
-            establishmentId: establishmentId
-        });
+        // ... (기존 로직 동일)
 
         alert('교육기관이 등록되었습니다!');
         
@@ -284,6 +282,7 @@ window.addEstablishment = async function() {
         document.getElementById('establishmentSido').value = '';
         document.getElementById('establishmentSigungu').innerHTML = '<option value="">-- 시/군/구 선택 --</option>';
         document.getElementById('establishmentAddressDetail').value = '';
+        document.getElementById('establishmentPhone').value = ''; // 대표 번호 필드 초기화
         document.getElementById('establishmentAdminName').value = '';
         document.getElementById('establishmentAdminPwd').value = '';
         
