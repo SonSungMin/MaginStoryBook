@@ -19,13 +19,6 @@ const previewImage = document.getElementById('previewImage');
 const drawingTitleInput = document.getElementById('drawingTitleInput');
 const drawingStoryInput = document.getElementById('drawingStoryInput');
 
-const aiResultModal = document.getElementById('aiResultModal');
-const aiOriginalImg = document.getElementById('aiOriginalImg');
-const aiGeneratedImg = document.getElementById('aiGeneratedImg');
-const wizardGif = document.getElementById('wizardGif');
-const aiStatusText = document.getElementById('aiStatusText');
-const compareToggle = document.getElementById('compareToggle');
-
 const storybookDropzone = document.getElementById('storybook-dropzone');
 const pageSlots = document.querySelectorAll('.page-slot');
 const currentPagePreviewImg = document.querySelector('#current-page-preview img');
@@ -34,8 +27,6 @@ const currentPagePreviewText = document.querySelector('#current-page-preview .pr
 // 업로드 관련 변수
 let currentOriginalDrawingSrc = '';
 let currentOriginalFile = null;
-let currentDrawingTitle = '';
-let currentDrawingStory = '';
 
 // --- 이미지 자르기(Crop) 관련 변수 및 DOM 요소 추가 ---
 let cropper = null;
@@ -187,7 +178,7 @@ function createStoryCardElement(story, includeInteraction = false) {
     storyCard.dataset.storyId = story.id;
 
     const img = document.createElement('img');
-    img.src = story.aiImgUrl || story.aiImg || 'images/placeholder_preview.png';
+    img.src = story.originalImgUrl || 'images/placeholder_preview.png';
     img.alt = story.title;
     storyCard.appendChild(img);
 
@@ -230,8 +221,7 @@ function renderTeacherArtworkList() {
         artworkItem.classList.add('artwork-item');
         artworkItem.setAttribute('draggable', true);
         artworkItem.dataset.artworkId = story.id;
-        artworkItem.dataset.originalImg = story.originalImgUrl || story.originalImg;
-        artworkItem.dataset.aiImg = story.aiImgUrl || story.aiImg;
+        artworkItem.dataset.originalImg = story.originalImgUrl;
         artworkItem.dataset.title = story.title;
         artworkItem.dataset.storyText = story.storyText;
 
@@ -239,9 +229,8 @@ function renderTeacherArtworkList() {
         const uploaderName = story.uploaderName || story.uploaderId || '알 수 없음';
 
         artworkItem.innerHTML = `
-            <img src="${story.aiImgUrl || story.aiImg || 'images/placeholder_preview.png'}" alt="${story.title}">
+            <img src="${story.originalImgUrl || 'images/placeholder_preview.png'}" alt="${story.title}">
             <span>${story.title} (${uploaderName})</span>
-            ${story.aiProcessed !== false ? '<i class="fas fa-magic ai-icon" title="AI 변환 완료"></i>' : '<i class="fas fa-spinner fa-spin ai-icon" title="AI 변환 중"></i>'}
         `;
         teacherArtworkList.appendChild(artworkItem);
     });
@@ -265,8 +254,6 @@ window.openUploadModal = function() {
     // 전역 변수 초기화
     currentOriginalDrawingSrc = '';
     currentOriginalFile = null;
-    currentDrawingTitle = '';
-    currentDrawingStory = '';
 };
 
 window.closeUploadModal = function() {
@@ -344,93 +331,36 @@ window.startRecording = function() {
     alert('이야기 녹음 기능은 현재 개발 중입니다! 텍스트로 입력해주세요.');
 };
 
-// ... (processDrawingWithAI 이하 모든 함수는 기존과 동일) ...
-window.processDrawingWithAI = function() {
-    currentDrawingTitle = drawingTitleInput.value.trim();
-    currentDrawingStory = drawingStoryInput.value.trim();
 
-    if (!currentOriginalFile || !currentDrawingTitle) {
+window.saveStory = async function() {
+    const title = drawingTitleInput.value.trim();
+    const storyText = drawingStoryInput.value.trim();
+
+    if (!currentOriginalFile || !title) {
         alert('그림을 업로드하고 제목을 입력해주세요!');
         return;
     }
 
-    closeUploadModal();
-    aiResultModal.style.display = 'flex';
-
-    aiOriginalImg.src = currentOriginalDrawingSrc;
-    aiGeneratedImg.src = 'images/placeholder_preview.png';
-    aiGeneratedImg.style.opacity = '0';
-
-    wizardGif.style.display = 'block';
-    aiStatusText.style.display = 'block';
-    aiStatusText.textContent = '1/3 마법 그림책이 그림을 분석하고 있어요...';
-
-    compareToggle.checked = false;
-    aiOriginalImg.style.display = 'block';
-
-    // AI 이미지 생성 시뮬레이션
-    setTimeout(() => {
-        aiStatusText.textContent = '2/3 아이의 이야기를 그림과 연결하고 있어요...';
-        setTimeout(() => {
-            aiStatusText.textContent = '3/3 마법 변신 중! 곧 멋진 그림이 완성돼요!';
-            setTimeout(() => {
-                wizardGif.style.display = 'none';
-                aiStatusText.textContent = '마법 변신 완료!';
-
-                // 시뮬레이션: 샘플 AI 변환 이미지
-                const samples = [
-                    'images/ai_drawing_teacher_v1.png',
-                    'images/ai_drawing_dog_v1.png',
-                    'images/ai_drawing_kids_play_v1.png',
-                    'images/sample_ai_generated_default.png'
-                ];
-                const simulatedAiImg = samples[Math.floor(Math.random() * samples.length)];
-
-                aiGeneratedImg.src = simulatedAiImg;
-                aiGeneratedImg.style.opacity = '1';
-
-            }, 2000);
-        }, 1500);
-    }, 1500);
-};
-window.closeAIResultModal = function() {
-    aiResultModal.style.display = 'none';
-    wizardGif.style.display = 'none';
-    aiStatusText.style.display = 'none';
-    compareToggle.checked = false;
-};
-window.selectAIImage = async function() {
     try {
-        if (!currentOriginalFile) {
-            alert('업로드할 그림 파일이 없습니다.');
-            return;
-        }
-
         // 1. Supabase Storage에 이미지 업로드
         const timestamp = Date.now();
         const fileExtension = currentOriginalFile.name.split('.').pop();
-        // 경로: public/[사용자ID]/[타임스탬프]_[파일명]
-        const originalImagePath = `public/${currentUser.id}/${timestamp}_original.${fileExtension}`;
+        const imagePath = `public/${currentUser.id}/${timestamp}_${fileExtension}`;
 
-        const originalImageUrl = await window.supabaseStorageService.uploadImage(currentOriginalFile, originalImagePath);
+        const imageUrl = await window.supabaseStorageService.uploadImage(currentOriginalFile, imagePath);
 
-        // 2. AI 이미지는 시뮬레이션 URL 사용
-        const aiImageUrl = aiGeneratedImg.src;
-
-        // 3. Firebase Firestore에 작품 정보 저장 (이미지 URL은 Supabase에서 받은 것으로)
+        // 2. Firebase Firestore에 작품 정보 저장
         await window.firebaseService.createStory({
             uploaderId: currentUser.id,
             uploaderName: currentUser.name,
             establishmentId: currentUser.establishmentId,
-            title: currentDrawingTitle,
-            storyText: currentDrawingStory,
-            originalImgUrl: originalImageUrl, // ◀◀◀ Supabase URL 저장
-            aiImgUrl: aiImageUrl,
-            aiProcessed: true
+            title: title,
+            storyText: storyText,
+            originalImgUrl: imageUrl,
         });
 
-        alert('마법 그림이 내 그림 이야기에 추가되었습니다!');
-        closeAIResultModal();
+        alert('그림이 저장되었습니다!');
+        closeUploadModal();
 
         // 데이터 새로고침
         await loadStories();
@@ -444,10 +374,7 @@ window.selectAIImage = async function() {
         alert('작품 저장 중 오류가 발생했습니다.');
     }
 };
-window.regenerateAIImage = function() {
-    alert('다시 마법을 걸고 있습니다! (추가 옵션/프롬프트 입력 기능 개발 필요)');
-    processDrawingWithAI();
-};
+
 const storyDetailModalElement = document.getElementById('storyDetailModal');
 const detailStoryTitle = document.getElementById('detailStoryTitle');
 const detailOriginalImg = document.getElementById('detailOriginalImg');
@@ -460,8 +387,8 @@ function openStoryDetailModal(storyId) {
     if (!story) return;
 
     detailStoryTitle.textContent = story.title;
-    detailOriginalImg.src = story.originalImgUrl || story.originalImg || 'images/placeholder_preview.png';
-    detailAiImg.src = story.aiImgUrl || story.aiImg || 'images/placeholder_preview.png';
+    detailOriginalImg.src = story.originalImgUrl || 'images/placeholder_preview.png';
+    detailAiImg.style.display = 'none'; // AI 이미지는 숨김
     detailStoryText.textContent = story.storyText || '이야기가 없습니다.';
     
     const displayDate = story.createdAt ? 
@@ -533,7 +460,7 @@ function attachDragAndDropListeners() {
         item.addEventListener('dragstart', (e) => {
             draggedItem = e.target;
             e.dataTransfer.setData('artwork-id', e.target.dataset.artworkId);
-            e.dataTransfer.setData('artwork-img-src', e.target.dataset.aiImg);
+            e.dataTransfer.setData('artwork-img-src', e.target.dataset.originalImg);
             e.dataTransfer.setData('artwork-title', e.target.dataset.title);
             e.dataTransfer.setData('artwork-story-text', e.target.dataset.storyText);
             setTimeout(() => {
