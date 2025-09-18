@@ -41,13 +41,13 @@ class FirebaseService {
                     id: doc.id,
                     ...doc.data()
                 }));
-                console.log('사용처 실시간 업데이트:', establishments.length, '개');
+                console.log('교육기관 실시간 업데이트:', establishments.length, '개');
                 callback(establishments);
             }, (error) => {
-                console.error('사용처 실시간 리스너 오류:', error);
+                console.error('교육기관 실시간 리스너 오류:', error);
             });
         } catch (error) {
-            console.error('사용처 리스너 설정 오류:', error);
+            console.error('교육기관 리스너 설정 오류:', error);
             return null;
         }
     }
@@ -91,7 +91,7 @@ class FirebaseService {
     }
 
     // ===================
-    // 사용처(Establishments) 관리
+    // 교육기관(Establishments) 관리
     // ===================
     
     async createEstablishment(establishmentData) {
@@ -101,10 +101,10 @@ class FirebaseService {
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
-            console.log('사용처 생성 성공:', docRef.id);
+            console.log('교육기관 생성 성공:', docRef.id);
             return docRef.id;
         } catch (error) {
-            console.error('사용처 생성 오류:', error);
+            console.error('교육기관 생성 오류:', error);
             throw error;
         }
     }
@@ -115,9 +115,9 @@ class FirebaseService {
                 ...updateData,
                 updatedAt: serverTimestamp()
             });
-            console.log('사용처 정보 업데이트 완료:', establishmentId);
+            console.log('교육기관 정보 업데이트 완료:', establishmentId);
         } catch (error) {
-            console.error('사용처 정보 업데이트 오류:', error);
+            console.error('교육기관 정보 업데이트 오류:', error);
             throw error;
         }
     }
@@ -129,10 +129,10 @@ class FirebaseService {
                 id: doc.id,
                 ...doc.data()
             }));
-            console.log('사용처 목록 조회:', establishments.length, '개');
+            console.log('교육기관 목록 조회:', establishments.length, '개');
             return establishments;
         } catch (error) {
-            console.error('사용처 조회 오류:', error);
+            console.error('교육기관 조회 오류:', error);
             throw error;
         }
     }
@@ -142,11 +142,11 @@ class FirebaseService {
             // 관련 사용자들도 삭제
             await this.deleteUsersByEstablishment(establishmentId);
             
-            // 사용처 삭제
+            // 교육기관 삭제
             await deleteDoc(doc(this.db, 'establishments', establishmentId));
-            console.log('사용처 삭제 완료:', establishmentId);
+            console.log('교육기관 삭제 완료:', establishmentId);
         } catch (error) {
-            console.error('사용처 삭제 오류:', error);
+            console.error('교육기관 삭제 오류:', error);
             throw error;
         }
     }
@@ -224,10 +224,10 @@ class FirebaseService {
                 id: doc.id,
                 ...doc.data()
             }));
-            console.log('사용처별 사용자 조회:', establishmentId, '-', users.length, '명');
+            console.log('교육기관별 사용자 조회:', establishmentId, '-', users.length, '명');
             return users;
         } catch (error) {
-            console.error('사용처별 사용자 조회 오류:', error);
+            console.error('교육기관별 사용자 조회 오류:', error);
             throw error;
         }
     }
@@ -278,9 +278,9 @@ class FirebaseService {
             const users = await this.getUsersByEstablishment(establishmentId);
             const deletePromises = users.map(user => this.deleteUser(user.id));
             await Promise.all(deletePromises);
-            console.log('사용처 사용자 일괄 삭제 완료:', establishmentId);
+            console.log('교육기관 사용자 일괄 삭제 완료:', establishmentId);
         } catch (error) {
-            console.error('사용처 사용자 일괄 삭제 오류:', error);
+            console.error('교육기관 사용자 일괄 삭제 오류:', error);
             throw error;
         }
     }
@@ -326,12 +326,12 @@ class FirebaseService {
 
     async getStoriesByEstablishment(establishmentId) {
         try {
-            // 먼저 해당 사용처의 모든 사용자를 가져오기
+            // 먼저 해당 교육기관의 모든 사용자를 가져오기
             const users = await this.getUsersByEstablishment(establishmentId);
             const userIds = users.map(user => user.id);
 
             if (userIds.length === 0) {
-                console.log('사용처에 사용자가 없음:', establishmentId);
+                console.log('교육기관에 사용자가 없음:', establishmentId);
                 return [];
             }
 
@@ -363,10 +363,10 @@ class FirebaseService {
                 return bTime - aTime;
             });
 
-            console.log('사용처 작품 조회:', establishmentId, '-', allStories.length, '개');
+            console.log('교육기관 작품 조회:', establishmentId, '-', allStories.length, '개');
             return allStories;
         } catch (error) {
-            console.error('사용처 작품 조회 오류:', error);
+            console.error('교육기관 작품 조회 오류:', error);
             throw error;
         }
     }
@@ -513,10 +513,10 @@ class FirebaseService {
             );
             const querySnapshot = await getDocs(q);
             const exists = !querySnapshot.empty;
-            console.log('사용처 존재 확인:', name, '-', exists);
+            console.log('교육기관 존재 확인:', name, '-', exists);
             return exists;
         } catch (error) {
-            console.error('사용처 존재 확인 오류:', error);
+            console.error('교육기관 존재 확인 오류:', error);
             throw error;
         }
     }
@@ -562,7 +562,7 @@ class FirebaseService {
                 console.log('관리자 계정 생성 완료');
             }
 
-            // 샘플 사용처 확인 및 생성
+            // 샘플 교육기관 확인 및 생성
             const estExists = await this.checkEstablishmentExists('코드그림유치원');
             if (!estExists) {
                 const estId = await this.createEstablishment({
