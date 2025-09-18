@@ -109,6 +109,19 @@ class FirebaseService {
         }
     }
 
+    async updateEstablishment(establishmentId, updateData) {
+        try {
+            await updateDoc(doc(this.db, 'establishments', establishmentId), {
+                ...updateData,
+                updatedAt: serverTimestamp()
+            });
+            console.log('사용처 정보 업데이트 완료:', establishmentId);
+        } catch (error) {
+            console.error('사용처 정보 업데이트 오류:', error);
+            throw error;
+        }
+    }
+
     async getAllEstablishments() {
         try {
             const querySnapshot = await getDocs(collection(this.db, 'establishments'));
