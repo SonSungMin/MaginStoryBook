@@ -513,3 +513,96 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('관리자 페이지 DOM 로드 완료');
     // Firebase 서비스 로드를 기다린 후 initializeAdminPage가 호출됨
 });
+
+// ===================
+// 4. 교육기관 수정
+// ===================
+
+const editModal = document.getElementById('editEstablishmentModal');
+
+// 수정 모달 열기
+function openEditModal(id) {
+    const establishment = establishments.find(est => est.id === id);
+    if (!establishment) {
+        alert('교육기관 정보를 찾을 수 없습니다.');
+        return;
+    }
+
+    // 데이터 채우기
+    document.getElementById('editEstablishmentId').value = id;
+    document.getElementById('editEstablishmentName').value = establishment.name;
+    document.getElementById('editEstablishmentPhone').value = establishment.phone || '';
+    
+    // 주소 채우기 (시/도)
+    const sidoSelect = document.getElementById('editEstablishmentSido');
+    sidoSelect.innerHTML = '<option value="">-- 시/도 선택 --</option>';
+    for (const sido in addressData) {
+        const option = document.createElement('option');
+        option.value = sido;
+        option.textContent = sido;
+        sidoSelect.appendChild(option);
+    }
+    sidoSelect.value = establishment.address.sido;
+    
+    // 주소 채우기 (시/군/구)
+    updateEditSigunguOptions(); // 시/군/구 목록 생성
+    document.getElementById('editEstablishmentSigungu').value = establishment.address.sigungu;
+    
+    document.getElementById('editEstablishmentAddressDetail').value = establishment.address.detail;
+
+    editModal.style.display = 'flex';
+}
+
+// 수정 모달 닫기
+function closeEditModal() {
+    editModal.style.display = 'none';
+}
+
+// 수정 모달의 시/군/구 옵션 업데이트
+function updateEditSigunguOptions() {
+    const sidoSelect = document.getElementById('editEstablishmentSido');
+    const sigunguSelect = document.getElementById('editEstablishmentSigungu');
+    const selectedSido = sidoSelect.value;
+
+    sigunguSelect.innerHTML = '<option value="">-- 시/군/구 선택 --</option>';
+    if (selectedSido && addressData[selectedSido]) {
+        addressData[selectedSido].forEach(sigungu => {
+            const option = document.createElement('option');
+            option.value = sigungu;
+            option.textContent = sigungu;
+            sigunguSelect.appendChild(option);
+        });
+    }
+}
+
+// 변경사항 저장
+async function saveEstablishmentChanges() {
+    const id = document.getElementById('editEstablishmentId').value;
+    const name = document.getElementById('editEstablishmentName').value.trim();
+    const phone = document.getElementById('editEstablishmentPhone').value.trim();
+    const sido = document.getElementById('editEstablishmentSido').value;
+    const sigungu = document.getElementById('editEstablishmentSigungu').value;
+    const detail = document.getElementById('editEstablishmentAddressDetail').value.trim();
+
+    if (!name || !phone || !sido || !sigungu || !detail) {
+        alert('모든 필드를 입력해주세요.');
+        return;
+    }
+
+    const updateData = {
+        name,
+        phone,
+        address: { sido, sigungu, detail }
+    };
+
+    try {
+        await window.firebaseService.updateEstablishment(id, updateData);
+        alert('교육기관 정보가 성공적으로 수정되었습니다.');
+        closeEditModal();
+        // 목록을 실시간으로 갱신하기 위해 데이터 리스너가 자동으로 처리합니다.
+        // 만약 리스너를 사용하지 않는 환경이라면 여기서 목록을 다시 렌더링해야 합니다.
+    } catch (error) {
+        console.error('교육기관 정보 수정 오류:', error);
+        alert('정보 수정 중 오류가 발생했습니다.');
+    }
+}
