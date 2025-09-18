@@ -160,7 +160,7 @@
     color: #000;
     font-weight: 600;
     display: block; /* 기관명은 한 줄을 모두 차지 */
-    margin-bottom: 4px;
+    margin-bottom: 0;
 }
 
 .data-list li .item-info i {
@@ -221,6 +221,7 @@
     }
 
 }
+
 
 
 
