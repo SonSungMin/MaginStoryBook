@@ -78,13 +78,16 @@ window.initializeApp = async function() {
 // 권한에 따른 UI 설정 (수정됨)
 function setupUIByRole() {
     const teacherToolsNavButton = document.getElementById('teacherToolsNavButton');
+    const teacherToolsSection = document.getElementById('teacher-tools'); // 섹션 DOM 요소 추가
 
     // 교사, 원장, 관리자 권한일 경우 '선생님 도구함' 버튼을 보여줍니다.
     if (currentUser.role === 'teacher' || currentUser.role === 'director' || currentUser.role === 'admin') {
         teacherToolsNavButton.style.display = 'flex';
+        // 섹션은 기본적으로 숨김 처리합니다. (CSS 기본값에 따름)
     } else {
-        // 그 외의 권한(원생 등)은 버튼을 숨깁니다.
+        // 그 외의 권한(원생 등)은 버튼과 섹션을 모두 숨깁니다.
         teacherToolsNavButton.style.display = 'none';
+        teacherToolsSection.style.display = 'none';
     }
 }
 
@@ -141,11 +144,12 @@ function activateSection(targetId) {
         } else if (targetId === 'class-story') {
             renderClassStoryCards();
         } else if (targetId === 'teacher-tools') {
+            // 이 섹션이 활성화될 때만 내용을 렌더링
             if (currentUser.role === 'teacher' || currentUser.role === 'director' || currentUser.role === 'admin') {
                 renderTeacherArtworkList();
             } else {
                 alert('선생님 도구함에 접근할 권한이 없습니다.');
-                activateSection('my-story');
+                activateSection('my-story'); // 접근 권한 없으면 기본 페이지로
                 document.querySelector('.nav-button[data-target="my-story"]').classList.add('active');
             }
         }
