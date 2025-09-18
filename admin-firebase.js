@@ -294,6 +294,7 @@ window.addEstablishment = async function() {
 
 
 function renderEstablishmentList() {
+    const establishmentList = document.getElementById('establishmentList');
     console.log('사용처 리스트 렌더링 시작:', establishments);
     establishmentList.innerHTML = '';
     
@@ -309,13 +310,19 @@ function renderEstablishmentList() {
     
     establishments.forEach(est => {
         const li = document.createElement('li');
-        // 주소 객체를 포맷에 맞게 문자열로 변환하여 표시
         const fullAddress = est.address ? `${est.address.sido} ${est.address.sigungu} ${est.address.detail}` : '주소 정보 없음';
+        // 대표 번호가 있을 경우에만 표시
+        const phoneInfo = est.phone ? `<br><i class="fas fa-phone-alt"></i> ${est.phone}` : '';
 
+        // 개선된 레이아웃으로 변경
         li.innerHTML = `
             <span class="item-info">
-                <strong>${est.name || '이름 없음'}</strong> (${fullAddress})<br>
-                관리자: ${est.adminName || '관리자 없음'} (ID: ${est.adminName || '없음'})
+                <strong>${est.name || '이름 없음'}</strong><br>
+                <i class="fas fa-map-marker-alt"></i> ${fullAddress}
+                ${phoneInfo}
+            </span>
+            <span class="item-meta">
+                관리자: ${est.adminName || '관리자 없음'}
             </span>
             <button onclick="deleteEstablishment('${est.id}')"><i class="fas fa-trash"></i> 삭제</button>
         `;
