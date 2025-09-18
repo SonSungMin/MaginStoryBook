@@ -114,11 +114,18 @@
             <span class="close-button" onclick="closeUploadModal()">&times;</span>
             <h2>새 그림 올리기</h2>
             <div class="upload-area">
-                <input type="file" id="drawingFileInput" accept="image/*" onchange="previewOriginalDrawing(event)">
-                <label for="drawingFileInput" class="file-upload-label">
-                    <i class="fas fa-camera"></i>
-                    <p>그림 사진 찍기/업로드</p>
-                </label>
+                <input type="file" id="drawingFileInput" accept="image/*" onchange="previewOriginalDrawing(event)" style="display: none;">
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="previewOriginalDrawing(event)" style="display: none;">
+                <div class="upload-options">
+                    <label for="cameraInput" class="file-upload-label">
+                        <i class="fas fa-camera"></i>
+                        <p>그림 사진 찍기</p>
+                    </label>
+                    <label for="drawingFileInput" class="file-upload-label">
+                        <i class="fas fa-upload"></i>
+                        <p>그림 업로드</p>
+                    </label>
+                </div>
                 <div id="originalDrawingPreview" class="drawing-preview">
                     <img id="previewImage" src="images/placeholder_preview.png" alt="원본 그림 미리보기">
                 </div>
@@ -128,7 +135,7 @@
             <textarea id="drawingStoryInput" placeholder="그림에 대한 이야기를 들려주세요 (여기에 입력하거나 녹음 버튼 사용)"></textarea>
             
             <div class="button-group">
-                <button class="btn-secondary" onclick="startRecording()"><i class="fas fa-microphone"></i> 이야기 녹음 시작</button>
+                <button class="btn-secondary" onclick="closeUploadModal()">닫기</button>
                 <button class="btn-primary" onclick="processDrawingWithAI()"><i class="fas fa-magic"></i> 마법 변신!</button>
             </div>
         </div>
