@@ -259,7 +259,7 @@
             
             // === Supabase 클라이언트 초기화 (여기에 추가) ===
             const SUPABASE_URL = 'https://guonchhshaopidmjozhk.supabase.co'; // ◀◀◀ 본인의 Supabase URL로 교체
-            const SUPABASE_ANON_KEY = process.env.SUPABASE_KEY; // ◀◀◀ 본인의 Supabase Anon Key로 교체
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1b25jaGhzaGFvcGlkbWpvemhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxNzU2ODUsImV4cCI6MjA3Mzc1MTY4NX0.prY4iGz09EJHGuGHzLTpz-eEUu7TG5flWOGGX_2R8IY'; // ◀◀◀ 본인의 Supabase Anon Key로 교체
             
             const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             window.supabaseStorageService = new SupabaseStorageService(supabaseClient);
@@ -310,6 +310,7 @@
     </script>
 </body>
 </html>
+
 
 
 
