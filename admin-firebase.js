@@ -247,13 +247,17 @@ window.addEstablishment = async function() {
         establishmentAdminPwdInput.value = '';
         
         // 데이터 새로고침 및 즉시 리스트 업데이트
-        console.log('데이터 새로고침 시작...');
-        await loadData();
-        renderEstablishmentList();
+        //console.log('데이터 새로고침 시작...');
+        //await loadData();
+        //renderEstablishmentList();
         
         // 다른 섹션들도 업데이트
-        renderEstablishmentOptions();
-        renderMemberPermissionOptions();
+        //renderEstablishmentOptions();
+        //renderMemberPermissionOptions();
+        
+        // 실시간 리스너가 자동으로 목록을 갱신하므로 별도의 호출이 필요 없습니다.
+        // 폼 초기화 후 함수를 종료합니다.
+        console.log('사용처 등록 완료. 실시간 리스너가 화면을 업데이트합니다.');
         
         console.log('사용처 등록 완료');
         
