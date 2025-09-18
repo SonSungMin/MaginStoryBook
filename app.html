@@ -191,45 +191,55 @@
             <p>데이터를 불러오는 중...</p>
         </div>
     </div>
-
+    
+    <script src="app-firebase.js"></script>
+    
     <script type="module">
-        // Firebase SDK import
+        // Step 1: Firebase SDK import
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getStorage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
-        // Firebase 설정
+        // Step 2: Firebase 설정
         const firebaseConfig = {
             apiKey: "AIzaSyAd9mICdy1tVtQQS6X6-qx_Qnm1q9g6nMk",
             authDomain: "magicstorybookdb.firebaseapp.com",
             projectId: "magicstorybookdb",
-            storageBucket: "magicstorybookdb.appspot.com",
+            storageBucket: "magicstorybookdb.appspot.com", // 일관성을 위해 .appspot.com으로 수정
             messagingSenderId: "6167602990",
             appId: "1:6167602990:web:a4f95392b5cb7169e87cbf",
             measurementId: "G-0E119QHRK3"
           };
 
-        // Firebase 초기화
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const storage = getStorage(app);
+        // Step 3: 초기화 및 서비스 로드, 앱 실행을 순차적으로 진행
+        try {
+            // Firebase 초기화
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+            const storage = getStorage(app);
 
-        // 전역 변수로 설정
-        window.firebase = { app, db, auth, storage };
-        
-        console.log('Firebase 초기화 완료');
+            // 초기화된 정보를 전역 window 객체에 할당하여 다른 스크립트에서 사용
+            window.firebase = { app, db, auth, storage };
+            console.log('Firebase 초기화 완료');
 
-        // Firebase 서비스 로드
-        import('./firebase-service.js').then(() => {
+            // `firebase-service.js`를 동적으로 import하여 로드
+            await import('./firebase-service.js');
             console.log('Firebase 서비스 로드 완료');
-            // 앱 초기화 함수 호출 (app-firebase.js에 정의됨)
-            window.initializeApp();
-        }).catch(error => {
-            console.error('Firebase 서비스 로드 실패:', error);
+            
+            // 모든 준비가 끝났으므로 `app-firebase.js`에 정의된 메인 함수를 호출
+            if (window.initializeApp) {
+                window.initializeApp();
+            } else {
+                // `app-firebase.js`가 제대로 로드되지 않았을 경우
+                throw new Error('initializeApp 함수를 찾을 수 없습니다.');
+            }
+
+        } catch (error) {
+            console.error('시스템 초기화 과정에서 오류 발생:', error);
             alert('시스템 초기화에 실패했습니다. 페이지를 새로고침해주세요.');
-        });
+        }
     </script>
 
     <script>
@@ -260,8 +270,6 @@
             }
         }
     </script>
-
-    <script src="app-firebase.js"></script>
 
     <style>
         .loading-overlay {
