@@ -403,22 +403,37 @@ window.addMember = async function() {
 };
 
 function renderMemberList(filterEstId = null) {
+    const memberList = document.getElementById('memberList');
     memberList.innerHTML = '';
     let filteredUsers = users.filter(u => u.role !== 'admin'); // 관리자 계정 제외
-    
+
     if (filterEstId) {
         filteredUsers = filteredUsers.filter(u => u.establishmentId === filterEstId);
     }
 
+    // 역할(Role) 한글 매핑
+    const roleMap = {
+        student: '원생',
+        teacher: '선생님',
+        director: '원장',
+        admin: '관리자'
+    };
+
     filteredUsers.forEach(user => {
         const establishment = establishments.find(est => est.id === user.establishmentId);
         const li = document.createElement('li');
+        const userRoleKorean = roleMap[user.role] || user.role; // 매핑된 값이 없으면 원래 값 사용
+
         li.innerHTML = `
             <span class="item-info">
-                <strong>${user.name}</strong> (${user.role})<br>
+                <strong>${user.name}</strong> (${userRoleKorean})<br>
                 소속: ${establishment ? establishment.name : '알 수 없음'} / 생년월일: ${user.birthdate}
             </span>
-            <button onclick="deleteMember('${user.id}')"><i class="fas fa-trash"></i> 삭제</button>
+            <div class="button-group-list">
+                <button class="btn-edit" onclick="openEditMemberModal('${user.id}')"><i class="fas fa-pen"></i> 수정</button>
+                <button class="btn-reset-pwd" onclick="resetPassword('${user.id}')"><i class="fas fa-key"></i> 초기화</button>
+                <button onclick="deleteMember('${user.id}')"><i class="fas fa-trash"></i> 삭제</button>
+            </div>
         `;
         memberList.appendChild(li);
     });
@@ -604,5 +619,98 @@ async function saveEstablishmentChanges() {
     } catch (error) {
         console.error('교육기관 정보 수정 오류:', error);
         alert('정보 수정 중 오류가 발생했습니다.');
+    }
+}
+
+
+// ===================
+// 5. 구성원 수정 및 비밀번호 초기화
+// ===================
+
+const editMemberModal = document.getElementById('editMemberModal');
+
+// 구성원 수정 모달 열기
+function openEditMemberModal(id) {
+    const user = users.find(u => u.id === id);
+    if (!user) {
+        alert('구성원 정보를 찾을 수 없습니다.');
+        return;
+    }
+
+    // 데이터 채우기
+    document.getElementById('editMemberId').value = id;
+    document.getElementById('editMemberName').value = user.name;
+    document.getElementById('editMemberBirthdate').value = user.birthdate;
+
+    editMemberModal.style.display = 'flex';
+}
+
+// 구성원 수정 모달 닫기
+function closeEditMemberModal() {
+    editMemberModal.style.display = 'none';
+}
+
+// 구성원 변경사항 저장
+async function saveMemberChanges() {
+    const id = document.getElementById('editMemberId').value;
+    const name = document.getElementById('editMemberName').value.trim();
+    const birthdate = document.getElementById('editMemberBirthdate').value;
+
+    if (!name || !birthdate) {
+        alert('모든 필드를 입력해주세요.');
+        return;
+    }
+
+    // 같은 기관에 동일한 이름이 있는지 확인 (자기 자신은 제외)
+    const currentUser = users.find(u => u.id === id);
+    const isNameDuplicate = users.some(user => 
+        user.id !== id && 
+        user.establishmentId === currentUser.establishmentId && 
+        user.name === name
+    );
+
+    if (isNameDuplicate) {
+        alert('해당 교육기관에 이미 같은 이름의 구성원이 존재합니다.');
+        return;
+    }
+
+    const updateData = { name, birthdate };
+
+    try {
+        await window.firebaseService.updateUser(id, updateData);
+        alert('구성원 정보가 성공적으로 수정되었습니다.');
+        closeEditMemberModal();
+    } catch (error) {
+        console.error('구성원 정보 수정 오류:', error);
+        alert('정보 수정 중 오류가 발생했습니다.');
+    }
+}
+
+// 비밀번호 초기화
+async function resetPassword(id) {
+    const user = users.find(u => u.id === id);
+    if (!user) {
+        alert('구성원 정보를 찾을 수 없습니다.');
+        return;
+    }
+
+    if (!user.birthdate) {
+        alert('생년월일 정보가 없어 비밀번호를 초기화할 수 없습니다.');
+        return;
+    }
+
+    if (!confirm(`${user.name}님의 비밀번호를 생년월일(YYYYMMDD)로 초기화하시겠습니까?`)) {
+        return;
+    }
+
+    // 생년월일(YYYY-MM-DD)에서 하이픈(-) 제거하여 YYYYMMDD 형식으로 변경
+    const newPassword = user.birthdate.replace(/-/g, '');
+
+    try {
+        await window.firebaseService.updateUser(id, { password: newPassword });
+        alert(`비밀번호가 ${newPassword} (으)로 초기화되었습니다.`);
+    } catch (error) {
+        console.error('비밀번호 초기화 오류:', error);
+        alert('비밀번호 초기화 중 오류가 발생했습니다.');
     }
 }
