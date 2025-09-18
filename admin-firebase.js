@@ -198,15 +198,19 @@ function renderEstablishmentList() {
         const fullAddress = est.address ? `${est.address.sido} ${est.address.sigungu} ${est.address.detail}` : '주소 정보 없음';
         const phoneSpan = est.phone ? `<span>(${est.phone})</span>` : '';
         li.innerHTML = `
-            <div class="item-main-info">${est.name || '이름 없음'} ${phoneSpan}</div>
-            <div class="item-buttons">
+            <div class="item-content">
+                <div class="item-main-info">${est.name || '이름 없음'} ${phoneSpan}</div>
+                <div class="item-sub-info">
+                    <span>${fullAddress}</span>
+                    <span class="item-meta-info">관리자 : ${est.adminName || '관리자 없음'}</span>
+                </div>
+            </div>
+            <div class="item-actions">
                 <div class="button-group-list">
                     <button class="btn-edit" onclick="openEditModal('${est.id}')"><i class="fas fa-pen"></i> 수정</button>
                     <button onclick="deleteEstablishment('${est.id}')"><i class="fas fa-trash"></i> 삭제</button>
                 </div>
             </div>
-            <div class="item-sub-info">${fullAddress}</div>
-            <div class="item-meta-info">관리자 : ${est.adminName || '관리자 없음'}</div>
         `;
         establishmentList.appendChild(li);
     });
@@ -272,15 +276,19 @@ function renderMemberList(filterEstId = null) {
         const li = document.createElement('li');
         const userRoleKorean = roleMap[user.role] || user.role;
         li.innerHTML = `
-            <div class="item-main-info">${user.name} <span>(${userRoleKorean})</span></div>
-            <div class="item-buttons">
+            <div class="item-content">
+                <div class="item-main-info">${user.name} <span>(${userRoleKorean})</span></div>
+                <div class="item-sub-info">
+                    <span>소속: ${establishment ? establishment.name : '알 수 없음'} / 생년월일: ${user.birthdate}</span>
+                </div>
+            </div>
+            <div class="item-actions">
                 <div class="button-group-list">
                     <button class="btn-reset-pwd" onclick="resetPassword('${user.id}')"><i class="fas fa-key"></i> 초기화</button>
                     <button class="btn-edit" onclick="openEditMemberModal('${user.id}')"><i class="fas fa-pen"></i> 수정</button>
                     <button onclick="deleteMember('${user.id}')"><i class="fas fa-trash"></i> 삭제</button>
                 </div>
             </div>
-            <div class="item-sub-info">소속: ${establishment ? establishment.name : '알 수 없음'} / 생년월일: ${user.birthdate}</div>
         `;
         memberList.appendChild(li);
     });
@@ -339,16 +347,22 @@ function renderPermissionList() {
     users.forEach(user => {
         const establishment = establishments.find(est => est.id === user.establishmentId);
         const li = document.createElement('li');
+        // '구성원 권한 현황' 항목에만 특별한 클래스 부여
+        li.classList.add('permission-item'); 
         const userRoleKorean = roleMap[user.role] || user.role;
         li.innerHTML = `
-            <div class="item-main-info">${user.name} <span>${userRoleKorean}</span></div>
-            <div class="item-buttons">
+            <div class="item-content">
+                <div class="item-main-info">${user.name} <span>${userRoleKorean}</span></div>
+                <div class="item-sub-info">
+                    <span>소속: ${establishment ? establishment.name : '글로벌'}</span>
+                </div>
+            </div>
+            <div class="item-actions">
                  <div class="button-group-list">
                     <button class="btn-edit" onclick="openEditMemberModal('${user.id}')"><i class="fas fa-pen"></i> 수정</button>
                     <button onclick="deleteMember('${user.id}')"><i class="fas fa-trash"></i> 삭제</button>
                 </div>
             </div>
-            <div class="item-sub-info">소속: ${establishment ? establishment.name : '글로벌'}</div>
         `;
         permissionList.appendChild(li);
     });
