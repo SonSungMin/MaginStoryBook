@@ -137,40 +137,8 @@
             
             <div class="button-group">
                 <button class="btn-secondary" onclick="closeUploadModal()">닫기</button>
-                <button class="btn-primary" onclick="processDrawingWithAI()"><i class="fas fa-magic"></i> 마법 변신!</button>
+                <button class="btn-primary" onclick="saveStory()"><i class="fas fa-save"></i> 저장</button>
             </div>
-        </div>
-    </div>
-
-    <div id="aiResultModal" class="modal">
-        <div class="modal-content large-modal">
-            <span class="close-button" onclick="closeAIResultModal()">&times;</span>
-            <h2>마법 변신 결과!</h2>
-            <div class="ai-transform-compare">
-                <div class="ai-transform-box">
-                    <h3>원본 그림</h3>
-                    <img id="aiOriginalImg" src="" alt="원본 그림">
-                </div>
-                <div class="ai-transform-animation">
-                    <img src="images/nanobabana_wizard.gif" alt="마법 중" class="wizard-gif" id="wizardGif">
-                    <p id="aiStatusText">마법이 걸리고 있어요!</p>
-                </div>
-                <div class="ai-transform-box">
-                    <h3>AI 마법 변신!</h3>
-                    <img id="aiGeneratedImg" src="images/placeholder_preview.png" alt="AI 변환 그림">
-                </div>
-            </div>
-            
-            <div class="toggle-switch-container mt-3">
-                <label class="switch">
-                    <input type="checkbox" id="compareToggle">
-                    <span class="slider round"></span>
-                </label>
-                <span class="toggle-label">원본 그림과 비교하기</span>
-            </div>
-
-            <button class="btn-primary mt-3" onclick="selectAIImage()">마법 그림 선택하기</button>
-            <button class="btn-secondary mt-1" onclick="regenerateAIImage()">다시 마법 걸기</button>
         </div>
     </div>
 
@@ -255,8 +223,6 @@
             await import('./firebase-service.js');
             console.log('Firebase 서비스 로드 완료');
 
-            import { createClient } from '@supabase/supabase-js'
-            
             // === Supabase 클라이언트 초기화 (여기에 추가) ===
             const SUPABASE_URL = 'https://guonchhshaopidmjozhk.supabase.co'; // ◀◀◀ 본인의 Supabase URL로 교체
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1b25jaGhzaGFvcGlkbWpvemhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxNzU2ODUsImV4cCI6MjA3Mzc1MTY4NX0.prY4iGz09EJHGuGHzLTpz-eEUu7TG5flWOGGX_2R8IY'; // ◀◀◀ 본인의 Supabase Anon Key로 교체
@@ -310,7 +276,3 @@
     </script>
 </body>
 </html>
-
-
-
-
