@@ -37,6 +37,12 @@ let currentOriginalFile = null;
 let currentDrawingTitle = '';
 let currentDrawingStory = '';
 
+// --- 이미지 자르기(Crop) 관련 변수 및 DOM 요소 추가 ---
+let cropper = null;
+const cropModal = document.getElementById('cropModal');
+const imageToCrop = document.getElementById('imageToCrop');
+
+
 // 앱 초기화 함수
 window.initializeApp = async function() {
     if (!window.firebaseService) {
@@ -75,7 +81,7 @@ window.initializeApp = async function() {
     }
 };
 
-// 권한에 따른 UI 설정 (수정됨)
+// ... (기존 setupUIByRole, setupEventListeners, loadStories, activateSection, handleLogout 함수는 동일) ...
 function setupUIByRole() {
     const teacherToolsNavButton = document.getElementById('teacherToolsNavButton');
     const teacherToolsSection = document.getElementById('teacher-tools'); // 섹션 DOM 요소 추가
@@ -90,8 +96,6 @@ function setupUIByRole() {
         teacherToolsSection.style.display = 'none';
     }
 }
-
-// 이벤트 리스너 설정
 function setupEventListeners() {
     navButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -109,8 +113,6 @@ function setupEventListeners() {
     // 드래그 앤 드롭 이벤트
     setupDragAndDrop();
 }
-
-// 데이터 로드
 async function loadStories() {
     try {
         // 내 작품 로드
@@ -128,8 +130,6 @@ async function loadStories() {
         classStories = [];
     }
 }
-
-// 섹션 전환 기능
 function activateSection(targetId) {
     appSections.forEach(section => {
         section.classList.remove('active');
@@ -155,18 +155,14 @@ function activateSection(targetId) {
         }
     }
 }
-
-// 로그아웃 기능
 window.handleLogout = function() {
     sessionStorage.removeItem('loggedInUser');
     alert('로그아웃되었습니다.');
     window.location.href = 'index.html';
 };
 
-// ===================
-// 작품 카드 렌더링
-// ===================
 
+// ... (기존 카드 렌더링 관련 함수는 동일) ...
 function renderMyStoryCards() {
     // '새 그림 올리기' 카드를 제외하고 모두 지움
     myStoryGrid.querySelectorAll('.story-card:not(.upload-card)').forEach(card => card.remove());
@@ -176,7 +172,6 @@ function renderMyStoryCards() {
         myStoryGrid.insertBefore(storyCard, myStoryGrid.querySelector('.upload-card').nextSibling);
     });
 }
-
 function renderClassStoryCards() {
     classStoryGrid.innerHTML = '';
 
@@ -185,7 +180,6 @@ function renderClassStoryCards() {
         classStoryGrid.appendChild(storyCard);
     });
 }
-
 function createStoryCardElement(story, includeInteraction = false) {
     const storyCard = document.createElement('div');
     storyCard.classList.add('story-card');
@@ -226,8 +220,6 @@ function createStoryCardElement(story, includeInteraction = false) {
 
     return storyCard;
 }
-
-// 선생님 도구함 작품 목록 렌더링
 function renderTeacherArtworkList() {
     teacherArtworkList.innerHTML = '';
 
@@ -256,16 +248,20 @@ function renderTeacherArtworkList() {
     attachDragAndDropListeners();
 }
 
+
 // ===================
 // 새 그림 올리기 모달
 // ===================
 
 window.openUploadModal = function() {
     uploadModal.style.display = 'flex';
+    // 입력 필드 초기화
     drawingFileInput.value = '';
+    document.getElementById('cameraInput').value = '';
     previewImage.src = 'images/placeholder_preview.png';
     drawingTitleInput.value = '';
     drawingStoryInput.value = '';
+    // 전역 변수 초기화
     currentOriginalDrawingSrc = '';
     currentOriginalFile = null;
     currentDrawingTitle = '';
@@ -276,28 +272,78 @@ window.closeUploadModal = function() {
     uploadModal.style.display = 'none';
 };
 
+// --- previewOriginalDrawing 함수 수정 ---
+// 이미지를 선택하면 바로 미리보기에 넣지 않고, 자르기 모달을 띄웁니다.
 window.previewOriginalDrawing = function(event) {
     const file = event.target.files[0];
     if (file) {
-        currentOriginalFile = file;
         const reader = new FileReader();
         reader.onload = function(e) {
-            previewImage.src = e.target.result;
-            currentOriginalDrawingSrc = e.target.result;
+            // 자르기 모달에 이미지 설정 후, 모달을 보여줌
+            imageToCrop.src = e.target.result;
+            cropModal.style.display = 'flex';
+
+            // Cropper.js 인스턴스가 있다면 파괴 후 다시 생성
+            if (cropper) {
+                cropper.destroy();
+            }
+            // Cropper.js 초기화
+            cropper = new Cropper(imageToCrop, {
+                aspectRatio: 0, // 자유로운 비율로 자르기
+                viewMode: 1,    // 자르기 영역이 이미지 밖으로 나가지 않도록 설정
+            });
         };
         reader.readAsDataURL(file);
-    } else {
-        previewImage.src = 'images/placeholder_preview.png';
-        currentOriginalDrawingSrc = '';
-        currentOriginalFile = null;
+    }
+    // 같은 파일을 다시 선택할 수 있도록 입력 값을 초기화
+    event.target.value = '';
+};
+
+// --- 자르기 관련 함수들 추가 ---
+
+// 자르기 모달 닫기 및 Cropper.js 인스턴스 파괴
+function closeCropModal() {
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
+    cropModal.style.display = 'none';
+    imageToCrop.src = ""; // 이미지 소스 초기화
+}
+
+// '이 부분만 사용하기' 버튼 클릭 시
+window.cropImage = function() {
+    if (cropper) {
+        // 잘라낸 이미지를 캔버스(Canvas) 형태로 가져옴
+        const canvas = cropper.getCroppedCanvas({
+            imageSmoothingQuality: 'high',
+        });
+        
+        // 잘라낸 이미지를 '새 그림 올리기' 모달의 미리보기에 표시
+        previewImage.src = canvas.toDataURL();
+        currentOriginalDrawingSrc = canvas.toDataURL(); // Base64 데이터 저장
+
+        // 잘라낸 캔버스를 파일(Blob) 형태로 변환하여 업로드 준비
+        canvas.toBlob(function(blob) {
+            const croppedFile = new File([blob], "cropped_image.png", { type: "image/png" });
+            currentOriginalFile = croppedFile; // 최종 파일을 전역 변수에 저장
+        }, 'image/png');
+        
+        closeCropModal(); // 자르기 모달 닫기
     }
 };
+
+// '취소' 버튼 클릭 시
+window.cancelCrop = function() {
+    closeCropModal();
+};
+
 
 window.startRecording = function() {
     alert('이야기 녹음 기능은 현재 개발 중입니다! 텍스트로 입력해주세요.');
 };
 
-// AI 변환 과정 시뮬레이션
+// ... (processDrawingWithAI 이하 모든 함수는 기존과 동일) ...
 window.processDrawingWithAI = function() {
     currentDrawingTitle = drawingTitleInput.value.trim();
     currentDrawingStory = drawingStoryInput.value.trim();
@@ -346,14 +392,12 @@ window.processDrawingWithAI = function() {
         }, 1500);
     }, 1500);
 };
-
 window.closeAIResultModal = function() {
     aiResultModal.style.display = 'none';
     wizardGif.style.display = 'none';
     aiStatusText.style.display = 'none';
     compareToggle.checked = false;
 };
-
 window.selectAIImage = async function() {
     try {
         // 실제 구현에서는 Firebase Storage에 이미지 업로드
@@ -399,23 +443,16 @@ window.selectAIImage = async function() {
         alert('작품 저장 중 오류가 발생했습니다.');
     }
 };
-
 window.regenerateAIImage = function() {
     alert('다시 마법을 걸고 있습니다! (추가 옵션/프롬프트 입력 기능 개발 필요)');
     processDrawingWithAI();
 };
-
-// ===================
-// 작품 상세 보기 모달
-// ===================
-
 const storyDetailModalElement = document.getElementById('storyDetailModal');
 const detailStoryTitle = document.getElementById('detailStoryTitle');
 const detailOriginalImg = document.getElementById('detailOriginalImg');
 const detailAiImg = document.getElementById('detailAiImg');
 const detailStoryText = document.getElementById('detailStoryText');
 const detailStoryDate = document.getElementById('detailStoryDate');
-
 function openStoryDetailModal(storyId) {
     const allStories = [...myStories, ...classStories];
     const story = allStories.find(s => s.id === storyId);
@@ -433,17 +470,10 @@ function openStoryDetailModal(storyId) {
 
     storyDetailModalElement.style.display = 'flex';
 }
-
 window.closeStoryDetailModal = function() {
     storyDetailModalElement.style.display = 'none';
 };
-
-// ===================
-// 드래그 앤 드롭 기능
-// ===================
-
 let draggedItem = null;
-
 function setupDragAndDrop() {
     pageSlots.forEach(slot => {
         slot.addEventListener('dragover', (e) => {
@@ -495,7 +525,6 @@ function setupDragAndDrop() {
         });
     });
 }
-
 function attachDragAndDropListeners() {
     const currentArtworkItems = document.querySelectorAll('.artwork-item');
 
@@ -517,17 +546,12 @@ function attachDragAndDropListeners() {
         });
     });
 }
-
-// 동화책 기능
 window.previewStorybook = function() {
     alert('동화책 미리보기 기능은 동화책 뷰어 개발이 필요합니다!');
 };
-
 window.exportStorybook = function() {
     alert('PDF 내보내기 기능은 백엔드에서 PDF 생성 로직이 필요합니다!');
 };
-
-// DOM 로드 완료 후 대기
 document.addEventListener('DOMContentLoaded', () => {
     console.log('앱 DOM 로드 완료');
     // Firebase 서비스 로드를 기다린 후 initializeApp이 호출됨
