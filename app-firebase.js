@@ -73,7 +73,6 @@ window.initializeApp = async function() {
     }
 };
 
-// ... (기존 setupUIByRole, setupEventListeners, loadStories, activateSection, handleLogout 함수는 동일) ...
 function setupUIByRole() {
     const teacherToolsNavButton = document.getElementById('teacherToolsNavButton');
     const teacherToolsSection = document.getElementById('teacher-tools'); // 섹션 DOM 요소 추가
@@ -126,11 +125,11 @@ function activateSection(targetId) {
     appSections.forEach(section => {
         section.classList.remove('active');
     });
-    
+
     const targetSection = document.getElementById(targetId);
     if (targetSection) {
         targetSection.classList.add('active');
-        
+
         if (targetId === 'my-story') {
             renderMyStoryCards();
         } else if (targetId === 'class-story') {
@@ -154,7 +153,6 @@ window.handleLogout = function() {
 };
 
 
-// ... (기존 카드 렌더링 관련 함수는 동일) ...
 function renderMyStoryCards() {
     // '새 그림 올리기' 카드를 제외하고 모두 지움
     myStoryGrid.querySelectorAll('.story-card:not(.upload-card)').forEach(card => card.remove());
@@ -178,22 +176,23 @@ function createStoryCardElement(story, includeInteraction = false) {
     storyCard.dataset.storyId = story.id;
 
     const img = document.createElement('img');
+    // [FIXED] aiImgUrl 대신 originalImgUrl을 사용합니다.
     img.src = story.originalImgUrl || 'images/placeholder_preview.png';
     img.alt = story.title;
     storyCard.appendChild(img);
 
     const cardInfo = document.createElement('div');
     cardInfo.classList.add('card-info');
-    
-    const displayDate = story.createdAt ? 
-        window.firebaseService.formatDate(story.createdAt) : 
+
+    const displayDate = story.createdAt ?
+        window.firebaseService.formatDate(story.createdAt) :
         story.date || new Date().toLocaleDateString('ko-KR');
 
     cardInfo.innerHTML = `
         <span class="story-title">${story.title}</span>
         <span class="story-date">${displayDate}</span>
     `;
-    
+
     if (includeInteraction) {
         cardInfo.innerHTML += `
             <div class="interaction">
@@ -221,6 +220,7 @@ function renderTeacherArtworkList() {
         artworkItem.classList.add('artwork-item');
         artworkItem.setAttribute('draggable', true);
         artworkItem.dataset.artworkId = story.id;
+        // [FIXED] aiImg 대신 originalImgUrl을 사용하도록 데이터 속성 수정
         artworkItem.dataset.originalImg = story.originalImgUrl;
         artworkItem.dataset.title = story.title;
         artworkItem.dataset.storyText = story.storyText;
@@ -228,13 +228,14 @@ function renderTeacherArtworkList() {
         // 업로더 정보 가져오기 (현재는 ID로 표시)
         const uploaderName = story.uploaderName || story.uploaderId || '알 수 없음';
 
+        // [FIXED] 이미지 소스를 originalImgUrl로 변경하고, 불필요한 AI 아이콘 제거
         artworkItem.innerHTML = `
             <img src="${story.originalImgUrl || 'images/placeholder_preview.png'}" alt="${story.title}">
             <span>${story.title} (${uploaderName})</span>
         `;
         teacherArtworkList.appendChild(artworkItem);
     });
-    
+
     attachDragAndDropListeners();
 }
 
@@ -260,68 +261,54 @@ window.closeUploadModal = function() {
     uploadModal.style.display = 'none';
 };
 
-// --- previewOriginalDrawing 함수 수정 ---
-// 이미지를 선택하면 바로 미리보기에 넣지 않고, 자르기 모달을 띄웁니다.
 window.previewOriginalDrawing = function(event) {
     const file = event.target.files[0];
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            // 자르기 모달에 이미지 설정 후, 모달을 보여줌
             imageToCrop.src = e.target.result;
             cropModal.style.display = 'flex';
 
-            // Cropper.js 인스턴스가 있다면 파괴 후 다시 생성
             if (cropper) {
                 cropper.destroy();
             }
-            // Cropper.js 초기화
             cropper = new Cropper(imageToCrop, {
-                aspectRatio: 0, // 자유로운 비율로 자르기
-                viewMode: 1,    // 자르기 영역이 이미지 밖으로 나가지 않도록 설정
+                aspectRatio: 0,
+                viewMode: 1,
             });
         };
         reader.readAsDataURL(file);
     }
-    // 같은 파일을 다시 선택할 수 있도록 입력 값을 초기화
     event.target.value = '';
 };
 
-// --- 자르기 관련 함수들 추가 ---
-
-// 자르기 모달 닫기 및 Cropper.js 인스턴스 파괴
 function closeCropModal() {
     if (cropper) {
         cropper.destroy();
         cropper = null;
     }
     cropModal.style.display = 'none';
-    imageToCrop.src = ""; // 이미지 소스 초기화
+    imageToCrop.src = "";
 }
 
-// '이 부분만 사용하기' 버튼 클릭 시
 window.cropImage = function() {
     if (cropper) {
-        // 잘라낸 이미지를 캔버스(Canvas) 형태로 가져옴
         const canvas = cropper.getCroppedCanvas({
             imageSmoothingQuality: 'high',
         });
-        
-        // 잘라낸 이미지를 '새 그림 올리기' 모달의 미리보기에 표시
-        previewImage.src = canvas.toDataURL();
-        currentOriginalDrawingSrc = canvas.toDataURL(); // Base64 데이터 저장
 
-        // 잘라낸 캔버스를 파일(Blob) 형태로 변환하여 업로드 준비
+        previewImage.src = canvas.toDataURL();
+        currentOriginalDrawingSrc = canvas.toDataURL();
+
         canvas.toBlob(function(blob) {
             const croppedFile = new File([blob], "cropped_image.png", { type: "image/png" });
-            currentOriginalFile = croppedFile; // 최종 파일을 전역 변수에 저장
+            currentOriginalFile = croppedFile;
         }, 'image/png');
-        
-        closeCropModal(); // 자르기 모달 닫기
+
+        closeCropModal();
     }
 };
 
-// '취소' 버튼 클릭 시
 window.cancelCrop = function() {
     closeCropModal();
 };
@@ -330,7 +317,6 @@ window.cancelCrop = function() {
 window.startRecording = function() {
     alert('이야기 녹음 기능은 현재 개발 중입니다! 텍스트로 입력해주세요.');
 };
-
 
 window.saveStory = async function() {
     const title = drawingTitleInput.value.trim();
@@ -342,14 +328,12 @@ window.saveStory = async function() {
     }
 
     try {
-        // 1. Supabase Storage에 이미지 업로드
         const timestamp = Date.now();
-        const fileExtension = currentOriginalFile.name.split('.').pop();
-        const imagePath = `public/${currentUser.id}/${timestamp}_${fileExtension}`;
+        const fileExtension = currentOriginalFile.name.split('.').pop() || 'png';
+        const imagePath = `public/${currentUser.id}/${timestamp}_original.${fileExtension}`;
 
         const imageUrl = await window.supabaseStorageService.uploadImage(currentOriginalFile, imagePath);
 
-        // 2. Firebase Firestore에 작품 정보 저장
         await window.firebaseService.createStory({
             uploaderId: currentUser.id,
             uploaderName: currentUser.name,
@@ -362,7 +346,6 @@ window.saveStory = async function() {
         alert('그림이 저장되었습니다!');
         closeUploadModal();
 
-        // 데이터 새로고침
         await loadStories();
         renderMyStoryCards();
         if (currentUser.role === 'teacher' || currentUser.role === 'director' || currentUser.role === 'admin') {
@@ -381,18 +364,20 @@ const detailOriginalImg = document.getElementById('detailOriginalImg');
 const detailAiImg = document.getElementById('detailAiImg');
 const detailStoryText = document.getElementById('detailStoryText');
 const detailStoryDate = document.getElementById('detailStoryDate');
+
 function openStoryDetailModal(storyId) {
     const allStories = [...myStories, ...classStories];
     const story = allStories.find(s => s.id === storyId);
     if (!story) return;
 
     detailStoryTitle.textContent = story.title;
+    // [FIXED] originalImgUrl을 사용하고, AI 관련 이미지는 표시하지 않음
     detailOriginalImg.src = story.originalImgUrl || 'images/placeholder_preview.png';
-    detailAiImg.style.display = 'none'; // AI 이미지는 숨김
+    detailAiImg.style.display = 'none';
     detailStoryText.textContent = story.storyText || '이야기가 없습니다.';
-    
-    const displayDate = story.createdAt ? 
-        window.firebaseService.formatDate(story.createdAt) : 
+
+    const displayDate = story.createdAt ?
+        window.firebaseService.formatDate(story.createdAt) :
         story.date || new Date().toLocaleDateString('ko-KR');
     detailStoryDate.textContent = displayDate;
 
@@ -435,7 +420,6 @@ function setupDragAndDrop() {
                 img.dataset.artworkStoryText = storyText;
                 slot.appendChild(img);
 
-                // 미리보기 업데이트
                 currentPagePreviewImg.src = imgSrc;
                 currentPagePreviewText.textContent = `${title}의 이야기: "${storyText}"`;
             }
@@ -460,6 +444,7 @@ function attachDragAndDropListeners() {
         item.addEventListener('dragstart', (e) => {
             draggedItem = e.target;
             e.dataTransfer.setData('artwork-id', e.target.dataset.artworkId);
+            // [FIXED] aiImg 대신 originalImg 데이터 속성을 사용
             e.dataTransfer.setData('artwork-img-src', e.target.dataset.originalImg);
             e.dataTransfer.setData('artwork-title', e.target.dataset.title);
             e.dataTransfer.setData('artwork-story-text', e.target.dataset.storyText);
