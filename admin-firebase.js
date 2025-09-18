@@ -119,18 +119,18 @@ window.initializeAdminPage = async function() {
 function setupRealtimeListeners() {
     console.log('실시간 리스너 설정 중...');
     
-    // 사용처 실시간 업데이트
+    // 교육기관 실시간 업데이트
     establishmentListener = window.firebaseService.setupEstablishmentListener((newEstablishments) => {
-        console.log('사용처 실시간 업데이트 받음:', newEstablishments);
+        console.log('교육기관 실시간 업데이트 받음:', newEstablishments);
         establishments = newEstablishments;
         
-        // 현재 활성화된 섹션이 사용처 관리라면 리스트 업데이트
+        // 현재 활성화된 섹션이 교육기관 관리라면 리스트 업데이트
         const activeSection = document.querySelector('.admin-section.active');
         if (activeSection && activeSection.id === 'manage-establishments') {
             renderEstablishmentList();
         }
         
-        // 구성원 등록의 사용처 선택 옵션도 업데이트
+        // 구성원 등록의 교육기관 선택 옵션도 업데이트
         renderEstablishmentOptions();
     });
     
@@ -158,7 +158,7 @@ function setupRealtimeListeners() {
 window.addEventListener('beforeunload', () => {
     if (establishmentListener) {
         establishmentListener();
-        console.log('사용처 리스너 정리');
+        console.log('교육기관 리스너 정리');
     }
     if (userListener) {
         userListener();
@@ -179,9 +179,9 @@ async function loadData() {
         users = await window.firebaseService.getAllUsers();
         
         console.log('데이터 로드 완료:');
-        console.log('- 사용처:', establishments.length, '개');
+        console.log('- 교육기관:', establishments.length, '개');
         console.log('- 사용자:', users.length, '명');
-        console.log('사용처 데이터:', establishments);
+        console.log('교육기관 데이터:', establishments);
         console.log('사용자 데이터:', users);
         
     } catch (error) {
@@ -228,7 +228,7 @@ function activateAdminSection(targetId) {
 }
 
 // ===================
-// 1. 사용처 관리
+// 1. 교육기관 관리
 // ===================
 window.addEstablishment = async function() {
     const name = document.getElementById('establishmentName').value.trim();
@@ -322,11 +322,11 @@ function renderEstablishmentList() {
 }
 
 window.deleteEstablishment = async function(id) {
-    if (!confirm('정말 이 사용처를 삭제하시겠습니까? 관련 구성원도 모두 삭제됩니다.')) return;
+    if (!confirm('정말 이 교육기관를 삭제하시겠습니까? 관련 구성원도 모두 삭제됩니다.')) return;
     
     try {
         await window.firebaseService.deleteEstablishment(id);
-        alert('사용처 및 관련 구성원이 삭제되었습니다.');
+        alert('교육기관 및 관련 구성원이 삭제되었습니다.');
         
         // 데이터 새로고침
         await loadData();
@@ -335,8 +335,8 @@ window.deleteEstablishment = async function(id) {
         renderMemberList();
         
     } catch (error) {
-        console.error('사용처 삭제 오류:', error);
-        alert('사용처 삭제 중 오류가 발생했습니다.');
+        console.error('교육기관 삭제 오류:', error);
+        alert('교육기관 삭제 중 오류가 발생했습니다.');
     }
 };
 
@@ -345,7 +345,7 @@ window.deleteEstablishment = async function(id) {
 // ===================
 
 function renderEstablishmentOptions() {
-    memberEstablishmentSelect.innerHTML = '<option value="">-- 사용처 선택 --</option>';
+    memberEstablishmentSelect.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
     establishments.forEach(est => {
         const option = document.createElement('option');
         option.value = est.id;
@@ -367,10 +367,10 @@ window.addMember = async function() {
     }
 
     try {
-        // 중복 확인 (같은 사용처 내에서)
+        // 중복 확인 (같은 교육기관 내에서)
         const userExists = await window.firebaseService.checkUserExists(name, establishmentId);
         if (userExists) {
-            alert(`해당 사용처에 이미 '${name}'이라는 이름의 구성원이 있습니다.`);
+            alert(`해당 교육기관에 이미 '${name}'이라는 이름의 구성원이 있습니다.`);
             return;
         }
 
