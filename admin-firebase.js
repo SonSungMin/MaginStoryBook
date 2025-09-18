@@ -196,13 +196,17 @@ function renderEstablishmentList() {
     establishments.forEach(est => {
         const li = document.createElement('li');
         const fullAddress = est.address ? `${est.address.sido} ${est.address.sigungu} ${est.address.detail}` : '주소 정보 없음';
-        const phoneSpan = est.phone ? ` <span class="phone-number">(<i class="fas fa-phone-alt"></i> ${est.phone})</span>` : '';
+        const phoneSpan = est.phone ? ` <span class="phone-number">(${est.phone})</span>` : '';
         li.innerHTML = `
-            <span class="item-info">
-                <strong>${est.name || '이름 없음'}${phoneSpan}</strong>
-                <span class="address-line"><i class="fas fa-map-marker-alt"></i> ${fullAddress}</span>
-            </span>
-            <span class="item-meta">관리자: ${est.adminName || '관리자 없음'}</span>
+            <div class="item-info-wrapper">
+                <div class="item-line-1">
+                    <strong>${est.name || '이름 없음'}</strong> ${phoneSpan}
+                </div>
+                <div class="item-line-2">
+                    <span>${fullAddress}</span>
+                    <span class="item-meta">관리자 : ${est.adminName || '관리자 없음'}</span>
+                </div>
+            </div>
             <div class="button-group-list">
                 <button class="btn-edit" onclick="openEditModal('${est.id}')"><i class="fas fa-pen"></i> 수정</button>
                 <button onclick="deleteEstablishment('${est.id}')"><i class="fas fa-trash"></i> 삭제</button>
@@ -272,13 +276,17 @@ function renderMemberList(filterEstId = null) {
         const li = document.createElement('li');
         const userRoleKorean = roleMap[user.role] || user.role;
         li.innerHTML = `
-            <span class="item-info">
-                <strong>${user.name}</strong> (${userRoleKorean})<br>
-                소속: ${establishment ? establishment.name : '알 수 없음'} / 생년월일: ${user.birthdate}
-            </span>
+            <div class="item-info-wrapper">
+                <div class="item-line-1">
+                    <strong>${user.name}</strong> (${userRoleKorean})
+                </div>
+                <div class="item-line-2">
+                    <span>소속: ${establishment ? establishment.name : '알 수 없음'} / 생년월일: ${user.birthdate}</span>
+                </div>
+            </div>
             <div class="button-group-list">
-                <button class="btn-edit" onclick="openEditMemberModal('${user.id}')"><i class="fas fa-pen"></i> 수정</button>
                 <button class="btn-reset-pwd" onclick="resetPassword('${user.id}')"><i class="fas fa-key"></i> 초기화</button>
+                <button class="btn-edit" onclick="openEditMemberModal('${user.id}')"><i class="fas fa-pen"></i> 수정</button>
                 <button onclick="deleteMember('${user.id}')"><i class="fas fa-trash"></i> 삭제</button>
             </div>
         `;
@@ -341,9 +349,14 @@ function renderPermissionList() {
         const li = document.createElement('li');
         const userRoleKorean = roleMap[user.role] || user.role;
         li.innerHTML = `
-            <span class="item-info">
-                <strong>${user.name}</strong> / 소속: ${establishment ? establishment.name : '글로벌'} / 권한: <strong>${userRoleKorean}</strong>
-            </span>
+            <div class="item-info-wrapper">
+                <div class="item-line-1">
+                    <strong>${user.name}</strong> <span>${userRoleKorean}</span>
+                </div>
+                <div class="item-line-2">
+                    <span>소속: ${establishment ? establishment.name : '글로벌'}</span>
+                </div>
+            </div>
             <div class="button-group-list">
                 <button class="btn-edit" onclick="openEditMemberModal('${user.id}')"><i class="fas fa-pen"></i> 수정</button>
                 <button onclick="deleteMember('${user.id}')"><i class="fas fa-trash"></i> 삭제</button>
