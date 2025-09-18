@@ -141,7 +141,7 @@
     align-items: center;
     /* 가독성 높은 폰트로 재정의 */
     font-family: 'Malgun Gothic', 'Dotum', sans-serif;
-    font-size: 1.05em; /* 폰트 크기 증가 */
+    font-size: 1.15em; /* 폰트 크기 증가 */
     line-height: 1.6; /* 줄 간격 조정 */
 }
 .data-list li .item-info {
@@ -209,4 +209,5 @@
     }
 
 }
+
 
