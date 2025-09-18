@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Jua&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 </head>
 <body>
     <div id="app">
@@ -140,7 +141,6 @@
             </div>
         </div>
     </div>
-
     <div id="aiResultModal" class="modal">
         <div class="modal-content large-modal">
             <span class="close-button" onclick="closeAIResultModal()">&times;</span>
@@ -172,7 +172,6 @@
             <button class="btn-secondary mt-1" onclick="regenerateAIImage()">다시 마법 걸기</button>
         </div>
     </div>
-
     <div id="storyDetailModal" class="modal">
         <div class="modal-content large-modal">
             <span class="close-button" onclick="closeStoryDetailModal()">&times;</span>
@@ -191,6 +190,19 @@
             </div>
         </div>
     </div>
+    
+    <div id="cropModal" class="modal">
+        <div class="modal-content">
+            <h2>그림 자르기</h2>
+            <div class="crop-container">
+                <img id="imageToCrop" src="" alt="Crop this image">
+            </div>
+            <div class="button-group mt-3">
+                <button class="btn-secondary" onclick="cancelCrop()">취소</button>
+                <button class="btn-primary" onclick="cropImage()">이 부분만 사용하기</button>
+            </div>
+        </div>
+    </div>
 
     <div id="loadingSpinner" class="loading-overlay" style="display: none;">
         <div class="loading-content">
@@ -200,8 +212,10 @@
     </div>
     
     <script src="app-firebase.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     
     <script type="module">
+        // ... (기존 script type="module" 내용은 동일) ...
         // Step 1: Firebase SDK import
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
@@ -250,6 +264,7 @@
     </script>
 
     <script>
+        // ... (기존 shareStory 관련 script 내용은 동일) ...
         window.shareStory = function() {
             if (navigator.share) {
                 navigator.share({
@@ -277,130 +292,5 @@
             }
         }
     </script>
-
-    <style>
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .loading-content {
-            background-color: white;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-content p {
-            font-family: 'Jua', sans-serif;
-            color: var(--text-dark);
-            margin: 0;
-            font-size: 1.1em;
-        }
-
-        /* 사계절 갤러리 개선 */
-        .season-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
-        }
-
-        .season-card {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .season-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .season-card h3 {
-            font-family: 'Jua', sans-serif;
-            color: var(--secondary-color);
-            font-size: 1.5em;
-            margin: 20px 0 15px;
-            text-align: center;
-        }
-
-        .season-card img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            margin-bottom: 15px;
-        }
-
-        .season-card p {
-            font-family: 'Nanum Pen Script', sans-serif;
-            font-size: 1.1em;
-            color: #555;
-            padding: 0 20px;
-            text-align: center;
-            line-height: 1.4;
-        }
-
-        .btn-view-book {
-            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
-            color: var(--text-dark);
-            border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-family: 'Jua', sans-serif;
-            font-size: 1em;
-            margin: 15px 20px 20px;
-            width: calc(100% - 40px);
-            transition: all 0.3s;
-        }
-
-        .btn-view-book:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        /* 반응형 개선 */
-        @media (max-width: 768px) {
-            .season-gallery {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 15px;
-            }
-            
-            .season-card h3 {
-                font-size: 1.3em;
-            }
-            
-            .season-card p {
-                font-size: 1em;
-            }
-        }
-    </style>
 </body>
 </html>
