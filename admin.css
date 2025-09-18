@@ -131,95 +131,105 @@
     padding: 0;
 }
 
-/* 데이터 목록 */
+/* 데이터 목록 아이템 (li) 스타일 */
 .data-list li {
     background-color: #fcfcfc;
     border: 1px solid #eee;
-    padding: 18px 20px;
+    padding: 15px 20px;
     margin-bottom: 12px;
     border-radius: 8px;
-    display: flex; /* Flexbox 레이아웃 적용 */
-    justify-content: space-between; /* 요소들 사이의 간격을 균등하게 배분 */
-    align-items: center; /* 세로 중앙 정렬 */
-    gap: 15px; /* 요소 사이의 최소 간격 설정 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
     font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', Dotum, sans-serif;
-    font-size: 12px;
-    line-height: 1.7;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
-/* 교육기관 정보 (기관명, 주소, 연락처) */
-.data-list li .item-info {
-    flex-grow: 1; /* 남는 공간을 모두 차지하도록 설정 */
-    flex-shrink: 1; /* 공간이 부족할 때 줄어들도록 설정 */
-    min-width: 0; /* flex item의 너비가 내용보다 작아질 수 있도록 허용 */
-    color: #333;
-    /* 이 부분의 줄 간격을 1.2로 대폭 줄여 간격을 최소화합니다. */
-    line-height: 1.2;
+/* 정보 래퍼 (왼쪽 텍스트 영역) */
+.item-info-wrapper {
+    flex-grow: 1;
+    min-width: 0;
 }
 
-.data-list li .item-info strong {
-    font-size: 1.25em;
-    color: #000;
-    font-weight: 600;
-    /* display: block; 속성 제거하여 전화번호와 한 줄에 표시되도록 함 */
-}
-
-/* (신규 추가) 전화번호 스타일 */
-.data-list li .item-info .phone-number {
-    font-size: 0.8em; /* 기관명보다 작은 글씨 */
-    font-weight: 500; /* 보통 굵기 */
-    color: #555;
-    margin-left: 8px; /* 기관명과의 간격 */
-    white-space: nowrap; /* 전화번호는 줄바꿈되지 않도록 함 */
-}
-
-/* (신규 추가) 전화번호 안의 아이콘 스타일 */
-.data-list li .item-info .phone-number i {
-    font-size: 0.9em;
-    color: #777;
-}
-
-/* (신규 추가) 주소 스타일 */
-.data-list li .item-info .address-line {
-    display: block; /* 주소는 항상 다음 줄에 표시되도록 함 */
-    margin-top: 4px; /* 윗줄(기관명)과의 간격 */
-    font-size: 0.95em; /* 주소 글씨 크기 살짝 조정 */
-    color: #666;
-}
-
-.data-list li .item-info i {
-    color: #888;
-    margin-right: 6px;
-    width: 15px;
-    text-align: center;
-}
-
-/* 관리자 정보 */
-.data-list li .item-meta {
-    flex-shrink: 0; /* 공간이 부족해도 줄어들지 않음 */
-    white-space: nowrap; /* 텍스트가 줄바꿈되지 않도록 설정 */
-    font-size: 0.9em;
-    color: #666;
-    text-align: right;
-}
-
-/* 삭제 버튼 */
-.data-list li button {
-    flex-shrink: 0; /* 공간이 부족해도 줄어들지 않음 */
-    background: none;
-    border: none;
-    color: var(--secondary-color);
-    cursor: pointer;
+.item-line-1 {
     font-size: 1.1em;
-    padding: 5px;
-    border-radius: 5px;
-    transition: background-color 0.2s;
+    color: #333;
+    margin-bottom: 4px;
 }
 
-.data-list li button:hover {
+.item-line-1 strong {
+    font-weight: 600;
+    color: #000;
+}
+
+.item-line-1 .phone-number {
+    font-size: 0.9em;
+    color: #555;
+    margin-left: 5px;
+}
+
+.item-line-2 {
+    font-size: 0.9em;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.item-line-2 .item-meta {
+    margin-left: auto;
+    padding-left: 15px;
+    white-space: nowrap;
+}
+
+/* 목록 내 버튼 그룹 (오른쪽 버튼 영역) */
+.button-group-list {
+    display: flex;
+    gap: 5px; /* 버튼 사이 간격 */
+    flex-shrink: 0;
+}
+
+.button-group-list button {
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: #f8f8f8;
+    cursor: pointer;
+    padding: 6px 10px;
+    font-size: 0.85em;
+    font-family: 'Malgun Gothic', 'Dotum', sans-serif;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.button-group-list button:hover {
+    background-color: #eee;
+}
+
+.button-group-list .btn-edit {
+    color: #337ab7;
+    border-color: #337ab7;
+}
+.button-group-list .btn-edit:hover {
+    background-color: #eaf2fa;
+}
+
+.button-group-list .btn-reset-pwd {
+    color: #f0ad4e;
+    border-color: #f0ad4e;
+}
+.button-group-list .btn-reset-pwd:hover {
+    background-color: #fdf8e1;
+}
+
+.button-group-list button {
+    color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+.button-group-list button:hover {
     background-color: #ffe0e0;
 }
-
 
 /* 모달 공통 스타일 */
 .modal {
@@ -273,56 +283,6 @@
 }
 
 
-/* 목록 내 버튼 그룹 */
-.button-group-list {
-    display: flex;
-    gap: 5px; /* 버튼 사이 간격 */
-    flex-shrink: 0;
-}
-
-.button-group-list button {
-    border-radius: 5px;
-    border: 1px solid #ddd;
-    background-color: #f8f8f8;
-    cursor: pointer;
-    padding: 6px 10px;
-    font-size: 0.85em;
-    font-family: 'Malgun Gothic', 'Dotum', sans-serif;
-    transition: background-color 0.2s;
-    white-space: nowrap;
-}
-
-.button-group-list button:hover {
-    background-color: #eee;
-}
-
-/* 수정 버튼 */
-.button-group-list .btn-edit {
-    color: #337ab7;
-    border-color: #337ab7;
-}
-.button-group-list .btn-edit:hover {
-    background-color: #eaf2fa;
-}
-
-/* 비밀번호 초기화 버튼 */
-.button-group-list .btn-reset-pwd {
-    color: #f0ad4e;
-    border-color: #f0ad4e;
-}
-.button-group-list .btn-reset-pwd:hover {
-    background-color: #fdf8e1;
-}
-
-/* 삭제 버튼 (기존 스타일 재정의) */
-.data-list li .button-group-list button {
-    color: var(--secondary-color);
-    border-color: var(--secondary-color);
-}
-.data-list li .button-group-list button:hover {
-    background-color: #ffe0e0;
-}
-
 /* 반응형 */
 @media (max-width: 768px) {
     .admin-header .container {
@@ -348,4 +308,3 @@
     }
 
 }
-
