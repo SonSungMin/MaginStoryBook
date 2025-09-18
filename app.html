@@ -248,6 +248,14 @@
             // `firebase-service.js`를 동적으로 import하여 로드
             await import('./firebase-service.js');
             console.log('Firebase 서비스 로드 완료');
+
+            // === Supabase 클라이언트 초기화 (여기에 추가) ===
+            const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // ◀◀◀ 본인의 Supabase URL로 교체
+            const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // ◀◀◀ 본인의 Supabase Anon Key로 교체
+            
+            const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            window.supabaseStorageService = new SupabaseStorageService(supabaseClient);
+            console.log('Supabase 초기화 완료');
             
             // 모든 준비가 끝났으므로 `app-firebase.js`에 정의된 메인 함수를 호출
             if (window.initializeApp) {
@@ -294,3 +302,4 @@
     </script>
 </body>
 </html>
+
