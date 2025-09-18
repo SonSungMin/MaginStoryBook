@@ -311,15 +311,14 @@ function renderEstablishmentList() {
     establishments.forEach(est => {
         const li = document.createElement('li');
         const fullAddress = est.address ? `${est.address.sido} ${est.address.sigungu} ${est.address.detail}` : '주소 정보 없음';
-        // 대표 번호가 있을 경우에만 표시
-        const phoneInfo = est.phone ? `<br><i class="fas fa-phone-alt"></i> ${est.phone}` : '';
+        // 대표 번호가 있을 경우에만 표시될 span 생성
+        const phoneSpan = est.phone ? ` <span class="phone-number">(<i class="fas fa-phone-alt"></i> ${est.phone})</span>` : '';
 
-        // 개선된 레이아웃으로 변경
+        // 기관명 옆에 전화번호를 포함하도록 HTML 구조 변경
         li.innerHTML = `
             <span class="item-info">
-                <strong>${est.name || '이름 없음'}</strong><br>
-                <i class="fas fa-map-marker-alt"></i> ${fullAddress}
-                ${phoneInfo}
+                <strong>${est.name || '이름 없음'}${phoneSpan}</strong>
+                <span class="address-line"><i class="fas fa-map-marker-alt"></i> ${fullAddress}</span>
             </span>
             <span class="item-meta">
                 관리자: ${est.adminName || '관리자 없음'}
