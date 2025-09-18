@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>마법 그림책 - 로그인</title>
-    <link rel="stylesheet" href="style.css"> <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Jua&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Jua&display=swap" rel="stylesheet">
     <style>
         /* 로그인 페이지 전용 스타일 */
         body {
@@ -12,12 +13,12 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: var(--background-light); /* style.css의 변수 사용 */
+            background-color: var(--background-light);
             margin: 0;
             flex-direction: column;
         }
         .login-container {
-            background-color: var(--card-bg); /* style.css의 변수 사용 */
+            background-color: var(--card-bg);
             padding: 40px;
             border-radius: 15px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
@@ -28,12 +29,12 @@
         }
         .login-container h2 {
             font-family: 'Jua', sans-serif;
-            color: var(--secondary-color); /* style.css의 변수 사용 */
+            color: var(--secondary-color);
             margin-bottom: 30px;
             font-size: 2.2em;
         }
         .login-container img.logo {
-            width: 80%; /* 로고 크기 조정 */
+            width: 80%;
             max-width: 250px;
             margin-bottom: 30px;
         }
@@ -41,7 +42,7 @@
             width: calc(100% - 20px);
             padding: 12px;
             margin-bottom: 20px;
-            border: 1px solid var(--border-color); /* style.css의 변수 사용 */
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-family: 'Jua', sans-serif;
             font-size: 1.1em;
@@ -57,12 +58,16 @@
             transition: background-color 0.3s;
         }
         .login-container .btn-login {
-            background-color: var(--primary-color); /* style.css의 변수 사용 */
+            background-color: var(--primary-color);
             color: var(--text-dark);
             margin-bottom: 15px;
         }
         .login-container .btn-login:hover {
             background-color: darken(var(--primary-color), 10%);
+        }
+        .login-container .btn-login:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
         }
         .login-container .admin-link {
             font-size: 0.9em;
@@ -76,6 +81,15 @@
         .login-container .admin-link a:hover {
             text-decoration: underline;
         }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--accent-color);
+        }
+        .loading.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -84,42 +98,110 @@
         <h2>로그인</h2>
         <input type="text" id="loginId" placeholder="이름 (ID)">
         <input type="password" id="loginPwd" placeholder="비밀번호">
-        <button class="btn-login" onclick="handleLogin()">로그인</button>
+        <button class="btn-login" id="loginButton" onclick="handleLogin()">로그인</button>
+        <div class="loading" id="loadingDiv">
+            <p>로그인 중...</p>
+        </div>
         <p class="admin-link">관리자이신가요? <a href="admin.html">관리자 페이지로 이동</a></p>
     </div>
 
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Firebase SDK import
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getStorage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+        // Firebase 설정 (실제 값으로 교체 필요)
+        const firebaseConfig = {
+            apiKey: "your-api-key",
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "your-app-id"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+
+        // 전역 변수로 설정
+        window.firebase = { app, db, auth, storage };
+        
+        console.log('Firebase 초기화 완료');
+
+        // Firebase 서비스 로드
+        import('./firebase-service.js').then(() => {
+            console.log('Firebase 서비스 로드 완료');
+            // 초기 샘플 데이터 생성
+            window.firebaseService.initializeSampleData();
+        }).catch(error => {
+            console.error('Firebase 서비스 로드 실패:', error);
+        });
+    </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // 로그인 상태 확인 (app.html에서 로그아웃 시 session에서 제거되므로)
+            // 로그인 상태 확인
             const loggedInUser = sessionStorage.getItem('loggedInUser');
             if (loggedInUser) {
-                // 이미 로그인되어 있다면 운영 화면으로 바로 이동
                 window.location.href = 'app.html';
             }
         });
 
-        function handleLogin() {
+        async function handleLogin() {
             const id = document.getElementById('loginId').value.trim();
             const pwd = document.getElementById('loginPwd').value.trim();
+            const loginButton = document.getElementById('loginButton');
+            const loadingDiv = document.getElementById('loadingDiv');
 
             if (!id || !pwd) {
                 alert('이름과 비밀번호를 입력해주세요.');
                 return;
             }
 
-            // localStorage에서 사용자 정보 불러오기
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            const user = users.find(u => u.name === id && u.password === pwd);
+            // Firebase 서비스가 로드될 때까지 대기
+            if (!window.firebaseService) {
+                alert('시스템 초기화 중입니다. 잠시 후 다시 시도해주세요.');
+                return;
+            }
 
-            if (user) {
-                // 로그인 성공: sessionStorage에 사용자 정보 저장
-                sessionStorage.setItem('loggedInUser', JSON.stringify(user));
-                alert(`${user.name}님, 환영합니다!`);
-                window.location.href = 'app.html'; // 운영 화면으로 리다이렉션
-            } else {
-                alert('이름 또는 비밀번호가 올바르지 않습니다.');
+            try {
+                // 로딩 상태 표시
+                loginButton.disabled = true;
+                loadingDiv.classList.add('show');
+
+                // Firebase에서 사용자 조회
+                const user = await window.firebaseService.getUserByNameAndPassword(id, pwd);
+
+                if (user) {
+                    // 로그인 성공: sessionStorage에 사용자 정보 저장
+                    sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+                    alert(`${user.name}님, 환영합니다!`);
+                    window.location.href = 'app.html';
+                } else {
+                    alert('이름 또는 비밀번호가 올바르지 않습니다.');
+                }
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                alert('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+            } finally {
+                // 로딩 상태 해제
+                loginButton.disabled = false;
+                loadingDiv.classList.remove('show');
             }
         }
+
+        // Enter 키로 로그인
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
     </script>
 </body>
 </html>
