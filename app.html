@@ -109,7 +109,6 @@
         </main>
     </div>
 
-    <!-- 업로드 모달 -->
     <div id="uploadModal" class="modal">
         <div class="modal-content">
             <span class="close-button" onclick="closeUploadModal()">&times;</span>
@@ -135,7 +134,6 @@
         </div>
     </div>
 
-    <!-- AI 결과 모달 -->
     <div id="aiResultModal" class="modal">
         <div class="modal-content large-modal">
             <span class="close-button" onclick="closeAIResultModal()">&times;</span>
@@ -168,7 +166,6 @@
         </div>
     </div>
 
-    <!-- 작품 상세 모달 -->
     <div id="storyDetailModal" class="modal">
         <div class="modal-content large-modal">
             <span class="close-button" onclick="closeStoryDetailModal()">&times;</span>
@@ -188,7 +185,6 @@
         </div>
     </div>
 
-    <!-- 로딩 스피너 -->
     <div id="loadingSpinner" class="loading-overlay" style="display: none;">
         <div class="loading-content">
             <div class="spinner"></div>
@@ -196,7 +192,6 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
     <script type="module">
         // Firebase SDK import
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -204,12 +199,12 @@
         import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getStorage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
-        // Firebase 설정 (실제 값으로 교체 필요)
+        // Firebase 설정
         const firebaseConfig = {
             apiKey: "AIzaSyAd9mICdy1tVtQQS6X6-qx_Qnm1q9g6nMk",
             authDomain: "magicstorybookdb.firebaseapp.com",
             projectId: "magicstorybookdb",
-            storageBucket: "magicstorybookdb.firebasestorage.app",
+            storageBucket: "magicstorybookdb.appspot.com",
             messagingSenderId: "6167602990",
             appId: "1:6167602990:web:a4f95392b5cb7169e87cbf",
             measurementId: "G-0E119QHRK3"
@@ -229,15 +224,14 @@
         // Firebase 서비스 로드
         import('./firebase-service.js').then(() => {
             console.log('Firebase 서비스 로드 완료');
-            // 앱 초기화
-            initializeApp();
+            // 앱 초기화 함수 호출 (app-firebase.js에 정의됨)
+            window.initializeApp();
         }).catch(error => {
             console.error('Firebase 서비스 로드 실패:', error);
             alert('시스템 초기화에 실패했습니다. 페이지를 새로고침해주세요.');
         });
     </script>
 
-    <!-- 공유 기능 -->
     <script>
         window.shareStory = function() {
             if (navigator.share) {
@@ -269,7 +263,6 @@
 
     <script src="app-firebase.js"></script>
 
-    <!-- 추가 CSS for 로딩 스피너 -->
     <style>
         .loading-overlay {
             position: fixed;
@@ -396,4 +389,3 @@
     </style>
 </body>
 </html>
-
