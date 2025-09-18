@@ -711,4 +711,278 @@ body {
   -webkit-transition: .4s;
   transition: .4s;
 }
-input
+input:checked + .slider {
+  background-color: var(--primary-color);
+}
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--primary-color);
+}
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+.slider.round {
+  border-radius: 34px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
+.toggle-label {
+    font-family: 'Jua', sans-serif;
+    font-size: 1.1em;
+    color: #555;
+}
+
+/* 작품 상세 보기 모달 */
+.detail-content {
+    text-align: left;
+    margin-top: 20px;
+}
+.detail-image-area {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.detail-image-area img {
+    max-width: 45%;
+    height: 250px;
+    object-fit: contain;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: #f8f8f8;
+}
+.detail-story-text {
+    font-family: 'Nanum Pen Script', sans-serif;
+    font-size: 1.5em;
+    line-height: 1.8;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #eee;
+    margin-bottom: 15px;
+}
+.detail-info {
+    font-size: 0.9em;
+    color: #777;
+    text-align: right;
+}
+
+
+/* 토글 스위치 */
+.toggle-switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+input:checked + .slider {
+  background-color: var(--primary-color);
+}
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--primary-color);
+}
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+.slider.round {
+  border-radius: 34px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
+.toggle-label {
+    font-family: 'Jua', sans-serif;
+    font-size: 1.1em;
+    color: #555;
+}
+
+/* 작품 상세 보기 모달 */
+.detail-content {
+    text-align: left;
+    margin-top: 20px;
+}
+.detail-image-area {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.detail-image-area img {
+    max-width: 45%;
+    height: 250px;
+    object-fit: contain;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: #f8f8f8;
+}
+.detail-story-text {
+    font-family: 'Nanum Pen Script', sans-serif;
+    font-size: 1.5em;
+    line-height: 1.8;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #eee;
+    margin-bottom: 15px;
+}
+.detail-info {
+    font-size: 0.9em;
+    color: #777;
+    text-align: right;
+}
+
+/* --- 추가된 스타일 시작 --- */
+
+/* 이미지 자르기 모달 스타일 */
+.crop-container {
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+    background: #f1f1f1;
+    margin-bottom: 15px;
+}
+
+#imageToCrop {
+    max-width: 100%;
+}
+
+
+
+/* 반응형 디자인 */
+@media (max-width: 992px) {
+    .main-header .container {
+        flex-direction: column;
+    }
+    .main-nav {
+        width: 100%;
+        justify-content: center;
+        margin-top: 15px;
+    }
+    .header-right {
+        width: 100%;
+        text-align: center;
+        margin-top: 15px;
+    }
+    .teacher-dashboard {
+        grid-template-columns: 1fr;
+    }
+    .storybook-layout {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    .ai-transform-compare {
+        flex-direction: column;
+    }
+    .ai-transform-box {
+        width: 100%;
+    }
+    .ai-transform-animation {
+        margin: 20px 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .logo {
+        font-size: 1.5em;
+    }
+    .logo img {
+        height: 35px;
+    }
+    .nav-button, .season-calendar-button, .logout-button {
+        font-size: 0.9em;
+        padding: 8px 12px;
+    }
+    .story-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+    .story-card img {
+        height: 150px;
+    }
+    .app-section h2 {
+        font-size: 1.8em;
+    }
+    .modal-content {
+        padding: 20px;
+    }
+    .modal-content .btn-primary,
+    .modal-content .btn-secondary {
+        width: 100%;
+        margin: 5px 0;
+    }
+    .detail-image-area img {
+        max-width: 90%;
+        height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .nav-button {
+        width: calc(50% - 10px);
+        margin-bottom: 10px;
+    }
+    .season-calendar-button, .logout-button {
+        width: calc(50% - 10px);
+        margin-bottom: 10px;
+    }
+    .story-grid {
+        grid-template-columns: 1fr;
+    }
+    .story-card img {
+        height: 200px;
+    }
+    .upload-card {
+        min-height: 200px;
+    }
+    .teacher-dashboard {
+        grid-template-columns: 1fr;
+    }
+    .storybook-layout {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .ai-transform-box {
+        min-width: unset;
+    }
+}
