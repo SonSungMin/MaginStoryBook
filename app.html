@@ -92,6 +92,18 @@
                         <p>햇살 가득 신나는 여름의 추억</p>
                         <button class="btn-view-book">보기</button>
                     </div>
+                    <div class="season-card">
+                        <h3>가을 이야기</h3>
+                        <img src="images/season_autumn_thumb.png" alt="가을 썸네일">
+                        <p>단풍잎처럼 알록달록한 가을 추억</p>
+                        <button class="btn-view-book">보기</button>
+                    </div>
+                    <div class="season-card">
+                        <h3>겨울 이야기</h3>
+                        <img src="images/season_winter_thumb.png" alt="겨울 썸네일">
+                        <p>눈꽃같이 반짝이는 겨울 이야기</p>
+                        <button class="btn-view-book">보기</button>
+                    </div>
                 </div>
             </section>
         </main>
@@ -170,5 +182,216 @@
                 <p class="detail-info">작성일: <span id="detailStoryDate"></span></p>
             </div>
             <div class="button-group mt-3">
-                <button class="btn-primary" onclick="alert('친구에게 공유 기능 개발 중!')">친구에게 공유</button>
-                <button class="btn-secondary" onclick="
+                <button class="btn-primary" onclick="shareStory()">친구에게 공유</button>
+                <button class="btn-secondary" onclick="closeStoryDetailModal()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로딩 스피너 -->
+    <div id="loadingSpinner" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>데이터를 불러오는 중...</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Firebase SDK import
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getStorage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+        // Firebase 설정 (실제 값으로 교체 필요)
+        const firebaseConfig = {
+            apiKey: "your-api-key",
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "your-app-id"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+
+        // 전역 변수로 설정
+        window.firebase = { app, db, auth, storage };
+        
+        console.log('Firebase 초기화 완료');
+
+        // Firebase 서비스 로드
+        import('./firebase-service.js').then(() => {
+            console.log('Firebase 서비스 로드 완료');
+            // 앱 초기화
+            initializeApp();
+        }).catch(error => {
+            console.error('Firebase 서비스 로드 실패:', error);
+            alert('시스템 초기화에 실패했습니다. 페이지를 새로고침해주세요.');
+        });
+    </script>
+
+    <!-- 공유 기능 -->
+    <script>
+        window.shareStory = function() {
+            if (navigator.share) {
+                navigator.share({
+                    title: '마법 그림책 작품',
+                    text: '우리 아이의 멋진 작품을 확인해보세요!',
+                    url: window.location.href
+                }).then(() => {
+                    console.log('공유 성공');
+                }).catch(err => {
+                    console.log('공유 실패:', err);
+                    fallbackShare();
+                });
+            } else {
+                fallbackShare();
+            }
+        };
+
+        function fallbackShare() {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('링크가 클립보드에 복사되었습니다!');
+                });
+            } else {
+                alert('공유 기능이 지원되지 않는 브라우저입니다.');
+            }
+        }
+    </script>
+
+    <script src="app-firebase.js"></script>
+
+    <!-- 추가 CSS for 로딩 스피너 -->
+    <style>
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-content p {
+            font-family: 'Jua', sans-serif;
+            color: var(--text-dark);
+            margin: 0;
+            font-size: 1.1em;
+        }
+
+        /* 사계절 갤러리 개선 */
+        .season-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .season-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .season-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .season-card h3 {
+            font-family: 'Jua', sans-serif;
+            color: var(--secondary-color);
+            font-size: 1.5em;
+            margin: 20px 0 15px;
+            text-align: center;
+        }
+
+        .season-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            margin-bottom: 15px;
+        }
+
+        .season-card p {
+            font-family: 'Nanum Pen Script', sans-serif;
+            font-size: 1.1em;
+            color: #555;
+            padding: 0 20px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .btn-view-book {
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            color: var(--text-dark);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Jua', sans-serif;
+            font-size: 1em;
+            margin: 15px 20px 20px;
+            width: calc(100% - 40px);
+            transition: all 0.3s;
+        }
+
+        .btn-view-book:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 반응형 개선 */
+        @media (max-width: 768px) {
+            .season-gallery {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+            }
+            
+            .season-card h3 {
+                font-size: 1.3em;
+            }
+            
+            .season-card p {
+                font-size: 1em;
+            }
+        }
+    </style>
+</body>
+</html>
