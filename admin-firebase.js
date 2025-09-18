@@ -42,7 +42,6 @@ window.updateSigunguOptions = function() {
     }
 }
 
-
 let establishments = [];
 let users = [];
 let establishmentListener = null;
