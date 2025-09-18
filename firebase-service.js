@@ -12,7 +12,8 @@ import {
     where, 
     orderBy,
     serverTimestamp,
-    limit
+    limit,
+    onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 import { 
@@ -26,6 +27,67 @@ class FirebaseService {
     constructor() {
         this.db = window.firebase.db;
         this.storage = window.firebase.storage;
+    }
+
+    // ===================
+    // 실시간 리스너 (실시간 업데이트용)
+    // ===================
+
+    setupEstablishmentListener(callback) {
+        try {
+            const q = query(collection(this.db, 'establishments'), orderBy('createdAt', 'desc'));
+            return onSnapshot(q, (querySnapshot) => {
+                const establishments = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                console.log('사용처 실시간 업데이트:', establishments.length, '개');
+                callback(establishments);
+            }, (error) => {
+                console.error('사용처 실시간 리스너 오류:', error);
+            });
+        } catch (error) {
+            console.error('사용처 리스너 설정 오류:', error);
+            return null;
+        }
+    }
+
+    setupUserListener(callback) {
+        try {
+            const q = query(collection(this.db, 'users'), orderBy('createdAt', 'desc'));
+            return onSnapshot(q, (querySnapshot) => {
+                const users = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                console.log('사용자 실시간 업데이트:', users.length, '명');
+                callback(users);
+            }, (error) => {
+                console.error('사용자 실시간 리스너 오류:', error);
+            });
+        } catch (error) {
+            console.error('사용자 리스너 설정 오류:', error);
+            return null;
+        }
+    }
+
+    setupStoryListener(callback) {
+        try {
+            const q = query(collection(this.db, 'stories'), orderBy('createdAt', 'desc'));
+            return onSnapshot(q, (querySnapshot) => {
+                const stories = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                console.log('작품 실시간 업데이트:', stories.length, '개');
+                callback(stories);
+            }, (error) => {
+                console.error('작품 실시간 리스너 오류:', error);
+            });
+        } catch (error) {
+            console.error('작품 리스너 설정 오류:', error);
+            return null;
+        }
     }
 
     // ===================
