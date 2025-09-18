@@ -16,6 +16,29 @@
         </div>
     </div>
 
+    <div id="editEstablishmentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeEditModal()">&times;</span>
+            <h2>교육기관 정보 수정</h2>
+            <input type="hidden" id="editEstablishmentId">
+            <div class="form-group" style="flex-direction: column;">
+                <input type="text" id="editEstablishmentName" placeholder="교육기관명">
+                <select id="editEstablishmentSido" onchange="updateEditSigunguOptions()">
+                    <option value="">-- 시/도 선택 --</option>
+                </select>
+                <select id="editEstablishmentSigungu">
+                    <option value="">-- 시/군/구 선택 --</option>
+                </select>
+                <input type="text" id="editEstablishmentAddressDetail" placeholder="상세주소">
+                <input type="tel" id="editEstablishmentPhone" placeholder="대표 번호">
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" onclick="saveEstablishmentChanges()">변경사항 저장</button>
+                <button class="btn-secondary" onclick="closeEditModal()">취소</button>
+            </div>
+        </div>
+    </div>
+    
     <div class="admin-container container">
         <div class="admin-nav">
             <button class="admin-nav-button active" data-target="manage-establishments">교육기관 관리</button>
@@ -136,4 +159,5 @@
     </script>
 </body>
 </html>
+
 
