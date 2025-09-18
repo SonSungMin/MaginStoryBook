@@ -143,7 +143,7 @@
     align-items: center;
     /* 더욱 깔끔한 정자 폰트 및 크기 상향 */
     font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', Dotum, sans-serif;
-    font-size: 13px; /* 폰트 크기를 16px로 명확하게 지정하여 확대 */
+    font-size: 11px; /* 폰트 크기를 16px로 명확하게 지정하여 확대 */
     line-height: 1.7; /* 줄 간격을 넓혀 가독성 확보 */
 }
 
@@ -214,6 +214,7 @@
     }
 
 }
+
 
 
 
