@@ -26,12 +26,25 @@ const permissionList = document.getElementById('permissionList');
 
 // 페이지 초기화 함수
 window.initializeAdminPage = async function() {
+    console.log('관리자 페이지 초기화 시작...');
+    
+    // Firebase 서비스 대기
+    let retryCount = 0;
+    while (!window.firebaseService && retryCount < 10) {
+        console.log(`Firebase 서비스 대기 중... (${retryCount + 1}/10)`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        retryCount++;
+    }
+    
     if (!window.firebaseService) {
-        console.error('Firebase 서비스가 로드되지 않았습니다.');
+        console.error('Firebase 서비스 로드 실패');
+        alert('Firebase 서비스 로드에 실패했습니다. 페이지를 새로고침해주세요.');
         return;
     }
 
     try {
+        console.log('Firebase 서비스 연결됨');
+        
         // 초기 데이터 로드
         await loadData();
         
@@ -42,20 +55,40 @@ window.initializeAdminPage = async function() {
         activateAdminSection('manage-establishments');
         
         console.log('관리자 페이지 초기화 완료');
+        
+        // 시스템 상태 확인
+        const status = await window.firebaseService.getSystemStatus();
+        console.log('시스템 상태:', status);
+        
     } catch (error) {
         console.error('관리자 페이지 초기화 오류:', error);
-        alert('페이지 로드 중 오류가 발생했습니다.');
+        alert('페이지 로드 중 오류가 발생했습니다: ' + error.message);
     }
 };
 
 // 데이터 로드
 async function loadData() {
+    console.log('데이터 로드 시작...');
     try {
+        if (!window.firebaseService) {
+            console.error('Firebase 서비스가 없음');
+            throw new Error('Firebase 서비스가 초기화되지 않았습니다.');
+        }
+        
         establishments = await window.firebaseService.getAllEstablishments();
         users = await window.firebaseService.getAllUsers();
-        console.log('데이터 로드 완료:', { establishments, users });
+        
+        console.log('데이터 로드 완료:');
+        console.log('- 사용처:', establishments.length, '개');
+        console.log('- 사용자:', users.length, '명');
+        console.log('사용처 데이터:', establishments);
+        console.log('사용자 데이터:', users);
+        
     } catch (error) {
         console.error('데이터 로드 오류:', error);
+        // 빈 배열로 초기화하여 에러 방지
+        establishments = [];
+        users = [];
         throw error;
     }
 }
@@ -109,7 +142,15 @@ window.addEstablishment = async function() {
         return;
     }
 
+    // Firebase 서비스 확인
+    if (!window.firebaseService) {
+        alert('Firebase 서비스가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
+        return;
+    }
+
     try {
+        console.log('사용처 등록 시작:', { name, address, adminName });
+        
         // 중복 확인
         const nameExists = await window.firebaseService.checkEstablishmentExists(name);
         if (nameExists) {
@@ -130,14 +171,16 @@ window.addEstablishment = async function() {
             adminName,
             adminPwd
         });
+        console.log('사용처 생성 완료:', establishmentId);
 
         // 사용처 관리자 계정 생성
-        await window.firebaseService.createUser({
+        const userId = await window.firebaseService.createUser({
             name: adminName,
             password: adminPwd,
             role: 'director',
             establishmentId: establishmentId
         });
+        console.log('관리자 계정 생성 완료:', userId);
 
         alert('사용처가 등록되었습니다!');
         
@@ -147,29 +190,51 @@ window.addEstablishment = async function() {
         establishmentAdminNameInput.value = '';
         establishmentAdminPwdInput.value = '';
         
-        // 데이터 새로고침
+        // 데이터 새로고침 및 즉시 리스트 업데이트
+        console.log('데이터 새로고침 시작...');
         await loadData();
         renderEstablishmentList();
         
+        // 다른 섹션들도 업데이트
+        renderEstablishmentOptions();
+        renderMemberPermissionOptions();
+        
+        console.log('사용처 등록 완료');
+        
     } catch (error) {
         console.error('사용처 등록 오류:', error);
-        alert('사용처 등록 중 오류가 발생했습니다.');
+        alert('사용처 등록 중 오류가 발생했습니다: ' + error.message);
     }
 };
 
 function renderEstablishmentList() {
+    console.log('사용처 리스트 렌더링 시작:', establishments);
     establishmentList.innerHTML = '';
-    establishments.forEach(est => {
+    
+    if (establishments.length === 0) {
+        const li = document.createElement('li');
+        li.innerHTML = '<span class="item-info">등록된 사용처가 없습니다.</span>';
+        li.style.color = '#999';
+        li.style.textAlign = 'center';
+        establishmentList.appendChild(li);
+        console.log('사용처 없음');
+        return;
+    }
+    
+    establishments.forEach((est, index) => {
+        console.log(`사용처 ${index + 1}:`, est);
         const li = document.createElement('li');
         li.innerHTML = `
             <span class="item-info">
-                <strong>${est.name}</strong> (${est.address})<br>
-                관리자: ${est.adminName} (ID: ${est.adminName})
+                <strong>${est.name || '이름 없음'}</strong> (${est.address || '주소 없음'})<br>
+                관리자: ${est.adminName || '관리자 없음'} (ID: ${est.adminName || '없음'})
             </span>
             <button onclick="deleteEstablishment('${est.id}')"><i class="fas fa-trash"></i> 삭제</button>
         `;
         establishmentList.appendChild(li);
     });
+    
+    console.log('사용처 리스트 렌더링 완료:', establishments.length, '개');
 }
 
 window.deleteEstablishment = async function(id) {
