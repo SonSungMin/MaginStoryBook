@@ -272,6 +272,57 @@
     margin-top: 20px;
 }
 
+
+/* 목록 내 버튼 그룹 */
+.button-group-list {
+    display: flex;
+    gap: 5px; /* 버튼 사이 간격 */
+    flex-shrink: 0;
+}
+
+.button-group-list button {
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: #f8f8f8;
+    cursor: pointer;
+    padding: 6px 10px;
+    font-size: 0.85em;
+    font-family: 'Malgun Gothic', 'Dotum', sans-serif;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.button-group-list button:hover {
+    background-color: #eee;
+}
+
+/* 수정 버튼 */
+.button-group-list .btn-edit {
+    color: #337ab7;
+    border-color: #337ab7;
+}
+.button-group-list .btn-edit:hover {
+    background-color: #eaf2fa;
+}
+
+/* 비밀번호 초기화 버튼 */
+.button-group-list .btn-reset-pwd {
+    color: #f0ad4e;
+    border-color: #f0ad4e;
+}
+.button-group-list .btn-reset-pwd:hover {
+    background-color: #fdf8e1;
+}
+
+/* 삭제 버튼 (기존 스타일 재정의) */
+.data-list li .button-group-list button {
+    color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+.data-list li .button-group-list button:hover {
+    background-color: #ffe0e0;
+}
+
 /* 반응형 */
 @media (max-width: 768px) {
     .admin-header .container {
@@ -297,3 +348,4 @@
     }
 
 }
+
