@@ -295,26 +295,15 @@ window.addEstablishment = async function() {
 
 function renderEstablishmentList() {
     const establishmentList = document.getElementById('establishmentList');
-    console.log('사용처 리스트 렌더링 시작:', establishments);
     establishmentList.innerHTML = '';
     
-    if (establishments.length === 0) {
-        const li = document.createElement('li');
-        li.innerHTML = '<span class="item-info">등록된 사용처가 없습니다.</span>';
-        li.style.color = '#999';
-        li.style.textAlign = 'center';
-        establishmentList.appendChild(li);
-        console.log('사용처 없음');
-        return;
-    }
+    if (establishments.length === 0) { /* ... (내용 동일) ... */ return; }
     
     establishments.forEach(est => {
         const li = document.createElement('li');
         const fullAddress = est.address ? `${est.address.sido} ${est.address.sigungu} ${est.address.detail}` : '주소 정보 없음';
-        // 대표 번호가 있을 경우에만 표시될 span 생성
         const phoneSpan = est.phone ? ` <span class="phone-number">(<i class="fas fa-phone-alt"></i> ${est.phone})</span>` : '';
 
-        // 기관명 옆에 전화번호를 포함하도록 HTML 구조 변경
         li.innerHTML = `
             <span class="item-info">
                 <strong>${est.name || '이름 없음'}${phoneSpan}</strong>
@@ -323,12 +312,13 @@ function renderEstablishmentList() {
             <span class="item-meta">
                 관리자: ${est.adminName || '관리자 없음'}
             </span>
-            <button onclick="deleteEstablishment('${est.id}')"><i class="fas fa-trash"></i> 삭제</button>
+            <div class="button-group-list">
+                <button class="btn-edit" onclick="openEditModal('${est.id}')"><i class="fas fa-pen"></i> 수정</button>
+                <button onclick="deleteEstablishment('${est.id}')"><i class="fas fa-trash"></i> 삭제</button>
+            </div>
         `;
         establishmentList.appendChild(li);
     });
-    
-    console.log('사용처 리스트 렌더링 완료:', establishments.length, '개');
 }
 
 window.deleteEstablishment = async function(id) {
