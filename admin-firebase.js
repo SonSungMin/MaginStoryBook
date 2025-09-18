@@ -347,19 +347,19 @@ function renderPermissionList() {
     users.forEach(user => {
         const establishment = establishments.find(est => est.id === user.establishmentId);
         const li = document.createElement('li');
-        li.classList.add('permission-item'); 
         const userRoleKorean = roleMap[user.role] || user.role;
+        // 이전 버전의 구조로 복원
         li.innerHTML = `
             <div class="item-content">
-                <div class="item-main-info">${user.name} <span>${userRoleKorean}</span></div>
+                <div class="item-main-info">${user.name} <span>(${userRoleKorean})</span></div>
                 <div class="item-sub-info">
-                    <span>${establishment ? establishment.name : '글로벌'}</span>
+                    <span>소속: ${establishment ? establishment.name : '글로벌'}</span>
                 </div>
             </div>
             <div class="item-actions">
-                 <div class="button-group-list">
-                    <button class="btn-edit" onclick="openEditMemberModal('${user.id}')">수정</button>
-                    <button onclick="deleteMember('${user.id}')">삭제</button>
+                <div class="button-group-list">
+                    <button class="btn-edit" onclick="openEditMemberModal('${user.id}')"><i class="fas fa-pen"></i> 수정</button>
+                    <button onclick="deleteMember('${user.id}')"><i class="fas fa-trash"></i> 삭제</button>
                 </div>
             </div>
         `;
