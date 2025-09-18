@@ -94,7 +94,7 @@ function setupRealtimeListeners() {
         establishments = newEstablishments;
         const activeSectionId = document.querySelector('.admin-section.active')?.id;
         if (activeSectionId === 'manage-establishments') renderEstablishmentList();
-        if (activeSectionId === 'manage-members') renderEstablishmentOptions();
+        renderEstablishmentOptions(); // 항상 교육기관 목록을 최신으로 유지
     });
     
     userListener = window.firebaseService.setupUserListener((newUsers) => {
@@ -107,6 +107,7 @@ function setupRealtimeListeners() {
         }
     });
 }
+
 
 window.addEventListener('beforeunload', () => {
     if (establishmentListener) establishmentListener();
@@ -343,10 +344,15 @@ function renderPermissionList() {
             <span class="item-info">
                 <strong>${user.name}</strong> / 소속: ${establishment ? establishment.name : '글로벌'} / 권한: <strong>${userRoleKorean}</strong>
             </span>
+            <div class="button-group-list">
+                <button class="btn-edit" onclick="openEditMemberModal('${user.id}')"><i class="fas fa-pen"></i> 수정</button>
+                <button onclick="deleteMember('${user.id}')"><i class="fas fa-trash"></i> 삭제</button>
+            </div>
         `;
         permissionList.appendChild(li);
     });
 }
+
 
 // ===================
 // 4. 교육기관 수정
