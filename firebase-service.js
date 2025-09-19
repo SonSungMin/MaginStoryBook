@@ -312,6 +312,7 @@ class FirebaseService {
     
             if (userData.establishmentId) {
                 const estDocRef = doc(this.db, 'establishments', userData.establishmentId);
+                // [수정] 여기가 오류 지점이었습니다. estDoc -> estDocRef
                 const estDoc = await getDoc(estDocRef);
                 if (estDoc.exists()) {
                     userData.establishmentName = estDoc.data().name;
