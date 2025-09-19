@@ -159,9 +159,7 @@ window.handleLogout = function() {
  * '내 그림 이야기' 섹션의 카드들을 렌더링
  */
 function renderMyStoryCards() {
-    // 기존 스토리 카드들만 삭제 (업로드 카드는 남김)
     myStoryGrid.querySelectorAll('.story-card:not(.upload-card)').forEach(card => card.remove());
-    
     myStories.forEach(story => {
         const storyCard = createStoryCardElement(story);
         myStoryGrid.appendChild(storyCard);
@@ -192,13 +190,13 @@ function createStoryCardElement(story) {
     const imageLink = document.createElement('a');
     imageLink.href = 'javascript:void(0)';
     imageLink.onclick = (event) => {
-        // 버튼 클릭 시에는 상세 모달이 열리지 않도록 함
-        if (event.target.tagName !== 'BUTTON' && !event.target.closest('button')) {
+        if (!event.target.closest('button')) {
             openStoryDetailModal(story.id);
         }
     };
 
     const img = document.createElement('img');
+    // ✨ 여기가 핵심 수정 사항입니다. 'originalImgUrl'을 사용합니다.
     img.src = story.originalImgUrl || 'images/placeholder_preview.png';
     img.alt = story.title;
     imageLink.appendChild(img);
@@ -237,6 +235,7 @@ function renderTeacherArtworkList() {
         artworkItem.dataset.title = story.title;
         artworkItem.dataset.storyText = story.storyText;
         const uploaderName = story.uploaderName || '알 수 없음';
+        // ✨ 여기도 'originalImgUrl'을 사용하도록 수정했습니다.
         artworkItem.innerHTML = `<img src="${story.originalImgUrl || 'images/placeholder_preview.png'}" alt="${story.title}"><span>${story.title} (${uploaderName})</span>`;
         teacherArtworkList.appendChild(artworkItem);
     });
@@ -287,11 +286,7 @@ function closeCropModal() {
 window.cropImage = function() {
     if (cropper) {
         const canvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
-        const dataUrl = canvas.toDataURL();
-        
-        console.log("미리보기 이미지 URL (Data URL):", dataUrl.substring(0, 100) + "...");
-        previewImage.src = dataUrl;
-        
+        previewImage.src = canvas.toDataURL();
         canvas.toBlob(blob => {
             currentOriginalFile = new File([blob], "cropped_image.png", { type: "image/png" });
         }, 'image/png');
@@ -322,6 +317,7 @@ window.saveStory = async function() {
             title,
             storyText,
             originalImgUrl: imageUrl,
+            aiProcessed: false // AI 처리를 안했으므로 false
         });
         alert('그림이 저장되었습니다!');
         closeUploadModal();
@@ -389,6 +385,7 @@ function openStoryDetailModal(storyId) {
     const story = [...myStories, ...classStories].find(s => s.id === storyId);
     if (!story) return;
     detailStoryTitle.textContent = story.title;
+    // ✨ 여기도 'originalImgUrl'을 사용하도록 수정하고, AI 이미지는 숨깁니다.
     detailOriginalImg.src = story.originalImgUrl || 'images/placeholder_preview.png';
     detailStoryText.textContent = story.storyText || '이야기가 없습니다.';
     const displayDate = story.createdAt ? window.firebaseService.formatDate(story.createdAt) : new Date().toLocaleDateString('ko-KR');
