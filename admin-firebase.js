@@ -1,3 +1,5 @@
+// admin-firebase.js
+
 const addressData = {
     "서울특별시": ["강남구", "강동구", "강북구", "강서구", "관악구", "광진구", "구로구", "금천구", "노원구", "도봉구", "동대문구", "동작구", "마포구", "서대문구", "서초구", "성동구", "성북구", "송파구", "양천구", "영등포구", "용산구", "은평구", "종로구", "중구", "중랑구"],
     "부산광역시": ["강서구", "금정구", "기장군", "남구", "동구", "동래구", "부산진구", "북구", "사상구", "사하구", "서구", "수영구", "연제구", "영도구", "중구", "해운대구"],
@@ -20,6 +22,114 @@ let establishments = [];
 let users = [];
 let classes = [];
 
+// 모든 로직을 DOMContentLoaded 이벤트 리스너 안에 배치
+export function initializeAdminPage() {
+    console.log('관리자 페이지 초기화 시작...');
+
+    // 전역에서 접근 가능한 함수들 정의
+    window.openEditModal = openEditModal;
+    window.deleteEstablishment = deleteEstablishment;
+    window.deleteClass = deleteClass;
+    window.openEditMemberModal = openEditMemberModal;
+    window.deleteMember = deleteMember;
+    window.resetPassword = resetPassword;
+
+    // 이벤트 리스너 연결
+    document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
+    document.getElementById('adminLogoutButton').addEventListener('click', handleAdminLogout);
+    
+    document.querySelectorAll('.admin-nav-button').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.admin-nav-button').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            activateAdminSection(button.dataset.target);
+        });
+    });
+
+    document.getElementById('addEstablishmentButton').addEventListener('click', addEstablishment);
+    document.getElementById('addClassButton').addEventListener('click', addClass);
+    document.getElementById('addMemberButton').addEventListener('click', addMember);
+    document.getElementById('updateMemberPermissionButton').addEventListener('click', updateMemberPermission);
+
+    // 모달 관련 이벤트
+    document.getElementById('saveEstablishmentChangesButton').addEventListener('click', saveEstablishmentChanges);
+    document.getElementById('closeEditEstablishmentModalButton').addEventListener('click', closeEditModal);
+    document.getElementById('cancelEditEstablishmentButton').addEventListener('click', closeEditModal);
+    
+    document.getElementById('saveMemberChangesButton').addEventListener('click', saveMemberChanges);
+    document.getElementById('closeEditMemberModalButton').addEventListener('click', closeEditMemberModal);
+    document.getElementById('cancelEditMemberButton').addEventListener('click', closeEditMemberModal);
+
+    // 드롭다운 변경 이벤트
+    document.getElementById('establishmentSido').addEventListener('change', updateSigunguOptions);
+    document.getElementById('editEstablishmentSido').addEventListener('change', updateEditSigunguOptions);
+    document.getElementById('classEstablishmentSelect').addEventListener('change', renderClassList);
+    document.getElementById('memberEstablishment').addEventListener('change', filterMembersByEstablishment);
+
+    initializeAddressOptions();
+    checkAdminLoginState();
+}
+
+function checkAdminLoginState() {
+    if (sessionStorage.getItem('loggedInAdmin')) {
+        document.getElementById('admin-login-container').style.display = 'none';
+        document.getElementById('admin-main-content').style.display = 'block';
+        loadDataAndRender();
+    } else {
+        document.getElementById('admin-login-container').style.display = 'block';
+        document.getElementById('admin-main-content').style.display = 'none';
+    }
+}
+
+async function loadDataAndRender() {
+    try {
+        [establishments, users] = await Promise.all([
+            window.firebaseService.getAllEstablishments(),
+            window.firebaseService.getAllUsers()
+        ]);
+        renderAll();
+    } catch (error) {
+        console.error("데이터 로딩 및 렌더링 오류:", error);
+    }
+}
+
+function renderAll() {
+    renderEstablishmentList();
+    renderEstablishmentOptions();
+    renderClassEstablishmentOptions();
+    renderMemberList();
+    renderMemberPermissionOptions();
+    renderPermissionList();
+    if(document.getElementById('classEstablishmentSelect').value) {
+        renderClassList();
+    }
+}
+
+function handleAdminLogin() {
+    const id = document.getElementById('adminId').value.trim();
+    const pwd = document.getElementById('adminPwd').value.trim();
+
+    if (id === 'admin' && pwd === 'admin') {
+        sessionStorage.setItem('loggedInAdmin', 'true');
+        checkAdminLoginState();
+    } else {
+        alert('아이디 또는 비밀번호가 올바르지 않습니다.');
+    }
+}
+
+function handleAdminLogout() {
+    sessionStorage.removeItem('loggedInAdmin');
+    location.reload();
+}
+
+function activateAdminSection(targetId) {
+    document.querySelectorAll('.admin-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.getElementById(targetId).classList.add('active');
+}
+
+// 주소 관련 함수
 function initializeAddressOptions() {
     const sidoSelect = document.getElementById('establishmentSido');
     sidoSelect.innerHTML = '<option value="">-- 시/도 선택 --</option>';
@@ -31,11 +141,10 @@ function initializeAddressOptions() {
     }
 }
 
-export function updateSigunguOptions() {
+function updateSigunguOptions() {
     const sidoSelect = document.getElementById('establishmentSido');
     const sigunguSelect = document.getElementById('establishmentSigungu');
     const selectedSido = sidoSelect.value;
-
     sigunguSelect.innerHTML = '<option value="">-- 시/군/구 선택 --</option>';
     if (selectedSido && addressData[selectedSido]) {
         addressData[selectedSido].forEach(sigungu => {
@@ -47,85 +156,23 @@ export function updateSigunguOptions() {
     }
 }
 
-function checkAdminLoginState() {
-    const loggedInAdmin = sessionStorage.getItem('loggedInAdmin');
-    if (loggedInAdmin) {
-        document.getElementById('admin-login-container').style.display = 'none';
-        document.getElementById('admin-main-content').style.display = 'block';
-        loadDataAndRender(); 
-    } else {
-        document.getElementById('admin-login-container').style.display = 'block';
-        document.getElementById('admin-main-content').style.display = 'none';
-    }
-}
-
-export function initializeAdminPage() {
-    console.log('관리자 페이지 초기화 시작...');
-    
-    document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
-    document.getElementById('adminLogoutButton').addEventListener('click', handleAdminLogout);
-
-    initializeAddressOptions();
-    setupEventListeners(); 
-
-    checkAdminLoginState(); 
-};
-
-async function loadDataAndRender() {
-    try {
-        establishments = await window.firebaseService.getAllEstablishments();
-        users = await window.firebaseService.getAllUsers();
-        renderEstablishmentList();
-        renderEstablishmentOptions();
-        renderMemberList();
-        renderMemberPermissionOptions();
-        renderPermissionList();
-        renderClassEstablishmentOptions();
-    } catch (error) {
-        console.error("데이터 로딩 및 렌더링 오류:", error);
-    }
-}
-
-function setupEventListeners() {
-    const adminNavButtons = document.querySelectorAll('.admin-nav-button');
-    adminNavButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            adminNavButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            activateAdminSection(button.dataset.target);
+function updateEditSigunguOptions() {
+    const sidoSelect = document.getElementById('editEstablishmentSido');
+    const sigunguSelect = document.getElementById('editEstablishmentSigungu');
+    const selectedSido = sidoSelect.value;
+    sigunguSelect.innerHTML = '<option value="">-- 시/군/구 선택 --</option>';
+    if (selectedSido && addressData[selectedSido]) {
+        addressData[selectedSido].forEach(sigungu => {
+            const option = document.createElement('option');
+            option.value = sigungu;
+            option.textContent = sigungu;
+            sigunguSelect.appendChild(option);
         });
-    });
-}
-
-function activateAdminSection(targetId) {
-    const adminSections = document.querySelectorAll('.admin-section');
-    adminSections.forEach(section => section.classList.remove('active'));
-    const targetSection = document.getElementById(targetId);
-    if (targetSection) {
-        targetSection.classList.add('active');
     }
 }
 
-export function handleAdminLogin() {
-    console.log('로그인 버튼 클릭됨, handleAdminLogin 함수 실행.');
-    const id = document.getElementById('adminId').value.trim();
-    const pwd = document.getElementById('adminPwd').value.trim();
-
-    if (id === 'admin' && pwd === 'admin') {
-        console.log('관리자 인증 성공.');
-        sessionStorage.setItem('loggedInAdmin', 'true');
-        checkAdminLoginState();
-    } else {
-        alert('아이디 또는 비밀번호가 올바르지 않습니다.');
-    }
-}
-
-export function handleAdminLogout() {
-    sessionStorage.removeItem('loggedInAdmin');
-    location.reload();
-}
-
-export async function addEstablishment() {
+// 교육기관 관련 함수
+async function addEstablishment() {
     const name = document.getElementById('establishmentName').value.trim();
     const sido = document.getElementById('establishmentSido').value;
     const sigungu = document.getElementById('establishmentSigungu').value;
@@ -135,14 +182,15 @@ export async function addEstablishment() {
     const adminPwd = document.getElementById('establishmentAdminPwd').value.trim();
 
     if (!name || !sido || !sigungu || !addressDetail || !phone || !adminName || !adminPwd) {
-        alert('모든 필드를 입력해주세요.');
-        return;
+        return alert('모든 필드를 입력해주세요.');
     }
     try {
-        const nameExists = await window.firebaseService.checkEstablishmentExists(name);
-        if (nameExists) return alert('이미 존재하는 교육기관명입니다.');
-        const userExists = await window.firebaseService.checkUserExists(adminName);
-        if (userExists) return alert('관리자 이름(ID)이 이미 존재합니다.');
+        if (await window.firebaseService.checkEstablishmentExists(name)) {
+            return alert('이미 존재하는 교육기관명입니다.');
+        }
+        if (await window.firebaseService.checkUserExists(adminName)) {
+            return alert('관리자 이름(ID)이 이미 존재합니다.');
+        }
         const address = { sido, sigungu, detail: addressDetail };
         const establishmentId = await window.firebaseService.createEstablishment({ name, address, phone, adminName, adminPwd });
         await window.firebaseService.createUser({ name: adminName, password: adminPwd, role: 'director', establishmentId });
@@ -150,17 +198,17 @@ export async function addEstablishment() {
         loadDataAndRender();
     } catch (error) {
         console.error('교육기관 등록 오류:', error);
-        alert('교육기관 등록 중 오류가 발생했습니다: ' + error.message);
+        alert('교육기관 등록 중 오류가 발생했습니다.');
     }
 }
 
 function renderEstablishmentList() {
-    const establishmentList = document.getElementById('establishmentList');
-    establishmentList.innerHTML = '';
+    const listElement = document.getElementById('establishmentList');
+    listElement.innerHTML = '';
     establishments.forEach(est => {
-        const li = document.createElement('li');
         const fullAddress = est.address ? `${est.address.sido} ${est.address.sigungu} ${est.address.detail}` : '주소 정보 없음';
         const phoneSpan = est.phone ? `(${est.phone})` : '';
+        const li = document.createElement('li');
         li.innerHTML = `
             <div class="item-content">
                 <div class="item-main-info">${est.name || '이름 없음'} <span>${phoneSpan}</span></div>
@@ -176,15 +224,15 @@ function renderEstablishmentList() {
                 </div>
             </div>
         `;
-        establishmentList.appendChild(li);
+        listElement.appendChild(li);
     });
 }
 
-export async function deleteEstablishment(id) {
-    if (!confirm('정말 이 교육기관를 삭제하시겠습니까? 관련 구성원도 모두 삭제됩니다.')) return;
+async function deleteEstablishment(id) {
+    if (!confirm('정말 이 교육기관을 삭제하시겠습니까? 관련 구성원과 반도 모두 삭제됩니다.')) return;
     try {
         await window.firebaseService.deleteEstablishment(id);
-        alert('교육기관 및 관련 구성원이 삭제되었습니다.');
+        alert('교육기관 및 관련 데이터가 삭제되었습니다.');
         loadDataAndRender();
     } catch (error) {
         console.error('교육기관 삭제 오류:', error);
@@ -192,26 +240,22 @@ export async function deleteEstablishment(id) {
     }
 }
 
-export function renderClassEstablishmentOptions() {
-    const classEstablishmentSelect = document.getElementById('classEstablishmentSelect');
-    classEstablishmentSelect.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
+// 반 관련 함수
+function renderClassEstablishmentOptions() {
+    const select = document.getElementById('classEstablishmentSelect');
+    select.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
     establishments.forEach(est => {
-        const option = document.createElement('option');
-        option.value = est.id;
-        option.textContent = est.name;
-        classEstablishmentSelect.appendChild(option);
+        select.innerHTML += `<option value="${est.id}">${est.name}</option>`;
     });
 }
 
-export async function addClass() {
+async function addClass() {
     const establishmentId = document.getElementById('classEstablishmentSelect').value;
     const name = document.getElementById('className').value.trim();
 
     if (!establishmentId || !name) {
-        alert('교육기관을 선택하고 반 이름을 입력해주세요.');
-        return;
+        return alert('교육기관을 선택하고 반 이름을 입력해주세요.');
     }
-
     try {
         await window.firebaseService.createClass({ establishmentId, name });
         alert('반이 등록되었습니다.');
@@ -223,10 +267,10 @@ export async function addClass() {
     }
 }
 
-export async function renderClassList() {
+async function renderClassList() {
     const establishmentId = document.getElementById('classEstablishmentSelect').value;
-    const classList = document.getElementById('classList');
-    classList.innerHTML = '';
+    const listElement = document.getElementById('classList');
+    listElement.innerHTML = '';
 
     if (!establishmentId) return;
 
@@ -235,23 +279,18 @@ export async function renderClassList() {
         classes.forEach(c => {
             const li = document.createElement('li');
             li.innerHTML = `
-                <div class="item-content">
-                    <div class="item-main-info">${c.name}</div>
-                </div>
+                <div class="item-content"><div class="item-main-info">${c.name}</div></div>
                 <div class="item-actions">
-                    <div class="button-group-list">
-                        <button onclick="deleteClass('${c.id}')">삭제</button>
-                    </div>
-                </div>
-            `;
-            classList.appendChild(li);
+                    <div class="button-group-list"><button onclick="deleteClass('${c.id}')">삭제</button></div>
+                </div>`;
+            listElement.appendChild(li);
         });
     } catch (error) {
         console.error("반 목록 로딩 오류:", error);
     }
 }
 
-export async function deleteClass(id) {
+async function deleteClass(id) {
     if (!confirm('정말 이 반을 삭제하시겠습니까?')) return;
     try {
         await window.firebaseService.deleteClass(id);
@@ -263,29 +302,27 @@ export async function deleteClass(id) {
     }
 }
 
+// 구성원 관련 함수
 function renderEstablishmentOptions() {
-    const memberEstablishmentSelect = document.getElementById('memberEstablishment');
-    const currentVal = memberEstablishmentSelect.value;
-    memberEstablishmentSelect.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
+    const select = document.getElementById('memberEstablishment');
+    select.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
     establishments.forEach(est => {
-        const option = document.createElement('option');
-        option.value = est.id;
-        option.textContent = est.name;
-        memberEstablishmentSelect.appendChild(option);
+        select.innerHTML += `<option value="${est.id}">${est.name}</option>`;
     });
-    memberEstablishmentSelect.value = currentVal;
 }
 
-export async function addMember() {
+async function addMember() {
     const establishmentId = document.getElementById('memberEstablishment').value;
     const name = document.getElementById('memberName').value.trim();
     const birthdate = document.getElementById('memberBirthdate').value;
     const password = document.getElementById('memberPwd').value.trim();
     const role = document.getElementById('memberRole').value;
     if (!establishmentId || !name || !birthdate || !password || !role) return alert('모든 필드를 입력해주세요.');
+    
     try {
-        const userExists = await window.firebaseService.checkUserExists(name, establishmentId);
-        if (userExists) return alert(`해당 교육기관에 이미 '${name}'이라는 이름의 구성원이 있습니다.`);
+        if (await window.firebaseService.checkUserExists(name, establishmentId)) {
+            return alert(`해당 교육기관에 이미 '${name}'이라는 이름의 구성원이 있습니다.`);
+        }
         await window.firebaseService.createUser({ establishmentId, name, birthdate, password, role });
         alert('구성원이 등록되었습니다!');
         loadDataAndRender();
@@ -296,21 +333,18 @@ export async function addMember() {
 }
 
 function renderMemberList(filterEstId = null) {
-    const memberList = document.getElementById('memberList');
-    memberList.innerHTML = '';
-    let filteredUsers = users.filter(u => u.role !== 'admin');
-    if (filterEstId) {
-        filteredUsers = filteredUsers.filter(u => u.establishmentId === filterEstId);
-    }
+    const listElement = document.getElementById('memberList');
+    listElement.innerHTML = '';
+    let filteredUsers = users.filter(u => u.role !== 'admin' && (!filterEstId || u.establishmentId === filterEstId));
+    
     filteredUsers.forEach(user => {
         const establishment = establishments.find(est => est.id === user.establishmentId);
         const li = document.createElement('li');
-        const userRoleKorean = roleMap[user.role] || user.role;
         li.innerHTML = `
             <div class="item-content">
-                <div class="item-main-info">${user.name} <span>(${userRoleKorean})</span></div>
+                <div class="item-main-info">${user.name} <span>(${roleMap[user.role] || user.role})</span></div>
                 <div class="item-sub-info">
-                    <span>${establishment ? establishment.name : '알 수 없음'} / ${user.birthdate}</span>
+                    <span>${establishment ? establishment.name : '알 수 없음'} / ${user.birthdate || ''}</span>
                 </div>
             </div>
             <div class="item-actions">
@@ -321,15 +355,15 @@ function renderMemberList(filterEstId = null) {
                 </div>
             </div>
         `;
-        memberList.appendChild(li);
+        listElement.appendChild(li);
     });
 }
 
-export function filterMembersByEstablishment() {
-    renderMemberList(document.getElementById('memberEstablishment').value || null);
+function filterMembersByEstablishment() {
+    renderMemberList(document.getElementById('memberEstablishment').value);
 }
 
-export async function deleteMember(id) {
+async function deleteMember(id) {
     if (!confirm('정말 이 구성원을 삭제하시겠습니까?')) return;
     try {
         await window.firebaseService.deleteUser(id);
@@ -341,28 +375,22 @@ export async function deleteMember(id) {
     }
 }
 
+// 권한 관련 함수
 function renderMemberPermissionOptions() {
-    const permissionMemberSelect = document.getElementById('permissionMemberSelect');
-    const currentVal = permissionMemberSelect.value;
-    permissionMemberSelect.innerHTML = '<option value="">-- 구성원 선택 --</option>';
+    const select = document.getElementById('permissionMemberSelect');
+    select.innerHTML = '<option value="">-- 구성원 선택 --</option>';
     users.filter(u => u.role !== 'admin').forEach(user => {
-        const option = document.createElement('option');
-        option.value = user.id;
         const establishment = establishments.find(est => est.id === user.establishmentId);
-        const userRoleKorean = roleMap[user.role] || user.role;
-        option.textContent = `${user.name} (${establishment ? establishment.name : ''}) - 현재: ${userRoleKorean}`;
-        permissionMemberSelect.appendChild(option);
+        select.innerHTML += `<option value="${user.id}">${user.name} (${establishment ? establishment.name : ''}) - 현재: ${roleMap[user.role] || user.role}</option>`;
     });
-    permissionMemberSelect.value = currentVal;
 }
 
-export async function updateMemberPermission() {
+async function updateMemberPermission() {
     const userId = document.getElementById('permissionMemberSelect').value;
     const newRole = document.getElementById('permissionRoleSelect').value;
     if (!userId || !newRole) return alert('구성원과 새로운 권한을 선택해주세요.');
     try {
         const user = users.find(u => u.id === userId);
-        if (!user) return alert('구성원을 찾을 수 없습니다.');
         await window.firebaseService.updateUserRole(userId, newRole);
         alert(`${user.name}님의 권한이 ${roleMap[newRole]}(으)로 변경되었습니다.`);
         loadDataAndRender();
@@ -373,76 +401,53 @@ export async function updateMemberPermission() {
 }
 
 function renderPermissionList() {
-    const permissionList = document.getElementById('permissionList');
-    permissionList.innerHTML = '';
+    const listElement = document.getElementById('permissionList');
+    listElement.innerHTML = '';
     users.forEach(user => {
         const establishment = establishments.find(est => est.id === user.establishmentId);
         const li = document.createElement('li');
         li.classList.add('permission-item'); 
-        const userRoleKorean = roleMap[user.role] || user.role;
         li.innerHTML = `
             <div class="item-content">
                 <div class="item-main-info">
-                    <span>${user.name} (${userRoleKorean})</span>
-                    <div class="item-actions">
-                        <div class="button-group-list">
-                            <button class="btn-edit" onclick="openEditMemberModal('${user.id}')">수정</button>
-                            <button onclick="deleteMember('${user.id}')">삭제</button>
-                        </div>
-                    </div>
+                    <span>${user.name} (${roleMap[user.role] || user.role})</span>
                 </div>
                 <div class="item-sub-info">
                     <span>소속: ${establishment ? establishment.name : '글로벌'}</span>
                 </div>
             </div>
         `;
-        permissionList.appendChild(li);
+        listElement.appendChild(li);
     });
 }
 
-const editModal = document.getElementById('editEstablishmentModal');
-
-export function openEditModal(id) {
+// 모달 관련 함수
+function openEditModal(id) {
     const establishment = establishments.find(est => est.id === id);
     if (!establishment) return alert('교육기관 정보를 찾을 수 없습니다.');
     document.getElementById('editEstablishmentId').value = id;
     document.getElementById('editEstablishmentName').value = establishment.name;
     document.getElementById('editEstablishmentPhone').value = establishment.phone || '';
+    
     const sidoSelect = document.getElementById('editEstablishmentSido');
     sidoSelect.innerHTML = '<option value="">-- 시/도 선택 --</option>';
     for (const sido in addressData) {
-        const option = document.createElement('option');
-        option.value = sido;
-        option.textContent = sido;
-        sidoSelect.appendChild(option);
+        sidoSelect.innerHTML += `<option value="${sido}">${sido}</option>`;
     }
     sidoSelect.value = establishment.address.sido;
+    
     updateEditSigunguOptions();
     document.getElementById('editEstablishmentSigungu').value = establishment.address.sigungu;
     document.getElementById('editEstablishmentAddressDetail').value = establishment.address.detail;
-    editModal.style.display = 'flex';
+    
+    document.getElementById('editEstablishmentModal').style.display = 'flex';
 }
 
-export function closeEditModal() {
-    editModal.style.display = 'none';
+function closeEditModal() {
+    document.getElementById('editEstablishmentModal').style.display = 'none';
 }
 
-export function updateEditSigunguOptions() {
-    const sidoSelect = document.getElementById('editEstablishmentSido');
-    const sigunguSelect = document.getElementById('editEstablishmentSigungu');
-    const selectedSido = sidoSelect.value;
-    sigunguSelect.innerHTML = '<option value="">-- 시/군/구 선택 --</option>';
-    if (selectedSido && addressData[selectedSido]) {
-        addressData[selectedSido].forEach(sigungu => {
-            const option = document.createElement('option');
-            option.value = sigungu;
-            option.textContent = sigungu;
-            sigunguSelect.appendChild(option);
-        });
-    }
-}
-
-export async function saveEstablishmentChanges() {
+async function saveEstablishmentChanges() {
     const id = document.getElementById('editEstablishmentId').value;
     const name = document.getElementById('editEstablishmentName').value.trim();
     const phone = document.getElementById('editEstablishmentPhone').value.trim();
@@ -450,9 +455,9 @@ export async function saveEstablishmentChanges() {
     const sigungu = document.getElementById('editEstablishmentSigungu').value;
     const detail = document.getElementById('editEstablishmentAddressDetail').value.trim();
     if (!name || !phone || !sido || !sigungu || !detail) return alert('모든 필드를 입력해주세요.');
-    const updateData = { name, phone, address: { sido, sigungu, detail } };
+
     try {
-        await window.firebaseService.updateEstablishment(id, updateData);
+        await window.firebaseService.updateEstablishment(id, { name, phone, address: { sido, sigungu, detail } });
         alert('교육기관 정보가 성공적으로 수정되었습니다.');
         closeEditModal();
         loadDataAndRender();
@@ -462,32 +467,31 @@ export async function saveEstablishmentChanges() {
     }
 }
 
-const editMemberModal = document.getElementById('editMemberModal');
-
-export function openEditMemberModal(id) {
+function openEditMemberModal(id) {
     const user = users.find(u => u.id === id);
     if (!user) return alert('구성원 정보를 찾을 수 없습니다.');
     document.getElementById('editMemberId').value = id;
     document.getElementById('editMemberName').value = user.name;
     document.getElementById('editMemberBirthdate').value = user.birthdate;
-    editMemberModal.style.display = 'flex';
+    document.getElementById('editMemberModal').style.display = 'flex';
 }
 
-export function closeEditMemberModal() {
-    editMemberModal.style.display = 'none';
+function closeEditMemberModal() {
+    document.getElementById('editMemberModal').style.display = 'none';
 }
 
-export async function saveMemberChanges() {
+async function saveMemberChanges() {
     const id = document.getElementById('editMemberId').value;
     const name = document.getElementById('editMemberName').value.trim();
     const birthdate = document.getElementById('editMemberBirthdate').value;
     if (!name || !birthdate) return alert('모든 필드를 입력해주세요.');
-    const currentUser = users.find(u => u.id === id);
-    const isNameDuplicate = users.some(user => user.id !== id && user.establishmentId === currentUser.establishmentId && user.name === name);
-    if (isNameDuplicate) return alert('해당 교육기관에 이미 같은 이름의 구성원이 존재합니다.');
-    const updateData = { name, birthdate };
+
+    const currentUserData = users.find(u => u.id === id);
+    if (users.some(u => u.id !== id && u.establishmentId === currentUserData.establishmentId && u.name === name)) {
+        return alert('해당 교육기관에 이미 같은 이름의 구성원이 존재합니다.');
+    }
     try {
-        await window.firebaseService.updateUser(id, updateData);
+        await window.firebaseService.updateUser(id, { name, birthdate });
         alert('구성원 정보가 성공적으로 수정되었습니다.');
         closeEditMemberModal();
         loadDataAndRender();
@@ -497,15 +501,17 @@ export async function saveMemberChanges() {
     }
 }
 
-export async function resetPassword(id) {
+async function resetPassword(id) {
     const user = users.find(u => u.id === id);
-    if (!user) return alert('구성원 정보를 찾을 수 없습니다.');
-    if (!user.birthdate) return alert('생년월일 정보가 없어 비밀번호를 초기화할 수 없습니다.');
+    if (!user || !user.birthdate) {
+        return alert('생년월일 정보가 없어 비밀번호를 초기화할 수 없습니다.');
+    }
     if (!confirm(`${user.name}님의 비밀번호를 생년월일(YYYYMMDD)로 초기화하시겠습니까?`)) return;
+    
     const newPassword = user.birthdate.replace(/-/g, '');
     try {
         await window.firebaseService.updateUser(id, { password: newPassword });
-        alert(`비밀번호가 ${newPassword} (으)로 초기화되었습니다.`);
+        alert(`비밀번호가 ${newPassword}(으)로 초기화되었습니다.`);
     } catch (error) {
         console.error('비밀번호 초기화 오류:', error);
         alert('비밀번호 초기화 중 오류가 발생했습니다.');
