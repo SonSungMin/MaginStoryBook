@@ -65,13 +65,30 @@
                 </div>
             </div>
         </div>
+
+        <div id="editThemeModal" class="modal">
+            <div class="modal-content">
+                <span id="closeEditThemeModalButton" class="close-button">&times;</span>
+                <h2>테마 수정</h2>
+                <input type="hidden" id="editThemeId">
+                <div class="form-group" style="flex-direction: column;">
+                    <input type="text" id="editThemeName" placeholder="테마명">
+                </div>
+                <div class="button-group">
+                    <button id="saveThemeChangesButton" class="btn-primary">변경사항 저장</button>
+                    <button id="cancelEditThemeButton" class="btn-secondary">취소</button>
+                </div>
+            </div>
+        </div>
         
         <div class="admin-container container">
             <div class="admin-nav">
                 <button class="admin-nav-button active" data-target="manage-establishments">교육기관 관리</button>
                 <button class="admin-nav-button" data-target="manage-classes">반 관리</button>
+                <button class="admin-nav-button" data-target="manage-themes">테마 관리</button>
                 <button class="admin-nav-button" data-target="manage-members">구성원 관리</button>
                 <button class="admin-nav-button" data-target="manage-permissions">권한 관리</button>
+                <button class="admin-nav-button" data-target="storybook-maker">동화책 만들기</button>
             </div>
 
             <section id="manage-establishments" class="admin-section active">
@@ -109,6 +126,22 @@
                 <div class="data-list">
                     <h3>등록된 반</h3>
                     <ul id="classList">
+                    </ul>
+                </div>
+            </section>
+
+            <section id="manage-themes" class="admin-section">
+                <h2>테마 등록 및 관리</h2>
+                <div class="form-group">
+                    <select id="themeEstablishmentSelect">
+                        <option value="">-- 교육기관 선택 --</option>
+                    </select>
+                    <input type="text" id="themeName" placeholder="테마 이름">
+                    <button id="addThemeButton" class="btn-primary">테마 등록</button>
+                </div>
+                <div class="data-list">
+                    <h3>등록된 테마</h3>
+                    <ul id="themeList">
                     </ul>
                 </div>
             </section>
@@ -159,6 +192,37 @@
                     </ul>
                 </div>
             </section>
+
+            <section id="storybook-maker" class="admin-section">
+                <h2>동화책 만들기</h2>
+                <div class="teacher-dashboard">
+                    <div class="tool-box">
+                        <h3>작품 목록</h3>
+                        <div class="artwork-list">
+                        </div>
+                    </div>
+                    <div class="tool-box">
+                        <h3>동화책 페이지 구성</h3>
+                        <div class="storybook-layout" id="storybook-dropzone">
+                            <div class="page-slot"><span class="slot-label">표지</span></div>
+                            <div class="page-slot"></div>
+                            <div class="page-slot"></div>
+                            <div class="page-slot"></div>
+                            <div class="page-slot"></div>
+                            <div class="page-slot"><span class="slot-label">뒷표지</span></div>
+                        </div>
+                        <button class="btn-primary mt-3" onclick="previewStorybook()">동화책 미리보기</button>
+                        <button class="btn-secondary mt-1" onclick="exportStorybook()">PDF 내보내기</button>
+                    </div>
+                    <div class="tool-box page-preview-box">
+                        <h3>페이지 미리보기</h3>
+                        <div class="page-preview" id="current-page-preview">
+                            <img src="images/placeholder_preview.png" alt="미리보기 이미지">
+                            <p class="preview-text">선택된 페이지의 그림과 이야기가 여기에 표시됩니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 
@@ -172,5 +236,3 @@
 
 </body>
 </html>
-
-
