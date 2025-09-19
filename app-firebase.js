@@ -75,16 +75,26 @@ window.initializeApp = async function() {
 };
 
 /**
- * 모든 스토리(내 그림, 우리 반)를 로드하고 화면에 렌더링
+ * 모든 스토리(내 그림, 우리 반/전체)를 로드하고 화면에 렌더링
  */
 async function loadAndRenderStories() {
     try {
         console.log('작품 데이터 로드를 시작합니다...');
         myStories = await window.firebaseService.getStoriesByUser(currentUser.id);
-        classStories = await window.firebaseService.getStoriesByEstablishment(currentUser.establishmentId);
+        
+        // ✨ 여기가 핵심 수정 사항입니다.
+        if (currentUser.role === 'admin') {
+            // 관리자는 모든 기관의 작품을 불러옵니다.
+            console.log('관리자 권한으로 모든 작품을 로드합니다.');
+            classStories = await window.firebaseService.getAllStories();
+        } else {
+            // 교사, 원생 등은 소속된 기관의 작품만 불러옵니다.
+            console.log(`'${currentUser.establishmentId}' 기관의 작품을 로드합니다.`);
+            classStories = await window.firebaseService.getStoriesByEstablishment(currentUser.establishmentId);
+        }
         
         console.log('Firebase에서 가져온 [내 작품] 데이터:', myStories);
-        console.log('Firebase에서 가져온 [우리 반 작품] 데이터:', classStories);
+        console.log('Firebase에서 가져온 [선생님 도구함용] 데이터:', classStories);
 
         renderMyStoryCards();
         renderClassStoryCards();
@@ -319,10 +329,7 @@ window.saveStory = async function() {
     try {
         const timestamp = Date.now();
         const fileExtension = currentOriginalFile.name.split('.').pop() || 'png';
-
-        // ✨ 여기가 핵심 수정 사항입니다. 'public/' 접두사를 제거했습니다.
         const imagePath = `${currentUser.id}/${timestamp}_original.${fileExtension}`;
-
         const imageUrl = await window.supabaseStorageService.uploadImage(currentOriginalFile, imagePath);
         
         console.log(`[저장 완료] 제목: "${title}", 최종 저장 URL: ${imageUrl}`);
