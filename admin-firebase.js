@@ -117,7 +117,8 @@ function handleAdminLogin() {
 
 function handleAdminLogout() {
     sessionStorage.removeItem('loggedInAdmin');
-    location.reload();
+    //location.reload();
+    window.location.href = 'index.html';
 }
 
 function activateAdminSection(targetId) {
