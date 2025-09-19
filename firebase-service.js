@@ -32,6 +32,7 @@ class FirebaseService {
         try {
             const docRef = await addDoc(collection(this.db, 'themes'), {
                 ...themeData,
+                isActive: false, // 기본값은 비활성
                 createdAt: serverTimestamp(),
             });
             console.log('테마 생성 성공:', docRef.id);
@@ -45,19 +46,37 @@ class FirebaseService {
     async getThemesByEstablishment(establishmentId) {
         if (!establishmentId) return [];
         try {
-            // [수정] orderBy를 쿼리에서 제거하고 클라이언트에서 정렬합니다.
             const q = query(
                 collection(this.db, 'themes'),
                 where('establishmentId', '==', establishmentId)
             );
             const querySnapshot = await getDocs(q);
             const themes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            // 클라이언트 측 정렬
             themes.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
             return themes;
         } catch (error) {
             console.error("테마 조회 오류:", error);
             throw error;
+        }
+    }
+    
+    async getActiveTheme(establishmentId) {
+        if (!establishmentId) return null;
+        try {
+            const q = query(
+                collection(this.db, 'themes'),
+                where('establishmentId', '==', establishmentId),
+                where('isActive', '==', true),
+                limit(1)
+            );
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                return null;
+            }
+            return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
+        } catch (error) {
+            console.error("활성 테마 조회 오류:", error);
+            return null;
         }
     }
 
@@ -67,6 +86,30 @@ class FirebaseService {
             console.log('테마 업데이트 완료:', themeId);
         } catch (error) {
             console.error('테마 업데이트 오류:', error);
+            throw error;
+        }
+    }
+    
+    async updateThemeActivation(establishmentId, themeIdToActivate) {
+        const batch = writeBatch(this.db);
+        try {
+            // 해당 기관의 모든 테마를 가져와 비활성화
+            const themes = await this.getThemesByEstablishment(establishmentId);
+            themes.forEach(theme => {
+                if (theme.id !== themeIdToActivate) {
+                    const themeRef = doc(this.db, 'themes', theme.id);
+                    batch.update(themeRef, { isActive: false });
+                }
+            });
+            
+            // 선택한 테마만 활성화
+            const activeThemeRef = doc(this.db, 'themes', themeIdToActivate);
+            batch.update(activeThemeRef, { isActive: true });
+            
+            await batch.commit();
+            console.log('테마 활성화 상태 업데이트 완료');
+        } catch(error) {
+            console.error('테마 활성화 오류:', error);
             throw error;
         }
     }
@@ -245,7 +288,6 @@ class FirebaseService {
 
     async getUserByNameAndPassword(name, password) {
         try {
-            // [수정] 복합 색인 방지를 위해 'name'으로만 쿼리 후 클라이언트에서 'password' 필터링
             const q = query(
                 collection(this.db, 'users'),
                 where('name', '==', name)
@@ -257,7 +299,6 @@ class FirebaseService {
                 return null;
             }
     
-            // 클라이언트 측에서 비밀번호 확인
             const userDoc = querySnapshot.docs.find(doc => doc.data().password === password);
             if (!userDoc) {
                 console.log('비밀번호 불일치:', name);
@@ -271,7 +312,7 @@ class FirebaseService {
     
             if (userData.establishmentId) {
                 const estDocRef = doc(this.db, 'establishments', userData.establishmentId);
-                const estDoc = await getDoc(estDocRef);
+                const estDoc = await getDoc(estDoc);
                 if (estDoc.exists()) {
                     userData.establishmentName = estDoc.data().name;
                 } else {
@@ -393,7 +434,6 @@ class FirebaseService {
 
     async getStoriesByUser(userId) {
         try {
-            // [수정] orderBy를 쿼리에서 제거하고 클라이언트에서 정렬합니다.
             const q = query(
                 collection(this.db, 'stories'),
                 where('uploaderId', '==', userId)
@@ -403,7 +443,6 @@ class FirebaseService {
                 id: doc.id,
                 ...doc.data()
             }));
-            // 클라이언트 측 정렬
             stories.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
             console.log('사용자 작품 조회:', userId, '-', stories.length, '개');
             return stories;
@@ -526,7 +565,6 @@ class FirebaseService {
     // ===================
     async checkUserExists(name, establishmentId = null) {
         try {
-            // [수정] 복합 색인 방지를 위해 'name'으로만 쿼리 후 클라이언트에서 'establishmentId' 필터링
             const q = query(
                 collection(this.db, 'users'),
                 where('name', '==', name)
@@ -536,7 +574,6 @@ class FirebaseService {
             if (querySnapshot.empty) return false;
 
             if (establishmentId) {
-                // 기관 ID가 있는 경우, 클라이언트 측에서 추가 필터링
                 return querySnapshot.docs.some(doc => doc.data().establishmentId === establishmentId);
             }
             
