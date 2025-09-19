@@ -181,6 +181,26 @@
             <p>데이터를 불러오는 중...</p>
         </div>
     </div>
+
+    <!-- NEW: Storybook Viewer Modal -->
+    <div id="storybookViewerModal" class="modal viewer-modal">
+        <div class="modal-content large-modal">
+            <span class="close-button" onclick="closeStorybookViewer()">&times;</span>
+            <div class="storybook-viewer">
+                <div class="viewer-page left">
+                    <img id="viewerImage" src="">
+                </div>
+                <div class="viewer-page right">
+                    <p id="viewerText"></p>
+                </div>
+            </div>
+            <div class="viewer-controls">
+                <button id="prevPageButton"><i class="fas fa-arrow-left"></i> 이전</button>
+                <span id="pageIndicator"></span>
+                <button id="nextPageButton">다음 <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
     
     <div class="version-footer"></div>
     <script src="js/config.js"></script>
@@ -263,3 +283,4 @@
     </script>
 </body>
 </html>
+
