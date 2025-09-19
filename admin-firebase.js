@@ -465,12 +465,26 @@ async function saveEstablishmentChanges() {
     }
 }
 
-function openEditMemberModal(id) {
+async function openEditMemberModal(id) {
     const user = users.find(u => u.id === id);
     if (!user) return alert('구성원 정보를 찾을 수 없습니다.');
     document.getElementById('editMemberId').value = id;
     document.getElementById('editMemberName').value = user.name;
     document.getElementById('editMemberBirthdate').value = user.birthdate;
+
+    const classSelect = document.getElementById('editMemberClass');
+    classSelect.innerHTML = '<option value="">-- 반 선택 --</option>';
+
+    if (user.establishmentId) {
+        const classes = await window.firebaseService.getClassesByEstablishment(user.establishmentId);
+        classes.forEach(c => {
+            classSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
+        if (user.classId) {
+            classSelect.value = user.classId;
+        }
+    }
+    
     document.getElementById('editMemberModal').style.display = 'flex';
 }
 
@@ -482,14 +496,15 @@ async function saveMemberChanges() {
     const id = document.getElementById('editMemberId').value;
     const name = document.getElementById('editMemberName').value.trim();
     const birthdate = document.getElementById('editMemberBirthdate').value;
-    if (!name || !birthdate) return alert('모든 필드를 입력해주세요.');
+    const classId = document.getElementById('editMemberClass').value;
+    if (!name || !birthdate) return alert('이름과 생년월일을 입력해주세요.');
 
     const currentUserData = users.find(u => u.id === id);
     if (users.some(u => u.id !== id && u.establishmentId === currentUserData.establishmentId && u.name === name)) {
         return alert('해당 교육기관에 이미 같은 이름의 구성원이 존재합니다.');
     }
     try {
-        await window.firebaseService.updateUser(id, { name, birthdate });
+        await window.firebaseService.updateUser(id, { name, birthdate, classId: classId || null });
         alert('구성원 정보가 성공적으로 수정되었습니다.');
         closeEditMemberModal();
         await loadDataAndRender();
@@ -498,6 +513,7 @@ async function saveMemberChanges() {
         alert('정보 수정 중 오류가 발생했습니다.');
     }
 }
+
 
 async function resetPassword(id) {
     const user = users.find(u => u.id === id);
