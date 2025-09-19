@@ -64,7 +64,10 @@ export function initializeAdminPage() {
     document.getElementById('establishmentSido').addEventListener('change', updateSigunguOptions);
     document.getElementById('editEstablishmentSido').addEventListener('change', updateEditSigunguOptions);
     document.getElementById('classEstablishmentSelect').addEventListener('change', renderClassList);
-    document.getElementById('memberEstablishment').addEventListener('change', filterMembersByEstablishment);
+    document.getElementById('memberEstablishment').addEventListener('change', () => {
+        filterMembersByEstablishment();
+        updateMemberClassOptions(); // 기관 변경 시 반 목록 업데이트
+    });
 
     initializeAddressOptions();
     checkAdminLoginState();
@@ -303,6 +306,19 @@ async function deleteClass(id) {
 }
 
 // 구성원 관련 함수
+async function updateMemberClassOptions() {
+    const establishmentId = document.getElementById('memberEstablishment').value;
+    const classSelect = document.getElementById('memberClass');
+    classSelect.innerHTML = '<option value="">-- 반 선택 --</option>';
+
+    if (!establishmentId) return;
+
+    const classes = await window.firebaseService.getClassesByEstablishment(establishmentId);
+    classes.forEach(c => {
+        classSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+    });
+}
+
 function renderEstablishmentOptions() {
     const select = document.getElementById('memberEstablishment');
     select.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
@@ -313,17 +329,21 @@ function renderEstablishmentOptions() {
 
 async function addMember() {
     const establishmentId = document.getElementById('memberEstablishment').value;
+    const classId = document.getElementById('memberClass').value;
     const name = document.getElementById('memberName').value.trim();
     const birthdate = document.getElementById('memberBirthdate').value;
     const password = document.getElementById('memberPwd').value.trim();
     const role = document.getElementById('memberRole').value;
     if (!establishmentId || !name || !birthdate || !password || !role) return alert('모든 필드를 입력해주세요.');
+    if ((role === 'student' || role === 'teacher') && !classId) {
+        return alert('원생 또는 선생님은 반드시 반을 선택해야 합니다.');
+    }
     
     try {
         if (await window.firebaseService.checkUserExists(name, establishmentId)) {
             return alert(`해당 교육기관에 이미 '${name}'이라는 이름의 구성원이 있습니다.`);
         }
-        await window.firebaseService.createUser({ establishmentId, name, birthdate, password, role });
+        await window.firebaseService.createUser({ establishmentId, classId, name, birthdate, password, role });
         alert('구성원이 등록되었습니다!');
         loadDataAndRender();
     } catch (error) {
@@ -332,19 +352,28 @@ async function addMember() {
     }
 }
 
-function renderMemberList(filterEstId = null) {
+async function renderMemberList(filterEstId = null) {
     const listElement = document.getElementById('memberList');
     listElement.innerHTML = '';
     let filteredUsers = users.filter(u => u.role !== 'admin' && (!filterEstId || u.establishmentId === filterEstId));
     
+    // Fetch all classes for mapping
+    let allClasses = [];
+    for (const est of establishments) {
+        const estClasses = await window.firebaseService.getClassesByEstablishment(est.id);
+        allClasses.push(...estClasses);
+    }
+    const classMap = Object.fromEntries(allClasses.map(c => [c.id, c.name]));
+
     filteredUsers.forEach(user => {
         const establishment = establishments.find(est => est.id === user.establishmentId);
+        const className = user.classId ? classMap[user.classId] || '미배정' : '해당 없음';
         const li = document.createElement('li');
         li.innerHTML = `
             <div class="item-content">
                 <div class="item-main-info">${user.name} <span>(${roleMap[user.role] || user.role})</span></div>
                 <div class="item-sub-info">
-                    <span>${establishment ? establishment.name : '알 수 없음'} / ${user.birthdate || ''}</span>
+                    <span>${establishment ? establishment.name : '알 수 없음'} / ${className} / ${user.birthdate || ''}</span>
                 </div>
             </div>
             <div class="item-actions">
