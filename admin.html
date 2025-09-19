@@ -9,140 +9,162 @@
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Jua&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="admin-header">
-        <div class="container">
-            <h1><img src="images/magic_storybook_logo_english.png" alt="Magic Storybook Logo" class="admin-logo"> 관리자 페이지</h1>
-            <button class="btn-back-to-login" onclick="location.href='index.html'"><i class="fas fa-sign-in-alt"></i> 로그인 화면으로</button>
-        </div>
+    <div id="admin-login-container" class="login-container">
+        <h2>관리자 로그인</h2>
+        <input type="text" id="adminId" placeholder="관리자 ID">
+        <input type="password" id="adminPwd" placeholder="비밀번호">
+        <button class="btn-login" onclick="handleAdminLogin()">로그인</button>
     </div>
 
-    <div id="editMemberModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="closeEditMemberModal()">&times;</span>
-            <h2>구성원 정보 수정</h2>
-            <input type="hidden" id="editMemberId">
-            <div class="form-group" style="flex-direction: column;">
-                <input type="text" id="editMemberName" placeholder="구성원 성명 (ID)">
-                <input type="date" id="editMemberBirthdate" placeholder="생년월일">
-            </div>
-            <div class="button-group">
-                <button class="btn-primary" onclick="saveMemberChanges()">변경사항 저장</button>
-                <button class="btn-secondary" onclick="closeEditMemberModal()">취소</button>
+    <div id="admin-main-content" style="display: none;">
+        <div class="admin-header">
+            <div class="container">
+                <h1><img src="images/magic_storybook_logo_english.png" alt="Magic Storybook Logo" class="admin-logo"> 관리자 페이지</h1>
+                <button class="btn-back-to-login" onclick="handleAdminLogout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
             </div>
         </div>
-    </div>
-    
-    <div id="editEstablishmentModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="closeEditModal()">&times;</span>
-            <h2>교육기관 정보 수정</h2>
-            <input type="hidden" id="editEstablishmentId">
-            <div class="form-group" style="flex-direction: column;">
-                <input type="text" id="editEstablishmentName" placeholder="교육기관명 (예: 해바라기 유치원)">
-                <select id="editEstablishmentSido" onchange="updateEditSigunguOptions()">
-                    <option value="">-- 시/도 선택 --</option>
-                </select>
-                <select id="editEstablishmentSigungu">
-                    <option value="">-- 시/군/구 선택 --</option>
-                </select>
-                <input type="text" id="editEstablishmentAddressDetail" placeholder="상세주소">
-                <input type="tel" id="editEstablishmentPhone" placeholder="대표 번호">
-            </div>
-            <div class="button-group">
-                <button class="btn-primary" onclick="saveEstablishmentChanges()">변경사항 저장</button>
-                <button class="btn-secondary" onclick="closeEditModal()">취소</button>
+        
+        <div id="editMemberModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeEditMemberModal()">&times;</span>
+                <h2>구성원 정보 수정</h2>
+                <input type="hidden" id="editMemberId">
+                <div class="form-group" style="flex-direction: column;">
+                    <input type="text" id="editMemberName" placeholder="구성원 성명 (ID)">
+                    <input type="date" id="editMemberBirthdate" placeholder="생년월일">
+                </div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="saveMemberChanges()">변경사항 저장</button>
+                    <button class="btn-secondary" onclick="closeEditMemberModal()">취소</button>
+                </div>
             </div>
         </div>
-    </div>
-    
-    <div class="admin-container container">
-        <div class="admin-nav">
-            <button class="admin-nav-button active" data-target="manage-establishments">교육기관 관리</button>
-            <button class="admin-nav-button" data-target="manage-members">구성원 관리</button>
-            <button class="admin-nav-button" data-target="manage-permissions">권한 관리</button>
+        
+        <div id="editEstablishmentModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeEditModal()">&times;</span>
+                <h2>교육기관 정보 수정</h2>
+                <input type="hidden" id="editEstablishmentId">
+                <div class="form-group" style="flex-direction: column;">
+                    <input type="text" id="editEstablishmentName" placeholder="교육기관명 (예: 해바라기 유치원)">
+                    <select id="editEstablishmentSido" onchange="updateEditSigunguOptions()">
+                        <option value="">-- 시/도 선택 --</option>
+                    </select>
+                    <select id="editEstablishmentSigungu">
+                        <option value="">-- 시/군/구 선택 --</option>
+                    </select>
+                    <input type="text" id="editEstablishmentAddressDetail" placeholder="상세주소">
+                    <input type="tel" id="editEstablishmentPhone" placeholder="대표 번호">
+                </div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="saveEstablishmentChanges()">변경사항 저장</button>
+                    <button class="btn-secondary" onclick="closeEditModal()">취소</button>
+                </div>
+            </div>
         </div>
+        
+        <div class="admin-container container">
+            <div class="admin-nav">
+                <button class="admin-nav-button active" data-target="manage-establishments">교육기관 관리</button>
+                <button class="admin-nav-button" data-target="manage-classes">반 관리</button>
+                <button class="admin-nav-button" data-target="manage-members">구성원 관리</button>
+                <button class="admin-nav-button" data-target="manage-permissions">권한 관리</button>
+            </div>
 
-        <section id="manage-establishments" class="admin-section active">
-            <h2>교육기관 등록 및 관리</h2>
-            <div class="form-group">
-                <input type="text" id="establishmentName" placeholder="교육기관명">
-                <select id="establishmentSido" onchange="updateSigunguOptions()">
-                    <option value="">-- 시/도 선택 --</option>
-                </select>
-                <select id="establishmentSigungu">
-                    <option value="">-- 시/군/구 선택 --</option>
-                </select>
-                <input type="text" id="establishmentAddressDetail" placeholder="상세주소">
-                <input type="tel" id="establishmentPhone" placeholder="대표 번호 (예: 02-123-4567)">
-                <input type="text" id="establishmentAdminName" placeholder="교육기관 관리자 이름 (ID)">
-                <input type="password" id="establishmentAdminPwd" placeholder="교육기관 관리자 비밀번호">
-                <button class="btn-primary" onclick="addEstablishment()">교육기관 등록</button>
-            </div>
-            <div class="data-list">
-                <h3>등록된 교육기관</h3>
-                <ul id="establishmentList">
-                </ul>
-            </div>
-        </section>
+            <section id="manage-establishments" class="admin-section active">
+                <h2>교육기관 등록 및 관리</h2>
+                <div class="form-group">
+                    <input type="text" id="establishmentName" placeholder="교육기관명">
+                    <select id="establishmentSido" onchange="updateSigunguOptions()">
+                        <option value="">-- 시/도 선택 --</option>
+                    </select>
+                    <select id="establishmentSigungu">
+                        <option value="">-- 시/군/구 선택 --</option>
+                    </select>
+                    <input type="text" id="establishmentAddressDetail" placeholder="상세주소">
+                    <input type="tel" id="establishmentPhone" placeholder="대표 번호 (예: 02-123-4567)">
+                    <input type="text" id="establishmentAdminName" placeholder="교육기관 관리자 이름 (ID)">
+                    <input type="password" id="establishmentAdminPwd" placeholder="교육기관 관리자 비밀번호">
+                    <button class="btn-primary" onclick="addEstablishment()">교육기관 등록</button>
+                </div>
+                <div class="data-list">
+                    <h3>등록된 교육기관</h3>
+                    <ul id="establishmentList">
+                    </ul>
+                </div>
+            </section>
 
-        <section id="manage-members" class="admin-section">
-            <h2>구성원 등록</h2>
-            <div class="form-group">
-                <select id="memberEstablishment" onchange="filterMembersByEstablishment()">
-                    <option value="">-- 교육기관 선택 --</option>
-                </select>
-                <input type="text" id="memberName" placeholder="구성원 성명 (ID)">
-                <input type="date" id="memberBirthdate" placeholder="생년월일">
-                <input type="password" id="memberPwd" placeholder="비밀번호">
-                <select id="memberRole">
-                    <option value="student">원생</option>
-                    <option value="teacher">선생님</option>
-                    <option value="director">원장</option>
-                    <option value="admin">관리자</option>
-                </select>
-                <button class="btn-primary" onclick="addMember()">구성원 등록</button>
-            </div>
-            <div class="data-list">
-                <h3>등록된 구성원</h3>
-                <ul id="memberList">
-                </ul>
-            </div>
-        </section>
+            <section id="manage-classes" class="admin-section">
+                <h2>반 등록 및 관리</h2>
+                <div class="form-group">
+                    <select id="classEstablishmentSelect" onchange="renderClassList()">
+                        <option value="">-- 교육기관 선택 --</option>
+                    </select>
+                    <input type="text" id="className" placeholder="반 이름">
+                    <button class="btn-primary" onclick="addClass()">반 등록</button>
+                </div>
+                <div class="data-list">
+                    <h3>등록된 반</h3>
+                    <ul id="classList">
+                    </ul>
+                </div>
+            </section>
 
-        <section id="manage-permissions" class="admin-section">
-            <h2>구성원별 권한 관리</h2>
-            <div class="form-group">
-                <select id="permissionMemberSelect">
-                    <option value="">-- 구성원 선택 --</option>
-                </select>
-                <select id="permissionRoleSelect">
-                    <option value="student">원생</option>
-                    <option value="teacher">선생님</option>
-                    <option value="director">원장</option>
-                    <option value="admin">관리자</option>
-                </select>
-                <button class="btn-primary" onclick="updateMemberPermission()">권한 변경</button>
-            </div>
-            <div class="data-list">
-                <h3>구성원 권한 현황</h3>
-                <ul id="permissionList">
-                </ul>
-            </div>
-        </section>
+            <section id="manage-members" class="admin-section">
+                <h2>구성원 등록</h2>
+                <div class="form-group">
+                    <select id="memberEstablishment" onchange="filterMembersByEstablishment()">
+                        <option value="">-- 교육기관 선택 --</option>
+                    </select>
+                    <input type="text" id="memberName" placeholder="구성원 성명 (ID)">
+                    <input type="date" id="memberBirthdate" placeholder="생년월일">
+                    <input type="password" id="memberPwd" placeholder="비밀번호">
+                    <select id="memberRole">
+                        <option value="student">원생</option>
+                        <option value="teacher">선생님</option>
+                        <option value="director">원장</option>
+                        <option value="admin">관리자</option>
+                    </select>
+                    <button class="btn-primary" onclick="addMember()">구성원 등록</button>
+                </div>
+                <div class="data-list">
+                    <h3>등록된 구성원</h3>
+                    <ul id="memberList">
+                    </ul>
+                </div>
+            </section>
+
+            <section id="manage-permissions" class="admin-section">
+                <h2>구성원별 권한 관리</h2>
+                <div class="form-group">
+                    <select id="permissionMemberSelect">
+                        <option value="">-- 구성원 선택 --</option>
+                    </select>
+                    <select id="permissionRoleSelect">
+                        <option value="student">원생</option>
+                        <option value="teacher">선생님</option>
+                        <option value="director">원장</option>
+                        <option value="admin">관리자</option>
+                    </select>
+                    <button class="btn-primary" onclick="updateMemberPermission()">권한 변경</button>
+                </div>
+                <div class="data-list">
+                    <h3>구성원 권한 현황</h3>
+                    <ul id="permissionList">
+                    </ul>
+                </div>
+            </section>
+        </div>
     </div>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
-    <script src="admin-firebase.js"></script>
-
     <script type="module">
-        // Firebase SDK import
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getStorage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
-        // Firebase 설정 (실제 값으로 교체 필요)
         const firebaseConfig = {
             apiKey: "AIzaSyAd9mICdy1tVtQQS6X6-qx_Qnm1q9g6nMk",
             authDomain: "magicstorybookdb.firebaseapp.com",
@@ -153,29 +175,46 @@
             measurementId: "G-0E119QHRK3"
           };
 
-        // Firebase 초기화
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         const storage = getStorage(app);
 
-        // 전역 변수로 설정
         window.firebase = { app, db, auth, storage };
         
         console.log('Firebase 초기화 완료');
 
-        // Firebase 서비스 로드
         import('./firebase-service.js').then(() => {
             console.log('Firebase 서비스 로드 완료');
-            // 페이지 초기화
-            initializeAdminPage();
+            import('./admin-firebase.js').then((module) => {
+                window.initializeAdminPage = module.initializeAdminPage;
+                window.handleAdminLogin = module.handleAdminLogin;
+                window.handleAdminLogout = module.handleAdminLogout;
+                window.addEstablishment = module.addEstablishment;
+                window.deleteEstablishment = module.deleteEstablishment;
+                window.openEditModal = module.openEditModal;
+                window.saveEstablishmentChanges = module.saveEstablishmentChanges;
+                window.addClass = module.addClass;
+                window.deleteClass = module.deleteClass;
+                window.renderClassList = module.renderClassList;
+                window.addMember = module.addMember;
+                window.deleteMember = module.deleteMember;
+                window.openEditMemberModal = module.openEditMemberModal;
+                window.saveMemberChanges = module.saveMemberChanges;
+                window.resetPassword = module.resetPassword;
+                window.updateMemberPermission = module.updateMemberPermission;
+                window.filterMembersByEstablishment = module.filterMembersByEstablishment;
+                window.updateSigunguOptions = module.updateSigunguOptions;
+                window.updateEditSigunguOptions = module.updateEditSigunguOptions;
+                window.closeEditModal = module.closeEditModal;
+                window.closeEditMemberModal = module.closeEditMemberModal;
+
+                // 페이지 초기화
+                initializeAdminPage();
+            });
         }).catch(error => {
             console.error('Firebase 서비스 로드 실패:', error);
         });
     </script>
 </body>
 </html>
-
-
-
-
