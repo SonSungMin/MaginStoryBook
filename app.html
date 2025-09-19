@@ -131,16 +131,32 @@
                     <img id="previewImage" src="images/placeholder_preview.png" alt="원본 그림 미리보기">
                 </div>
             </div>
-            
             <input type="text" id="drawingTitleInput" placeholder="그림 제목을 입력해주세요" class="mt-3">
-            <textarea id="drawingStoryInput" placeholder="그림에 대한 이야기를 들려주세요 (여기에 입력하거나 녹음 버튼 사용)"></textarea>
-            
+            <textarea id="drawingStoryInput" placeholder="그림에 대한 이야기를 들려주세요"></textarea>
             <div class="button-group">
                 <button class="btn-secondary" onclick="closeUploadModal()">닫기</button>
                 <button class="btn-primary" onclick="saveStory()"><i class="fas fa-save"></i> 저장</button>
             </div>
         </div>
     </div>
+
+    <div id="editStoryModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeEditStoryModal()">&times;</span>
+            <h2>그림 이야기 수정</h2>
+            <input type="hidden" id="editStoryId">
+            <div class="drawing-preview">
+                <img id="editPreviewImage" src="images/placeholder_preview.png" alt="수정할 그림 미리보기">
+            </div>
+            <input type="text" id="editDrawingTitleInput" placeholder="그림 제목" class="mt-3">
+            <textarea id="editDrawingStoryInput" placeholder="그림 이야기"></textarea>
+            <div class="button-group">
+                <button class="btn-secondary" onclick="closeEditStoryModal()">취소</button>
+                <button class="btn-primary" onclick="saveStoryChanges()">변경사항 저장</button>
+            </div>
+        </div>
+    </div>
+
 
     <div id="storyDetailModal" class="modal">
         <div class="modal-content large-modal">
@@ -149,7 +165,6 @@
             <div class="detail-content">
                 <div class="detail-image-area">
                     <img id="detailOriginalImg" src="" alt="원본 그림">
-                    <img id="detailAiImg" src="" alt="AI 변환 그림">
                 </div>
                 <p id="detailStoryText" class="detail-story-text"></p>
                 <p class="detail-info">작성일: <span id="detailStoryDate"></span></p>
@@ -160,7 +175,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="cropModal" class="modal">
         <div class="modal-content">
             <h2>그림 자르기</h2>
@@ -181,72 +196,54 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> 
-    <script src="app-firebase.js"></script> 
-    <script src="supabase-storage-service.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    <script src="app-firebase.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    
-    <script type="module">
-        // ... (기존 script type="module" 내용은 동일) ...
-        // Step 1: Firebase SDK import
+    <script src="supabase-storage-service.js"></script>
+    <script src="app-firebase.js"></script> <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getStorage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
-        // Step 2: Firebase 설정
         const firebaseConfig = {
             apiKey: "AIzaSyAd9mICdy1tVtQQS6X6-qx_Qnm1q9g6nMk",
             authDomain: "magicstorybookdb.firebaseapp.com",
             projectId: "magicstorybookdb",
-            storageBucket: "magicstorybookdb.appspot.com", // 일관성을 위해 .appspot.com으로 수정
+            storageBucket: "magicstorybookdb.appspot.com",
             messagingSenderId: "6167602990",
             appId: "1:6167602990:web:a4f95392b5cb7169e87cbf",
             measurementId: "G-0E119QHRK3"
           };
 
-        // Step 3: 초기화 및 서비스 로드, 앱 실행을 순차적으로 진행
         try {
-            // Firebase 초기화
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
             const auth = getAuth(app);
             const storage = getStorage(app);
 
-            // 초기화된 정보를 전역 window 객체에 할당하여 다른 스크립트에서 사용
             window.firebase = { app, db, auth, storage };
             console.log('Firebase 초기화 완료');
 
-            // `firebase-service.js`를 동적으로 import하여 로드
             await import('./firebase-service.js');
             console.log('Firebase 서비스 로드 완료');
 
-            // === Supabase 클라이언트 초기화 (여기에 추가) ===
-            const SUPABASE_URL = 'https://guonchhshaopidmjozhk.supabase.co'; // ◀◀◀ 본인의 Supabase URL로 교체
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1b25jaGhzaGFvcGlkbWpvemhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxNzU2ODUsImV4cCI6MjA3Mzc1MTY4NX0.prY4iGz09EJHGuGHzLTpz-eEUu7TG5flWOGGX_2R8IY'; // ◀◀◀ 본인의 Supabase Anon Key로 교체
-            
+            const SUPABASE_URL = 'https://guonchhshaopidmjozhk.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1b25jaGhzaGFvcGlkbWpvemhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxNzU2ODUsImV4cCI6MjA3Mzc1MTY4NX0.prY4iGz09EJHGuGHzLTpz-eEUu7TG5flWOGGX_2R8IY';
             const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             window.supabaseStorageService = new SupabaseStorageService(supabaseClient);
             console.log('Supabase 초기화 완료');
-            
-            // 모든 준비가 끝났으므로 `app-firebase.js`에 정의된 메인 함수를 호출
+
             if (window.initializeApp) {
                 window.initializeApp();
             } else {
-                // `app-firebase.js`가 제대로 로드되지 않았을 경우
                 throw new Error('initializeApp 함수를 찾을 수 없습니다.');
             }
-
         } catch (error) {
             console.error('시스템 초기화 과정에서 오류 발생:', error);
             alert('시스템 초기화에 실패했습니다. 페이지를 새로고침해주세요.');
         }
     </script>
-
     <script>
-        // ... (기존 shareStory 관련 script 내용은 동일) ...
         window.shareStory = function() {
             if (navigator.share) {
                 navigator.share({
@@ -263,7 +260,6 @@
                 fallbackShare();
             }
         };
-
         function fallbackShare() {
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(window.location.href).then(() => {
