@@ -421,7 +421,7 @@ class FirebaseService {
         try {
             const docRef = await addDoc(collection(this.db, 'stories'), {
                 ...storyData,
-                status: 'unregistered', // 'unregistered', 'registered', 'in_production'
+                status: 'unregistered', // 'unregistered', 'registered', 'in_production', 'completed'
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
@@ -557,6 +557,37 @@ class FirebaseService {
             console.log('사용자 작품 일괄 삭제 완료:', userId);
         } catch (error) {
             console.error('사용자 작품 일괄 삭제 오류:', error);
+            throw error;
+        }
+    }
+
+    // ===================
+    // 동화책(Storybooks) 관리
+    // ===================
+    async createStorybook(storybookData) {
+        try {
+            const docRef = await addDoc(collection(this.db, 'storybooks'), {
+                ...storybookData,
+                createdAt: serverTimestamp(),
+            });
+            console.log('동화책 생성 성공:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error('동화책 생성 오류:', error);
+            throw error;
+        }
+    }
+
+    async getStorybookByStoryId(storyId) {
+        try {
+            const q = query(collection(this.db, 'storybooks'), where('storyId', '==', storyId), limit(1));
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                return null;
+            }
+            return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
+        } catch (error) {
+            console.error('동화책 조회 오류:', error);
             throw error;
         }
     }
