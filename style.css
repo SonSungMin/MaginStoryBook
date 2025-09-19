@@ -40,7 +40,7 @@ body {
     padding: 5px 15px;
     font-size: 12px;
     font-family: Arial, sans-serif;
-    z-index: 1001;
+    z-index: 1001; /* 다른 요소 위에 표시되도록 z-index 추가 */
 }
 
 
