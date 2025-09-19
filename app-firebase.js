@@ -27,6 +27,7 @@ const drawingStoryInput = document.getElementById('drawingStoryInput');
 const uploadEstablishmentSelect = document.getElementById('uploadEstablishmentSelect');
 const uploadStudentSelect = document.getElementById('uploadStudentSelect');
 const themeSelect = document.getElementById('themeSelect');
+const themeSelectContainer = document.getElementById('themeSelectContainer');
 const editThemeSelect = document.getElementById('editThemeSelect');
 
 
@@ -91,7 +92,13 @@ window.initializeApp = async function() {
         setupUIByRole();
         setupEventListeners();
         await loadAndRenderStories();
+        // [수정] 활성 테마가 있으면 해당 테마를 기본으로 선택
+        const initialTheme = activeTheme ? activeTheme.id : 'all';
+        themeFilter.value = initialTheme;
+        classThemeFilter.value = initialTheme;
         activateSection('my-story');
+        renderMyStoryCards(initialTheme);
+
 
         console.log('앱 초기화 완료');
     } catch (error) {
@@ -119,8 +126,8 @@ async function loadAndRenderStories() {
         console.log('Firebase에서 가져온 [내 작품] 데이터:', myStories);
         console.log('Firebase에서 가져온 [우리반] 데이터:', classStories);
 
-        renderMyStoryCards();
-        renderClassStoryCards();
+        renderMyStoryCards(themeFilter.value);
+        renderClassStoryCards(classThemeFilter.value);
 
         if (currentUser.role === 'admin') {
             renderTeacherArtworkList();
@@ -302,6 +309,12 @@ function renderTeacherArtworkList() {
 // --- 새 그림 올리기 / 수정 / 삭제 ---
 
 window.openUploadModal = function() {
+    // [수정] 원생이고 활성 테마가 없으면 업로드 차단
+    if (currentUser.role === 'student' && !activeTheme) {
+        alert('현재 등록 가능한 활성 테마가 없습니다. 선생님께 문의해주세요.');
+        return;
+    }
+
     drawingFileInput.value = '';
     document.getElementById('cameraInput').value = '';
     previewImage.src = 'images/placeholder_preview.png';
@@ -312,9 +325,16 @@ window.openUploadModal = function() {
     uploadStudentSelect.style.display = 'none';
     uploadEstablishmentSelect.innerHTML = '';
     uploadStudentSelect.innerHTML = '';
-
-    // 활성 테마가 있으면 자동으로 선택
-    populateThemeOptions(themeSelect, activeTheme ? activeTheme.id : null);
+    
+    // [수정] 사용자 역할에 따른 테마 선택 UI 처리
+    if (currentUser.role === 'student') {
+        // 원생은 테마 선택 UI 숨김
+        themeSelectContainer.style.display = 'none';
+    } else {
+        // 교사/관리자는 테마 선택 UI 표시 및 활성 테마 자동 선택
+        themeSelectContainer.style.display = 'block';
+        populateThemeOptions(themeSelect, activeTheme ? activeTheme.id : null);
+    }
 
     if (['teacher', 'director'].includes(currentUser.role)) {
         uploadStudentSelect.style.display = 'block';
@@ -394,7 +414,8 @@ window.cancelCrop = function() {
 window.saveStory = async function() {
     const title = drawingTitleInput.value.trim();
     const storyText = drawingStoryInput.value.trim();
-    const selectedThemeId = themeSelect.value;
+    // [수정] 원생일 경우 활성 테마 ID를, 그 외에는 선택된 테마 ID를 사용
+    const selectedThemeId = currentUser.role === 'student' ? activeTheme.id : themeSelect.value;
 
     if (!currentOriginalFile || !title || !selectedThemeId) {
         alert('그림, 제목, 테마를 모두 선택 및 입력해주세요!');
