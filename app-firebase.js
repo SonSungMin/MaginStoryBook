@@ -83,10 +83,8 @@ async function loadAndRenderStories() {
         myStories = await window.firebaseService.getStoriesByUser(currentUser.id);
         classStories = await window.firebaseService.getStoriesByEstablishment(currentUser.establishmentId);
         
-        // ✨ [콘솔 로그 추가] 로드된 데이터 확인
         console.log('Firebase에서 가져온 [내 작품] 데이터:', myStories);
         console.log('Firebase에서 가져온 [우리 반 작품] 데이터:', classStories);
-
 
         renderMyStoryCards();
         renderClassStoryCards();
@@ -204,8 +202,7 @@ function createStoryCardElement(story) {
 
     const img = document.createElement('img');
     const imageUrl = story.originalImgUrl || 'images/placeholder_preview.png';
-
-    // ✨ [콘솔 로그 추가] 각 카드의 이미지 URL 확인
+    
     console.log(`[카드 렌더링] 제목: "${story.title}", 이미지 URL: ${imageUrl}`);
     
     img.src = imageUrl;
@@ -248,7 +245,6 @@ function renderTeacherArtworkList() {
         const uploaderName = story.uploaderName || '알 수 없음';
         
         const imageUrl = story.originalImgUrl || 'images/placeholder_preview.png';
-        // ✨ [콘솔 로그 추가] 선생님 도구함 목록의 이미지 URL 확인
         console.log(`[선생님 도구함] 제목: "${story.title}", 이미지 URL: ${imageUrl}`);
         
         artworkItem.innerHTML = `<img src="${imageUrl}" alt="${story.title}"><span>${story.title} (${uploaderName})</span>`;
@@ -323,10 +319,12 @@ window.saveStory = async function() {
     try {
         const timestamp = Date.now();
         const fileExtension = currentOriginalFile.name.split('.').pop() || 'png';
-        const imagePath = `public/${currentUser.id}/${timestamp}_original.${fileExtension}`;
+
+        // ✨ 여기가 핵심 수정 사항입니다. 'public/' 접두사를 제거했습니다.
+        const imagePath = `${currentUser.id}/${timestamp}_original.${fileExtension}`;
+
         const imageUrl = await window.supabaseStorageService.uploadImage(currentOriginalFile, imagePath);
         
-        // ✨ [콘솔 로그 추가] 저장 시 생성된 최종 URL 확인
         console.log(`[저장 완료] 제목: "${title}", 최종 저장 URL: ${imageUrl}`);
 
         await window.firebaseService.createStory({
@@ -406,7 +404,6 @@ function openStoryDetailModal(storyId) {
     detailStoryTitle.textContent = story.title;
     
     const imageUrl = story.originalImgUrl || 'images/placeholder_preview.png';
-    // ✨ [콘솔 로그 추가] 상세 보기 모달의 이미지 URL 확인
     console.log(`[상세 보기] 제목: "${story.title}", 이미지 URL: ${imageUrl}`);
     
     detailOriginalImg.src = imageUrl;
