@@ -1,26 +1,26 @@
 // firebase-service.js - Firebase 데이터베이스 서비스
 
-import { 
-    collection, 
-    doc, 
-    addDoc, 
-    getDoc, 
-    getDocs, 
-    updateDoc, 
-    deleteDoc, 
-    query, 
-    where, 
+import {
+    collection,
+    doc,
+    addDoc,
+    getDoc,
+    getDocs,
+    updateDoc,
+    deleteDoc,
+    query,
+    where,
     orderBy,
     serverTimestamp,
     limit,
     onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-import { 
-    ref, 
-    uploadBytes, 
+import {
+    ref,
+    uploadBytes,
     getDownloadURL,
-    deleteObject 
+    deleteObject
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
 class FirebaseService {
@@ -93,7 +93,7 @@ class FirebaseService {
     // ===================
     // 교육기관(Establishments) 관리
     // ===================
-    
+
     async createEstablishment(establishmentData) {
         try {
             const docRef = await addDoc(collection(this.db, 'establishments'), {
@@ -141,7 +141,7 @@ class FirebaseService {
         try {
             // 관련 사용자들도 삭제
             await this.deleteUsersByEstablishment(establishmentId);
-            
+
             // 교육기관 삭제
             await deleteDoc(doc(this.db, 'establishments', establishmentId));
             console.log('교육기관 삭제 완료:', establishmentId);
@@ -173,18 +173,18 @@ class FirebaseService {
     async getUserByNameAndPassword(name, password) {
         try {
             const q = query(
-                collection(this.db, 'users'), 
+                collection(this.db, 'users'),
                 where('name', '==', name),
                 where('password', '==', password),
                 limit(1)
             );
             const querySnapshot = await getDocs(q);
-            
+
             if (querySnapshot.empty) {
                 console.log('사용자 없음:', name);
                 return null;
             }
-            
+
             const userDoc = querySnapshot.docs[0];
             const userData = {
                 id: userDoc.id,
@@ -245,7 +245,7 @@ class FirebaseService {
         }
     }
 
-    
+
     async updateUserRole(userId, newRole) {
         try {
             await updateDoc(doc(this.db, 'users', userId), {
@@ -263,7 +263,7 @@ class FirebaseService {
         try {
             // 사용자의 모든 작품도 삭제
             await this.deleteStoriesByUser(userId);
-            
+
             // 사용자 삭제
             await deleteDoc(doc(this.db, 'users', userId));
             console.log('사용자 삭제 완료:', userId);
@@ -326,7 +326,6 @@ class FirebaseService {
 
     async getStoriesByEstablishment(establishmentId) {
         try {
-            // 먼저 해당 교육기관의 모든 사용자를 가져오기
             const users = await this.getUsersByEstablishment(establishmentId);
             const userIds = users.map(user => user.id);
 
@@ -335,7 +334,6 @@ class FirebaseService {
                 return [];
             }
 
-            // Firestore의 'in' 쿼리는 최대 10개까지만 지원하므로 청크 단위로 처리
             const chunks = [];
             for (let i = 0; i < userIds.length; i += 10) {
                 chunks.push(userIds.slice(i, i + 10));
@@ -356,7 +354,6 @@ class FirebaseService {
                 allStories.push(...stories);
             }
 
-            // 날짜순으로 다시 정렬
             allStories.sort((a, b) => {
                 const aTime = a.createdAt?.seconds || 0;
                 const bTime = b.createdAt?.seconds || 0;
@@ -405,23 +402,26 @@ class FirebaseService {
 
     async deleteStory(storyId) {
         try {
-            // 먼저 스토리 정보 가져오기 (이미지 삭제를 위해)
-            const storyDoc = await getDoc(doc(this.db, 'stories', storyId));
+            const storyDocRef = doc(this.db, 'stories', storyId);
+            const storyDoc = await getDoc(storyDocRef);
+
             if (storyDoc.exists()) {
                 const storyData = storyDoc.data();
-                
-                // Storage에서 이미지 파일들 삭제
-                if (storyData.originalImgPath) {
-                    await this.deleteFile(storyData.originalImgPath);
+                if (storyData.originalImgUrl) {
+                    // Supabase URL에서 파일 경로 추출
+                    const filePath = new URL(storyData.originalImgUrl).pathname.split('/images/').pop();
+                    if(filePath) {
+                         // Supabase 스토리지 서비스의 파일 삭제 메소드 호출
+                         await window.supabaseStorageService.deleteImage(filePath);
+                    }
                 }
-                if (storyData.aiImgPath) {
-                    await this.deleteFile(storyData.aiImgPath);
-                }
+                 // Firestore 문서 삭제
+                await deleteDoc(storyDocRef);
+                console.log('작품 삭제 완료:', storyId);
+            } else {
+                 console.log('삭제할 작품을 찾을 수 없습니다.');
             }
 
-            // Firestore에서 문서 삭제
-            await deleteDoc(doc(this.db, 'stories', storyId));
-            console.log('작품 삭제 완료:', storyId);
         } catch (error) {
             console.error('작품 삭제 오류:', error);
             throw error;
@@ -493,7 +493,7 @@ class FirebaseService {
                     limit(1)
                 );
             }
-            
+
             const querySnapshot = await getDocs(q);
             const exists = !querySnapshot.empty;
             console.log('사용자 존재 확인:', name, '-', exists);
@@ -540,133 +540,6 @@ class FirebaseService {
             u8arr[n] = bstr.charCodeAt(n);
         }
         return new File([u8arr], fileName, { type: mime });
-    }
-
-    // ===================
-    // 초기 데이터 설정 (개발용)
-    // ===================
-
-    async initializeSampleData() {
-        try {
-            console.log('샘플 데이터 초기화 시작...');
-            
-            // 기본 관리자 계정 확인 및 생성
-            const adminExists = await this.checkUserExists('admin');
-            if (!adminExists) {
-                await this.createUser({
-                    name: 'admin',
-                    password: 'admin',
-                    role: 'admin',
-                    establishmentId: 'global'
-                });
-                console.log('관리자 계정 생성 완료');
-            }
-
-            // 샘플 교육기관 확인 및 생성
-            const estExists = await this.checkEstablishmentExists('코드그림유치원');
-            if (!estExists) {
-                const estId = await this.createEstablishment({
-                    name: '코드그림유치원',
-                    address: '서울시 강남구',
-                    adminName: 'admin',
-                    adminPwd: 'admin'
-                });
-
-                // 샘플 사용자들 생성
-                const teacher1Id = await this.createUser({
-                    name: 'teacher1',
-                    password: '123',
-                    birthdate: '1990-01-01',
-                    role: 'teacher',
-                    establishmentId: estId
-                });
-
-                const student1Id = await this.createUser({
-                    name: 'student1',
-                    password: '123',
-                    birthdate: '2018-05-10',
-                    role: 'student',
-                    establishmentId: estId
-                });
-
-                const student2Id = await this.createUser({
-                    name: 'student2',
-                    password: '123',
-                    birthdate: '2019-03-22',
-                    role: 'student',
-                    establishmentId: estId
-                });
-
-                // 샘플 작품들 생성
-                await this.createStory({
-                    uploaderId: teacher1Id,
-                    uploaderName: 'teacher1',
-                    establishmentId: estId,
-                    title: '다정 선생님',
-                    storyText: '우리 반 다정 선생님은 웃는 모습이 예뻐요! 나노바바나 선생님도 좋아요!',
-                    originalImgUrl: 'images/original_drawing_teacher.png',
-                    aiImgUrl: 'images/ai_drawing_teacher_v1.png',
-                    aiProcessed: true
-                });
-
-                await this.createStory({
-                    uploaderId: student1Id,
-                    uploaderName: 'student1',
-                    establishmentId: estId,
-                    title: '우리집 강아지',
-                    storyText: '우리집 강아지 나노는 꼬리를 흔드는 걸 좋아해요. 나랑 맨날 산책해요.',
-                    originalImgUrl: 'images/original_drawing_dog.png',
-                    aiImgUrl: 'images/ai_drawing_dog_v1.png',
-                    aiProcessed: true
-                });
-
-                await this.createStory({
-                    uploaderId: student2Id,
-                    uploaderName: 'student2',
-                    establishmentId: estId,
-                    title: '놀이터에서',
-                    storyText: '친구들이랑 놀이터에서 뛰어 놀았어요. 미끄럼틀이 제일 재밌어요!',
-                    originalImgUrl: 'images/original_drawing_kids_play.png',
-                    aiImgUrl: 'images/ai_drawing_kids_play_v1.png',
-                    aiProcessed: true
-                });
-
-                console.log('샘플 데이터 생성 완료');
-            } else {
-                console.log('샘플 데이터가 이미 존재함');
-            }
-        } catch (error) {
-            console.error('샘플 데이터 초기화 오류:', error);
-            // 에러가 발생해도 앱이 계속 동작하도록 함
-        }
-    }
-
-    // ===================
-    // 상태 확인 함수
-    // ===================
-
-    async getSystemStatus() {
-        try {
-            const establishmentCount = (await this.getAllEstablishments()).length;
-            const userCount = (await this.getAllUsers()).length;
-            const storyCount = (await this.getAllStories()).length;
-
-            return {
-                establishments: establishmentCount,
-                users: userCount,
-                stories: storyCount,
-                timestamp: new Date().toISOString()
-            };
-        } catch (error) {
-            console.error('시스템 상태 확인 오류:', error);
-            return {
-                establishments: 0,
-                users: 0,
-                stories: 0,
-                error: error.message,
-                timestamp: new Date().toISOString()
-            };
-        }
     }
 }
 
