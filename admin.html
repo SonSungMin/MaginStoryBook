@@ -13,14 +13,14 @@
         <h2>관리자 로그인</h2>
         <input type="text" id="adminId" placeholder="관리자 ID">
         <input type="password" id="adminPwd" placeholder="비밀번호">
-        <button class="btn-login" onclick="handleAdminLogin()">로그인</button>
+        <button id="adminLoginButton" class="btn-login">로그인</button>
     </div>
 
     <div id="admin-main-content" style="display: none;">
         <div class="admin-header">
             <div class="container">
                 <h1><img src="images/magic_storybook_logo_english.png" alt="Magic Storybook Logo" class="admin-logo"> 관리자 페이지</h1>
-                <button class="btn-back-to-login" onclick="handleAdminLogout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
+                <button id="adminLogoutButton" class="btn-back-to-login"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
             </div>
         </div>
         
@@ -188,8 +188,8 @@
             console.log('Firebase 서비스 로드 완료');
             import('./admin-firebase.js').then((module) => {
                 window.initializeAdminPage = module.initializeAdminPage;
-                window.handleAdminLogin = module.handleAdminLogin;
-                window.handleAdminLogout = module.handleAdminLogout;
+                
+                // 전역 스코프에 함수 할당 (모달 등에서 사용)
                 window.addEstablishment = module.addEstablishment;
                 window.deleteEstablishment = module.deleteEstablishment;
                 window.openEditModal = module.openEditModal;
@@ -209,7 +209,7 @@
                 window.closeEditModal = module.closeEditModal;
                 window.closeEditMemberModal = module.closeEditMemberModal;
 
-                // 페이지 초기화
+                // 페이지 초기화 함수 호출
                 initializeAdminPage();
             });
         }).catch(error => {
