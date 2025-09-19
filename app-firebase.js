@@ -273,10 +273,31 @@ function createStoryCardElement(story) {
     if (canModify) {
         const cardActions = document.createElement('div');
         cardActions.classList.add('card-actions');
+        
+        // 기존 수정/삭제 버튼
         cardActions.innerHTML = `
             <button class="btn-edit" onclick="openEditStoryModal('${story.id}')"><i class="fas fa-edit"></i> 수정</button>
             <button class="btn-delete" onclick="deleteStory('${story.id}')"><i class="fas fa-trash"></i> 삭제</button>
         `;
+    
+        // 1. 등록/등록됨 버튼 추가
+        if (['teacher', 'director'].includes(currentUser.role)) {
+            const registerButton = document.createElement('button');
+            registerButton.dataset.storyId = story.id;
+            registerButton.dataset.status = story.status || 'unregistered';
+    
+            if (story.status === 'registered' || story.status === 'in_production') {
+                registerButton.textContent = '등록됨';
+                registerButton.classList.add('btn-registered');
+            } else {
+                registerButton.textContent = '등록';
+                registerButton.classList.add('btn-register');
+            }
+    
+            registerButton.onclick = () => handleRegisterToggle(story.id, story.status);
+            cardActions.appendChild(registerButton);
+        }
+        
         storyCard.appendChild(cardActions);
     }
     return storyCard;
