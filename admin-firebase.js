@@ -31,6 +31,7 @@ export function initializeAdminPage() {
     window.openEditMemberModal = openEditMemberModal;
     window.deleteMember = deleteMember;
     window.resetPassword = resetPassword;
+    window.handleRoleChange = handleRoleChange; // 권한 변경 함수를 전역으로 노출
 
     document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
     document.getElementById('adminLogoutButton').addEventListener('click', handleAdminLogout);
@@ -400,7 +401,35 @@ async function updateMemberPermission() {
 }
 
 /**
- * [수정됨] 구성원 권한 현황 목록을 렌더링하고, 각 항목에 수정/삭제 버튼을 추가합니다.
+ * [수정됨] 권한 목록에서 역할(Role) 변경 시 호출되는 함수
+ * @param {HTMLSelectElement} selectElement - 변경이 일어난 select 요소
+ * @param {string} userId - 대상 사용자의 ID
+ * @param {string} oldRole - 변경 전 역할
+ */
+async function handleRoleChange(selectElement, userId, oldRole) {
+    const newRole = selectElement.value;
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
+    const confirmation = confirm(`${user.name}님의 권한을 '${roleMap[oldRole]}'에서 '${roleMap[newRole]}'(으)로 변경하시겠습니까?`);
+    
+    if (confirmation) {
+        try {
+            await window.firebaseService.updateUserRole(userId, newRole);
+            alert('권한이 성공적으로 변경되었습니다.');
+            await loadDataAndRender(); // 데이터 및 UI 새로고침
+        } catch (error) {
+            console.error('권한 변경 오류:', error);
+            alert('권한 변경 중 오류가 발생했습니다.');
+            selectElement.value = oldRole; // 실패 시 원래 값으로 되돌림
+        }
+    } else {
+        selectElement.value = oldRole; // 취소 시 원래 값으로 되돌림
+    }
+}
+
+/**
+ * [수정됨] 구성원 권한 현황 목록을 렌더링하고, 각 항목에 권한 수정 드롭다운과 삭제 버튼을 추가합니다.
  */
 function renderPermissionList() {
     const listElement = document.getElementById('permissionList');
@@ -412,20 +441,34 @@ function renderPermissionList() {
         let actionsHtml = '';
         // 'admin' 역할은 수정하거나 삭제할 수 없습니다.
         if (user.role !== 'admin') {
+            // 권한 변경을 위한 select (드롭다운) 생성
+            let roleOptions = '';
+            for (const roleKey in roleMap) {
+                // admin 권한은 이 목록에서 선택 불가
+                if (roleKey === 'admin') continue;
+                const selected = user.role === roleKey ? 'selected' : '';
+                roleOptions += `<option value="${roleKey}" ${selected}>${roleMap[roleKey]}</option>`;
+            }
+
             actionsHtml = `
             <div class="item-actions">
+                <select class="role-select" onchange="handleRoleChange(this, '${user.id}', '${user.role}')">
+                    ${roleOptions}
+                </select>
                 <div class="button-group-list">
-                    <button class="btn-edit" onclick="openEditMemberModal('${user.id}')">수정</button>
                     <button onclick="deleteMember('${user.id}')">삭제</button>
                 </div>
             </div>
             `;
+        } else {
+            // admin 계정은 '수정 불가' 텍스트 표시
+            actionsHtml = `<div class="item-actions"><span>수정 불가</span></div>`;
         }
 
         li.innerHTML = `
             <div class="item-content">
                 <div class="item-main-info">
-                    <span>${user.name} (${roleMap[user.role] || user.role})</span>
+                    <span>${user.name}</span>
                 </div>
                 <div class="item-sub-info">
                     <span>소속: ${establishment ? establishment.name : '글로벌'}</span>
@@ -436,6 +479,7 @@ function renderPermissionList() {
         listElement.appendChild(li);
     });
 }
+
 
 function openEditModal(id) {
     const establishment = establishments.find(est => est.id === id);
