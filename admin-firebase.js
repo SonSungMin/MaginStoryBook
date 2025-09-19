@@ -332,6 +332,7 @@ async function renderMemberList(filterEstId = null) {
     filterEstId = filterEstId || document.getElementById('memberEstablishment').value;
     let filteredUsers = users.filter(u => u.role !== 'admin' && (!filterEstId || u.establishmentId === filterEstId));
     
+    // 모든 반 정보를 한 번에 가져와서 맵으로 만듭니다.
     const allClasses = await Promise.all(establishments.map(est => window.firebaseService.getClassesByEstablishment(est.id)));
     const classMap = Object.fromEntries(allClasses.flat().map(c => [c.id, c.name]));
 
@@ -341,10 +342,10 @@ async function renderMemberList(filterEstId = null) {
         const li = document.createElement('li');
         li.innerHTML = `
             <div class="item-content">
-                <div class="item-main-info">${user.name} <span>(${roleMap[user.role] || user.role})</span></div>
+                <div class="item-main-info">${user.name} / ${className} <span>(${roleMap[user.role] || user.role})</span></div>
                 <div class="item-sub-info">
-                    <span>${establishment ? establishment.name : '알 수 없음'} / ${className}</span>
-                    <span>${user.birthdate || ''}</span>
+                    <span>소속: ${establishment ? establishment.name : '알 수 없음'}</span>
+                    <span>생년월일: ${user.birthdate || ''}</span>
                 </div>
             </div>
             <div class="item-actions">
@@ -465,26 +466,41 @@ async function saveEstablishmentChanges() {
     }
 }
 
+/**
+ * [수정됨] 구성원 정보 수정 모달을 열고, 해당 구성원의 반 정보를 불러옵니다.
+ * @param {string} id - 수정할 사용자의 ID
+ */
 async function openEditMemberModal(id) {
     const user = users.find(u => u.id === id);
     if (!user) return alert('구성원 정보를 찾을 수 없습니다.');
+    
+    // 기본 정보 설정
     document.getElementById('editMemberId').value = id;
     document.getElementById('editMemberName').value = user.name;
     document.getElementById('editMemberBirthdate').value = user.birthdate;
 
+    // 반 선택 콤보박스 초기화
     const classSelect = document.getElementById('editMemberClass');
     classSelect.innerHTML = '<option value="">-- 반 선택 --</option>';
 
+    // 사용자가 속한 교육기관이 있는 경우, 해당 기관의 반 목록을 불러옴
     if (user.establishmentId) {
-        const classes = await window.firebaseService.getClassesByEstablishment(user.establishmentId);
-        classes.forEach(c => {
-            classSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-        });
-        if (user.classId) {
-            classSelect.value = user.classId;
+        try {
+            const classes = await window.firebaseService.getClassesByEstablishment(user.establishmentId);
+            classes.forEach(c => {
+                classSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            });
+            // 기존에 선택된 반이 있으면 그 값을 선택
+            if (user.classId) {
+                classSelect.value = user.classId;
+            }
+        } catch (error) {
+            console.error("수정 모달에서 반 목록 로딩 오류:", error);
+            alert("반 목록을 불러오는 데 실패했습니다.");
         }
     }
     
+    // 모달 표시
     document.getElementById('editMemberModal').style.display = 'flex';
 }
 
@@ -492,18 +508,24 @@ function closeEditMemberModal() {
     document.getElementById('editMemberModal').style.display = 'none';
 }
 
+/**
+ * [수정됨] 구성원 정보 변경사항(반 포함)을 저장합니다.
+ */
 async function saveMemberChanges() {
     const id = document.getElementById('editMemberId').value;
     const name = document.getElementById('editMemberName').value.trim();
     const birthdate = document.getElementById('editMemberBirthdate').value;
-    const classId = document.getElementById('editMemberClass').value;
-    if (!name || !birthdate) return alert('이름과 생년월일을 입력해주세요.');
+    const classId = document.getElementById('editMemberClass').value; // 수정된 반 ID
+    
+    if (!name || !birthdate) return alert('모든 필드를 입력해주세요.');
 
     const currentUserData = users.find(u => u.id === id);
     if (users.some(u => u.id !== id && u.establishmentId === currentUserData.establishmentId && u.name === name)) {
         return alert('해당 교육기관에 이미 같은 이름의 구성원이 존재합니다.');
     }
+
     try {
+        // 이름, 생년월일, 반 ID를 업데이트
         await window.firebaseService.updateUser(id, { name, birthdate, classId: classId || null });
         alert('구성원 정보가 성공적으로 수정되었습니다.');
         closeEditMemberModal();
@@ -513,7 +535,6 @@ async function saveMemberChanges() {
         alert('정보 수정 중 오류가 발생했습니다.');
     }
 }
-
 
 async function resetPassword(id) {
     const user = users.find(u => u.id === id);
