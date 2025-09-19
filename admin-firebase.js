@@ -332,7 +332,6 @@ async function renderMemberList(filterEstId = null) {
     filterEstId = filterEstId || document.getElementById('memberEstablishment').value;
     let filteredUsers = users.filter(u => u.role !== 'admin' && (!filterEstId || u.establishmentId === filterEstId));
     
-    // 모든 반 정보를 한 번에 가져와서 맵으로 만듭니다.
     const allClasses = await Promise.all(establishments.map(est => window.firebaseService.getClassesByEstablishment(est.id)));
     const classMap = Object.fromEntries(allClasses.flat().map(c => [c.id, c.name]));
 
@@ -400,13 +399,29 @@ async function updateMemberPermission() {
     }
 }
 
+/**
+ * [수정됨] 구성원 권한 현황 목록을 렌더링하고, 각 항목에 수정/삭제 버튼을 추가합니다.
+ */
 function renderPermissionList() {
     const listElement = document.getElementById('permissionList');
     listElement.innerHTML = '';
     users.forEach(user => {
         const establishment = establishments.find(est => est.id === user.establishmentId);
         const li = document.createElement('li');
-        li.classList.add('permission-item'); 
+
+        let actionsHtml = '';
+        // 'admin' 역할은 수정하거나 삭제할 수 없습니다.
+        if (user.role !== 'admin') {
+            actionsHtml = `
+            <div class="item-actions">
+                <div class="button-group-list">
+                    <button class="btn-edit" onclick="openEditMemberModal('${user.id}')">수정</button>
+                    <button onclick="deleteMember('${user.id}')">삭제</button>
+                </div>
+            </div>
+            `;
+        }
+
         li.innerHTML = `
             <div class="item-content">
                 <div class="item-main-info">
@@ -416,6 +431,7 @@ function renderPermissionList() {
                     <span>소속: ${establishment ? establishment.name : '글로벌'}</span>
                 </div>
             </div>
+            ${actionsHtml}
         `;
         listElement.appendChild(li);
     });
@@ -466,31 +482,23 @@ async function saveEstablishmentChanges() {
     }
 }
 
-/**
- * [수정됨] 구성원 정보 수정 모달을 열고, 해당 구성원의 반 정보를 불러옵니다.
- * @param {string} id - 수정할 사용자의 ID
- */
 async function openEditMemberModal(id) {
     const user = users.find(u => u.id === id);
     if (!user) return alert('구성원 정보를 찾을 수 없습니다.');
     
-    // 기본 정보 설정
     document.getElementById('editMemberId').value = id;
     document.getElementById('editMemberName').value = user.name;
     document.getElementById('editMemberBirthdate').value = user.birthdate;
 
-    // 반 선택 콤보박스 초기화
     const classSelect = document.getElementById('editMemberClass');
     classSelect.innerHTML = '<option value="">-- 반 선택 --</option>';
 
-    // 사용자가 속한 교육기관이 있는 경우, 해당 기관의 반 목록을 불러옴
     if (user.establishmentId) {
         try {
             const classes = await window.firebaseService.getClassesByEstablishment(user.establishmentId);
             classes.forEach(c => {
                 classSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
             });
-            // 기존에 선택된 반이 있으면 그 값을 선택
             if (user.classId) {
                 classSelect.value = user.classId;
             }
@@ -500,7 +508,6 @@ async function openEditMemberModal(id) {
         }
     }
     
-    // 모달 표시
     document.getElementById('editMemberModal').style.display = 'flex';
 }
 
@@ -508,14 +515,11 @@ function closeEditMemberModal() {
     document.getElementById('editMemberModal').style.display = 'none';
 }
 
-/**
- * [수정됨] 구성원 정보 변경사항(반 포함)을 저장합니다.
- */
 async function saveMemberChanges() {
     const id = document.getElementById('editMemberId').value;
     const name = document.getElementById('editMemberName').value.trim();
     const birthdate = document.getElementById('editMemberBirthdate').value;
-    const classId = document.getElementById('editMemberClass').value; // 수정된 반 ID
+    const classId = document.getElementById('editMemberClass').value;
     
     if (!name || !birthdate) return alert('모든 필드를 입력해주세요.');
 
@@ -525,7 +529,6 @@ async function saveMemberChanges() {
     }
 
     try {
-        // 이름, 생년월일, 반 ID를 업데이트
         await window.firebaseService.updateUser(id, { name, birthdate, classId: classId || null });
         alert('구성원 정보가 성공적으로 수정되었습니다.');
         closeEditMemberModal();
