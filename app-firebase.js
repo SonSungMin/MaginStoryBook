@@ -1,5 +1,6 @@
 // app-firebase.js - Firebase 연동된 메인 애플리케이션 스크립트
 
+// 전역 변수
 let currentUser = null;
 let myStories = [];
 let classStories = [];
@@ -12,29 +13,40 @@ const myStoryGrid = document.querySelector('#my-story .story-grid');
 const classStoryGrid = document.querySelector('#class-story .story-grid');
 const teacherArtworkList = document.querySelector('#teacher-tools .artwork-list');
 
+// 모달 및 입력 관련 DOM 요소
 const uploadModal = document.getElementById('uploadModal');
 const drawingFileInput = document.getElementById('drawingFileInput');
 const previewImage = document.getElementById('previewImage');
 const drawingTitleInput = document.getElementById('drawingTitleInput');
 const drawingStoryInput = document.getElementById('drawingStoryInput');
 
-// 수정 모달 DOM 요소
 const editStoryModal = document.getElementById('editStoryModal');
 const editStoryIdInput = document.getElementById('editStoryId');
 const editPreviewImage = document.getElementById('editPreviewImage');
 const editDrawingTitleInput = document.getElementById('editDrawingTitleInput');
 const editDrawingStoryInput = document.getElementById('editDrawingStoryInput');
 
+const storyDetailModalElement = document.getElementById('storyDetailModal');
+const detailStoryTitle = document.getElementById('detailStoryTitle');
+const detailOriginalImg = document.getElementById('detailOriginalImg');
+const detailStoryText = document.getElementById('detailStoryText');
+const detailStoryDate = document.getElementById('detailStoryDate');
+
+// 기타 UI 요소
 const storybookDropzone = document.getElementById('storybook-dropzone');
 const pageSlots = document.querySelectorAll('.page-slot');
 const currentPagePreviewImg = document.querySelector('#current-page-preview img');
 const currentPagePreviewText = document.querySelector('#current-page-preview .preview-text');
 
+// 업로드 및 크롭 관련 변수
 let currentOriginalFile = null;
 let cropper = null;
 const cropModal = document.getElementById('cropModal');
 const imageToCrop = document.getElementById('imageToCrop');
 
+/**
+ * 앱 초기화 함수
+ */
 window.initializeApp = async function() {
     if (!window.firebaseService || !window.supabaseStorageService) {
         console.error('필요한 서비스가 모두 로드되지 않았습니다.');
@@ -62,12 +74,17 @@ window.initializeApp = async function() {
     }
 };
 
+/**
+ * 모든 스토리(내 그림, 우리 반)를 로드하고 화면에 렌더링
+ */
 async function loadAndRenderStories() {
     try {
         myStories = await window.firebaseService.getStoriesByUser(currentUser.id);
         classStories = await window.firebaseService.getStoriesByEstablishment(currentUser.establishmentId);
+
         renderMyStoryCards();
         renderClassStoryCards();
+
         if (['teacher', 'director', 'admin'].includes(currentUser.role)) {
             renderTeacherArtworkList();
         }
@@ -78,7 +95,9 @@ async function loadAndRenderStories() {
     }
 }
 
-
+/**
+ * 사용자 역할에 따라 UI 설정 (예: 선생님 도구함 표시/숨김)
+ */
 function setupUIByRole() {
     const teacherToolsNavButton = document.getElementById('teacherToolsNavButton');
     if (['teacher', 'director', 'admin'].includes(currentUser.role)) {
@@ -88,6 +107,9 @@ function setupUIByRole() {
     }
 }
 
+/**
+ * 기본 이벤트 리스너 설정
+ */
 function setupEventListeners() {
     navButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -104,6 +126,10 @@ function setupEventListeners() {
     setupDragAndDrop();
 }
 
+/**
+ * 특정 섹션을 활성화하는 함수
+ * @param {string} targetId - 활성화할 섹션의 ID
+ */
 function activateSection(targetId) {
     appSections.forEach(section => section.classList.remove('active'));
     const targetSection = document.getElementById(targetId);
@@ -117,22 +143,34 @@ function activateSection(targetId) {
     }
 }
 
+/**
+ * 로그아웃 처리
+ */
 window.handleLogout = function() {
     sessionStorage.removeItem('loggedInUser');
     alert('로그아웃되었습니다.');
     window.location.href = 'index.html';
 };
 
+
+// --- 스토리 카드 렌더링 ---
+
+/**
+ * '내 그림 이야기' 섹션의 카드들을 렌더링
+ */
 function renderMyStoryCards() {
-    const uploadCard = myStoryGrid.querySelector('.upload-card');
-    myStoryGrid.innerHTML = '';
-    myStoryGrid.appendChild(uploadCard);
+    // 기존 스토리 카드들만 삭제 (업로드 카드는 남김)
+    myStoryGrid.querySelectorAll('.story-card:not(.upload-card)').forEach(card => card.remove());
+    
     myStories.forEach(story => {
         const storyCard = createStoryCardElement(story);
         myStoryGrid.appendChild(storyCard);
     });
 }
 
+/**
+ * '우리 반 이야기' 섹션의 카드들을 렌더링
+ */
 function renderClassStoryCards() {
     classStoryGrid.innerHTML = '';
     classStories.forEach(story => {
@@ -141,15 +179,25 @@ function renderClassStoryCards() {
     });
 }
 
+/**
+ * 스토리 카드 DOM 요소를 생성
+ * @param {object} story - 스토리 데이터
+ * @returns {HTMLElement} - 생성된 스토리 카드 요소
+ */
 function createStoryCardElement(story) {
     const storyCard = document.createElement('div');
     storyCard.classList.add('story-card');
     storyCard.dataset.storyId = story.id;
 
-    // 카드 클릭 시 상세 보기
     const imageLink = document.createElement('a');
     imageLink.href = 'javascript:void(0)';
-    imageLink.onclick = () => openStoryDetailModal(story.id);
+    imageLink.onclick = (event) => {
+        // 버튼 클릭 시에는 상세 모달이 열리지 않도록 함
+        if (event.target.tagName !== 'BUTTON' && !event.target.closest('button')) {
+            openStoryDetailModal(story.id);
+        }
+    };
+
     const img = document.createElement('img');
     img.src = story.originalImgUrl || 'images/placeholder_preview.png';
     img.alt = story.title;
@@ -162,7 +210,6 @@ function createStoryCardElement(story) {
     cardInfo.innerHTML = `<span class="story-title">${story.title}</span><span class="story-date">${displayDate}</span>`;
     storyCard.appendChild(cardInfo);
 
-    // 수정/삭제 버튼 추가
     const canModify = currentUser.id === story.uploaderId || ['teacher', 'director', 'admin'].includes(currentUser.role);
     if (canModify) {
         const cardActions = document.createElement('div');
@@ -176,7 +223,9 @@ function createStoryCardElement(story) {
     return storyCard;
 }
 
-
+/**
+ * '선생님 도구함'의 작품 목록을 렌더링
+ */
 function renderTeacherArtworkList() {
     teacherArtworkList.innerHTML = '';
     classStories.forEach(story => {
@@ -194,6 +243,8 @@ function renderTeacherArtworkList() {
     attachDragAndDropListeners();
 }
 
+
+// --- 새 그림 올리기 / 수정 / 삭제 ---
 
 window.openUploadModal = function() {
     uploadModal.style.display = 'flex';
@@ -236,7 +287,11 @@ function closeCropModal() {
 window.cropImage = function() {
     if (cropper) {
         const canvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
-        previewImage.src = canvas.toDataURL();
+        const dataUrl = canvas.toDataURL();
+        
+        console.log("미리보기 이미지 URL (Data URL):", dataUrl.substring(0, 100) + "...");
+        previewImage.src = dataUrl;
+        
         canvas.toBlob(blob => {
             currentOriginalFile = new File([blob], "cropped_image.png", { type: "image/png" });
         }, 'image/png');
@@ -251,18 +306,15 @@ window.cancelCrop = function() {
 window.saveStory = async function() {
     const title = drawingTitleInput.value.trim();
     const storyText = drawingStoryInput.value.trim();
-
     if (!currentOriginalFile || !title) {
         alert('그림을 업로드하고 제목을 입력해주세요!');
         return;
     }
-
     try {
         const timestamp = Date.now();
         const fileExtension = currentOriginalFile.name.split('.').pop() || 'png';
         const imagePath = `public/${currentUser.id}/${timestamp}_original.${fileExtension}`;
         const imageUrl = await window.supabaseStorageService.uploadImage(currentOriginalFile, imagePath);
-
         await window.firebaseService.createStory({
             uploaderId: currentUser.id,
             uploaderName: currentUser.name,
@@ -271,7 +323,6 @@ window.saveStory = async function() {
             storyText,
             originalImgUrl: imageUrl,
         });
-
         alert('그림이 저장되었습니다!');
         closeUploadModal();
         await loadAndRenderStories();
@@ -281,7 +332,6 @@ window.saveStory = async function() {
     }
 };
 
-// --- 수정/삭제 기능 함수 ---
 window.openEditStoryModal = function(storyId) {
     const story = [...myStories, ...classStories].find(s => s.id === storyId);
     if (story) {
@@ -301,12 +351,10 @@ window.saveStoryChanges = async function() {
     const storyId = editStoryIdInput.value;
     const newTitle = editDrawingTitleInput.value.trim();
     const newStoryText = editDrawingStoryInput.value.trim();
-
     if (!newTitle) {
         alert('제목을 입력해주세요.');
         return;
     }
-
     try {
         await window.firebaseService.updateStory(storyId, {
             title: newTitle,
@@ -322,7 +370,7 @@ window.saveStoryChanges = async function() {
 };
 
 window.deleteStory = async function(storyId) {
-    if (confirm('정말 이 작품을 삭제하시겠습니까?')) {
+    if (confirm('정말 이 작품을 삭제하시겠습니까? 삭제된 그림은 복구할 수 없습니다.')) {
         try {
             await window.firebaseService.deleteStory(storyId);
             alert('작품이 삭제되었습니다.');
@@ -335,17 +383,11 @@ window.deleteStory = async function(storyId) {
 };
 
 
-// --- 상세 보기 및 드래그 앤 드롭 (기존과 유사) ---
-const storyDetailModalElement = document.getElementById('storyDetailModal');
-const detailStoryTitle = document.getElementById('detailStoryTitle');
-const detailOriginalImg = document.getElementById('detailOriginalImg');
-const detailStoryText = document.getElementById('detailStoryText');
-const detailStoryDate = document.getElementById('detailStoryDate');
+// --- 상세 보기 및 드래그 앤 드롭 ---
 
 function openStoryDetailModal(storyId) {
     const story = [...myStories, ...classStories].find(s => s.id === storyId);
     if (!story) return;
-
     detailStoryTitle.textContent = story.title;
     detailOriginalImg.src = story.originalImgUrl || 'images/placeholder_preview.png';
     detailStoryText.textContent = story.storyText || '이야기가 없습니다.';
@@ -353,19 +395,17 @@ function openStoryDetailModal(storyId) {
     detailStoryDate.textContent = displayDate;
     storyDetailModalElement.style.display = 'flex';
 }
+
 window.closeStoryDetailModal = function() {
     storyDetailModalElement.style.display = 'none';
 };
+
 let draggedItem = null;
+
 function setupDragAndDrop() {
     pageSlots.forEach(slot => {
-        slot.addEventListener('dragover', e => {
-            e.preventDefault();
-            slot.style.backgroundColor = '#e0ffe0';
-        });
-        slot.addEventListener('dragleave', () => {
-            slot.style.backgroundColor = '#f0f0f0';
-        });
+        slot.addEventListener('dragover', e => { e.preventDefault(); slot.style.backgroundColor = '#e0ffe0'; });
+        slot.addEventListener('dragleave', () => { slot.style.backgroundColor = '#f0f0f0'; });
         slot.addEventListener('drop', e => {
             e.preventDefault();
             slot.style.backgroundColor = '#f0f0f0';
@@ -391,6 +431,7 @@ function setupDragAndDrop() {
         });
     });
 }
+
 function attachDragAndDropListeners() {
     const currentArtworkItems = document.querySelectorAll('.artwork-item');
     currentArtworkItems.forEach(item => {
@@ -408,6 +449,7 @@ function attachDragAndDropListeners() {
         });
     });
 }
+
 window.previewStorybook = function() {
     alert('동화책 미리보기 기능은 동화책 뷰어 개발이 필요합니다!');
 };
