@@ -6,14 +6,15 @@ let myStories = [];
 let classStories = [];
 let allUsers = []; // 전체 사용자 목록 캐싱
 let allEstablishments = []; // 전체 교육기관 목록 캐싱
+let themes = []; // 테마 목록 캐싱
 
 // DOM 요소 캐싱
 const navButtons = document.querySelectorAll('.nav-button');
 const appSections = document.querySelectorAll('.app-section');
-const seasonCalendarButton = document.querySelector('.season-calendar-button');
 const myStoryGrid = document.querySelector('#my-story .story-grid');
 const classStoryGrid = document.querySelector('#class-story .story-grid');
 const teacherArtworkList = document.querySelector('#teacher-tools .artwork-list');
+const themeFilter = document.getElementById('themeFilter');
 
 // 모달 및 입력 관련 DOM 요소
 const uploadModal = document.getElementById('uploadModal');
@@ -23,6 +24,8 @@ const drawingTitleInput = document.getElementById('drawingTitleInput');
 const drawingStoryInput = document.getElementById('drawingStoryInput');
 const uploadEstablishmentSelect = document.getElementById('uploadEstablishmentSelect');
 const uploadStudentSelect = document.getElementById('uploadStudentSelect');
+const themeSelect = document.getElementById('themeSelect');
+const editThemeSelect = document.getElementById('editThemeSelect');
 
 
 const editStoryModal = document.getElementById('editStoryModal');
@@ -36,6 +39,8 @@ const detailStoryTitle = document.getElementById('detailStoryTitle');
 const detailOriginalImg = document.getElementById('detailOriginalImg');
 const detailStoryText = document.getElementById('detailStoryText');
 const detailStoryDate = document.getElementById('detailStoryDate');
+const detailStoryTheme = document.getElementById('detailStoryTheme');
+
 
 // 기타 UI 요소
 const storybookDropzone = document.getElementById('storybook-dropzone');
@@ -67,13 +72,15 @@ window.initializeApp = async function() {
         currentUser = JSON.parse(loggedInUserData);
         console.log('로그인 사용자:', currentUser);
 
-        // 관리자 또는 교사인 경우, 사용자 및 기관 목록을 미리 로드
         if (['admin', 'teacher', 'director'].includes(currentUser.role)) {
             [allUsers, allEstablishments] = await Promise.all([
                 window.firebaseService.getAllUsers(),
                 window.firebaseService.getAllEstablishments()
             ]);
         }
+        
+        themes = await window.firebaseService.getThemesByEstablishment(currentUser.establishmentId);
+        populateThemeFilter();
 
 
         setupUIByRole();
@@ -96,24 +103,21 @@ async function loadAndRenderStories() {
         console.log('작품 데이터 로드를 시작합니다...');
         myStories = await window.firebaseService.getStoriesByUser(currentUser.id);
         
-        // ✨ 관리자일 경우와 아닐 경우를 분리하여 데이터를 로드합니다.
         if (currentUser.role === 'admin') {
-            // 관리자는 모든 기관의 작품을 불러옵니다.
             console.log('관리자 권한으로 모든 작품을 로드합니다.');
             classStories = await window.firebaseService.getAllStories();
         } else {
-            // 교사, 원생 등은 소속된 기관의 작품만 불러옵니다.
             console.log(`'${currentUser.establishmentId}' 기관의 작품을 로드합니다.`);
             classStories = await window.firebaseService.getStoriesByEstablishment(currentUser.establishmentId);
         }
         
         console.log('Firebase에서 가져온 [내 작품] 데이터:', myStories);
-        console.log('Firebase에서 가져온 [선생님 도구함/우리반] 데이터:', classStories);
+        console.log('Firebase에서 가져온 [우리반] 데이터:', classStories);
 
         renderMyStoryCards();
         renderClassStoryCards();
 
-        if (['teacher', 'director', 'admin'].includes(currentUser.role)) {
+        if (currentUser.role === 'admin') {
             renderTeacherArtworkList();
         }
         console.log('작품 렌더링이 완료되었습니다.');
@@ -125,11 +129,11 @@ async function loadAndRenderStories() {
 }
 
 /**
- * 사용자 역할에 따라 UI 설정 (예: 선생님 도구함 표시/숨김)
+ * 사용자 역할에 따라 UI 설정
  */
 function setupUIByRole() {
     const teacherToolsNavButton = document.getElementById('teacherToolsNavButton');
-    if (['teacher', 'director', 'admin'].includes(currentUser.role)) {
+    if (currentUser.role === 'admin') {
         teacherToolsNavButton.style.display = 'flex';
     } else {
         teacherToolsNavButton.style.display = 'none';
@@ -148,10 +152,7 @@ function setupEventListeners() {
         });
     });
 
-    seasonCalendarButton.addEventListener('click', () => {
-        navButtons.forEach(btn => btn.classList.remove('active'));
-        activateSection(seasonCalendarButton.dataset.target);
-    });
+    themeFilter.addEventListener('change', () => renderMyStoryCards(themeFilter.value));
     setupDragAndDrop();
     uploadEstablishmentSelect.addEventListener('change', populateStudentOptionsForAdmin);
 }
@@ -165,8 +166,8 @@ function activateSection(targetId) {
     const targetSection = document.getElementById(targetId);
     if (targetSection) {
         targetSection.classList.add('active');
-        if (targetId === 'teacher-tools' && !['teacher', 'director', 'admin'].includes(currentUser.role)) {
-             alert('선생님 도구함에 접근할 권한이 없습니다.');
+        if (targetId === 'teacher-tools' && currentUser.role !== 'admin') {
+             alert('이 기능은 관리자만 사용할 수 있습니다.');
              activateSection('my-story');
              document.querySelector('.nav-button[data-target="my-story"]').classList.add('active');
         }
@@ -187,10 +188,17 @@ window.handleLogout = function() {
 
 /**
  * '내 그림 이야기' 섹션의 카드들을 렌더링
+ * @param {string} filterThemeId - 필터링할 테마 ID
  */
-function renderMyStoryCards() {
+function renderMyStoryCards(filterThemeId = 'all') {
     myStoryGrid.querySelectorAll('.story-card:not(.upload-card)').forEach(card => card.remove());
-    myStories.forEach(story => {
+    
+    let filteredStories = myStories;
+    if (filterThemeId !== 'all') {
+        filteredStories = myStories.filter(story => story.themeId === filterThemeId);
+    }
+    
+    filteredStories.forEach(story => {
         const storyCard = createStoryCardElement(story);
         myStoryGrid.appendChild(storyCard);
     });
@@ -228,8 +236,6 @@ function createStoryCardElement(story) {
     const img = document.createElement('img');
     const imageUrl = story.originalImgUrl || 'images/placeholder_preview.png';
     
-    console.log(`[카드 렌더링] 제목: "${story.title}", 이미지 URL: ${imageUrl}`);
-    
     img.src = imageUrl;
     img.alt = story.title;
     imageLink.appendChild(img);
@@ -238,7 +244,9 @@ function createStoryCardElement(story) {
     const cardInfo = document.createElement('div');
     cardInfo.classList.add('card-info');
     const displayDate = story.createdAt ? window.firebaseService.formatDate(story.createdAt) : new Date().toLocaleDateString('ko-KR');
-    cardInfo.innerHTML = `<span class="story-title">${story.title}</span><span class="story-date">${displayDate}</span>`;
+    const theme = themes.find(t => t.id === story.themeId);
+    const themeName = theme ? theme.name : '미지정';
+    cardInfo.innerHTML = `<span class="story-title">${story.title}</span><span class="story-date">${displayDate} / ${themeName}</span>`;
     storyCard.appendChild(cardInfo);
 
     const canModify = currentUser.id === story.uploaderId || ['teacher', 'director', 'admin'].includes(currentUser.role);
@@ -255,7 +263,7 @@ function createStoryCardElement(story) {
 }
 
 /**
- * '선생님 도구함'의 작품 목록을 렌더링
+ * '동화책 만들기'의 작품 목록을 렌더링
  */
 function renderTeacherArtworkList() {
     teacherArtworkList.innerHTML = '';
@@ -270,7 +278,6 @@ function renderTeacherArtworkList() {
         const uploaderName = story.uploaderName || '알 수 없음';
         
         const imageUrl = story.originalImgUrl || 'images/placeholder_preview.png';
-        console.log(`[선생님 도구함] 제목: "${story.title}", 이미지 URL: ${imageUrl}`);
         
         artworkItem.innerHTML = `<img src="${imageUrl}" alt="${story.title}"><span>${story.title} (${uploaderName})</span>`;
         teacherArtworkList.appendChild(artworkItem);
@@ -281,9 +288,7 @@ function renderTeacherArtworkList() {
 
 // --- 새 그림 올리기 / 수정 / 삭제 ---
 
-// [수정됨]
 window.openUploadModal = function() {
-    // 초기화
     drawingFileInput.value = '';
     document.getElementById('cameraInput').value = '';
     previewImage.src = 'images/placeholder_preview.png';
@@ -295,8 +300,8 @@ window.openUploadModal = function() {
     uploadEstablishmentSelect.innerHTML = '';
     uploadStudentSelect.innerHTML = '';
 
+    populateThemeOptions(themeSelect);
 
-    // 역할에 따른 드롭다운 설정
     if (['teacher', 'director'].includes(currentUser.role)) {
         uploadStudentSelect.style.display = 'block';
         uploadStudentSelect.innerHTML = '<option value="">(내 이름으로 올리기)</option>';
@@ -317,7 +322,6 @@ window.openUploadModal = function() {
     uploadModal.style.display = 'flex';
 };
 
-// [추가됨] 관리자가 교육기관을 선택했을 때 원생 목록을 채우는 함수
 function populateStudentOptionsForAdmin() {
     const selectedEstId = uploadEstablishmentSelect.value;
     uploadStudentSelect.innerHTML = '<option value="">-- 원생 선택 --</option>';
@@ -373,12 +377,13 @@ window.cancelCrop = function() {
     closeCropModal();
 };
 
-// [수정됨]
 window.saveStory = async function() {
     const title = drawingTitleInput.value.trim();
     const storyText = drawingStoryInput.value.trim();
-    if (!currentOriginalFile || !title) {
-        alert('그림을 업로드하고 제목을 입력해주세요!');
+    const selectedThemeId = themeSelect.value;
+
+    if (!currentOriginalFile || !title || !selectedThemeId) {
+        alert('그림, 제목, 테마를 모두 선택 및 입력해주세요!');
         return;
     }
 
@@ -388,7 +393,6 @@ window.saveStory = async function() {
         establishmentId: currentUser.establishmentId
     };
 
-    // 교사/관리자가 다른 학생을 선택했는지 확인
     const selectedStudentId = uploadStudentSelect.value;
     if (selectedStudentId) {
         const selectedStudent = allUsers.find(u => u.id === selectedStudentId);
@@ -411,14 +415,13 @@ window.saveStory = async function() {
         const imagePath = `${uploader.id}/${timestamp}_original.${fileExtension}`;
         const imageUrl = await window.supabaseStorageService.uploadImage(currentOriginalFile, imagePath);
         
-        console.log(`[저장 완료] 제목: "${title}", 최종 저장 URL: ${imageUrl}`);
-
         await window.firebaseService.createStory({
             uploaderId: uploader.id,
             uploaderName: uploader.name,
             establishmentId: uploader.establishmentId,
             title,
             storyText,
+            themeId: selectedThemeId,
             originalImgUrl: imageUrl,
             aiProcessed: false
         });
@@ -438,6 +441,7 @@ window.openEditStoryModal = function(storyId) {
         editPreviewImage.src = story.originalImgUrl;
         editDrawingTitleInput.value = story.title;
         editDrawingStoryInput.value = story.storyText;
+        populateThemeOptions(editThemeSelect, story.themeId);
         editStoryModal.style.display = 'flex';
     }
 };
@@ -450,14 +454,17 @@ window.saveStoryChanges = async function() {
     const storyId = editStoryIdInput.value;
     const newTitle = editDrawingTitleInput.value.trim();
     const newStoryText = editDrawingStoryInput.value.trim();
-    if (!newTitle) {
-        alert('제목을 입력해주세요.');
+    const newThemeId = editThemeSelect.value;
+
+    if (!newTitle || !newThemeId) {
+        alert('제목과 테마를 모두 입력해주세요.');
         return;
     }
     try {
         await window.firebaseService.updateStory(storyId, {
             title: newTitle,
-            storyText: newStoryText
+            storyText: newStoryText,
+            themeId: newThemeId
         });
         alert('작품 정보가 수정되었습니다.');
         closeEditStoryModal();
@@ -481,8 +488,7 @@ window.deleteStory = async function(storyId) {
     }
 };
 
-
-// --- 상세 보기 및 드래그 앤 드롭 ---
+// --- 상세 보기 및 테마 관련 ---
 
 function openStoryDetailModal(storyId) {
     const story = [...myStories, ...classStories].find(s => s.id === storyId);
@@ -490,18 +496,37 @@ function openStoryDetailModal(storyId) {
     detailStoryTitle.textContent = story.title;
     
     const imageUrl = story.originalImgUrl || 'images/placeholder_preview.png';
-    console.log(`[상세 보기] 제목: "${story.title}", 이미지 URL: ${imageUrl}`);
     
     detailOriginalImg.src = imageUrl;
     detailStoryText.textContent = story.storyText || '이야기가 없습니다.';
     const displayDate = story.createdAt ? window.firebaseService.formatDate(story.createdAt) : new Date().toLocaleDateString('ko-KR');
+    const theme = themes.find(t => t.id === story.themeId);
     detailStoryDate.textContent = displayDate;
+    detailStoryTheme.textContent = theme ? theme.name : '미지정';
     storyDetailModalElement.style.display = 'flex';
 }
 
 window.closeStoryDetailModal = function() {
     storyDetailModalElement.style.display = 'none';
 };
+
+function populateThemeFilter() {
+    themeFilter.innerHTML = '<option value="all">전체보기</option>';
+    themes.forEach(theme => {
+        themeFilter.innerHTML += `<option value="${theme.id}">${theme.name}</option>`;
+    });
+}
+
+function populateThemeOptions(selectElement, selectedId = null) {
+    selectElement.innerHTML = '<option value="">-- 테마 선택 --</option>';
+    themes.forEach(theme => {
+        const selected = theme.id === selectedId ? 'selected' : '';
+        selectElement.innerHTML += `<option value="${theme.id}" ${selected}>${theme.name}</option>`;
+    });
+}
+
+
+// --- 드래그 앤 드롭 ---
 
 let draggedItem = null;
 
