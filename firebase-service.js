@@ -607,3 +607,23 @@ class FirebaseService {
 }
 
 window.firebaseService = new FirebaseService();
+
+async getStoriesByStatus(status) {
+        try {
+            const q = query(
+                collection(this.db, 'stories'),
+                where('status', '==', status),
+                orderBy('createdAt', 'desc')
+            );
+            const querySnapshot = await getDocs(q);
+            const stories = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            console.log(`'${status}' 상태인 작품 조회:`, stories.length, '개');
+            return stories;
+        } catch (error) {
+            console.error(`'${status}' 상태 작품 조회 오류:`, error);
+            throw error;
+        }
+    }
