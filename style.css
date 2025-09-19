@@ -596,7 +596,8 @@ body {
 
 
 .modal-content input[type="text"],
-.modal-content textarea {
+.modal-content textarea,
+.form-control {
     width: calc(100% - 20px);
     padding: 10px;
     margin-bottom: 15px;
