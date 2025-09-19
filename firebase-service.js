@@ -181,17 +181,28 @@ class FirebaseService {
                 limit(1)
             );
             const querySnapshot = await getDocs(q);
-
+    
             if (querySnapshot.empty) {
                 console.log('사용자 없음:', name);
                 return null;
             }
-
+    
             const userDoc = querySnapshot.docs[0];
             const userData = {
                 id: userDoc.id,
                 ...userDoc.data()
             };
+    
+            if (userData.establishmentId) {
+                const estDocRef = doc(this.db, 'establishments', userData.establishmentId);
+                const estDoc = await getDoc(estDocRef);
+                if (estDoc.exists()) {
+                    userData.establishmentName = estDoc.data().name;
+                } else {
+                    userData.establishmentName = '소속 없음';
+                }
+            }
+    
             console.log('사용자 로그인 성공:', userData.name);
             return userData;
         } catch (error) {
@@ -476,6 +487,11 @@ class FirebaseService {
             console.error('교육기관 존재 확인 오류:', error);
             throw error;
         }
+    }
+
+    formatDate(timestamp) {
+        if (!timestamp) return '';
+        return new Date(timestamp.seconds * 1000).toLocaleDateString('ko-KR');
     }
 }
 
