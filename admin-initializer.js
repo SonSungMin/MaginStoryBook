@@ -34,7 +34,7 @@ Promise.all([
 ]).then(([firebaseServiceModule, adminFirebaseModule]) => {
     console.log('모든 모듈 로드 완료.');
     
-    // DOM이 완전히 로드된 후 페이지 초기화 함수 호출
+    // DOM이 완전히 로드된 후 페이지 초기화 함수를 안전하게 호출
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', adminFirebaseModule.initializeAdminPage);
     } else {
