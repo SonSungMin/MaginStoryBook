@@ -1,4 +1,3 @@
-/* 기본 설정 */
 :root {
     --primary-color: #FFD400; /* 메인 노란색 */
     --secondary-color: #FF6B6B; /* 포인트 빨간색 */
@@ -10,8 +9,8 @@
     --card-bg: #FFFFFF;
     --success-color: #4CAF50;
     --warning-color: #FFC107;
-    --header-bg: #FFF1A0; /* ✨ 부드러운 노란색 계열로 변경 */
-    --ribbon-color: #FDB813; /* ✨ 어울리는 금빛 노란색으로 변경 */
+    --header-bg: #FFD34E; /* ✨ 눈이 편한 금빛 노란색으로 변경 */
+    --ribbon-color: #E59400; /* ✨ 어울리는 따뜻한 주황색으로 변경 */
 }
 
 body {
@@ -32,7 +31,7 @@ body {
 .main-header {
     background-color: var(--header-bg); /* ✨ 변경된 노란색 적용 */
     padding: 15px 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* 그림자 연하게 수정 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .main-header .container {
@@ -755,3 +754,4 @@ body {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
