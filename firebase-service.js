@@ -11,7 +11,8 @@ import {
     orderBy,
     serverTimestamp,
     limit,
-    onSnapshot
+    onSnapshot,
+    writeBatch
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 import {
@@ -27,20 +28,25 @@ class FirebaseService {
         this.storage = window.firebase.storage;
     }
 
+    // ===================
+    // 반(Classes) 관리
+    // ===================
     async createClass(classData) {
         try {
             const docRef = await addDoc(collection(this.db, 'classes'), {
                 ...classData,
                 createdAt: serverTimestamp(),
             });
+            console.log('반 생성 성공:', docRef.id);
             return docRef.id;
         } catch (error) {
-            console.error("Error creating class:", error);
+            console.error("반 생성 오류:", error);
             throw error;
         }
     }
 
     async getClassesByEstablishment(establishmentId) {
+        if (!establishmentId) return [];
         try {
             const q = query(
                 collection(this.db, 'classes'),
@@ -50,77 +56,26 @@ class FirebaseService {
             const querySnapshot = await getDocs(q);
             return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (error) {
-            console.error("Error getting classes:", error);
+            console.error("반 조회 오류:", error);
             throw error;
         }
     }
 
     async deleteClass(classId) {
         try {
+            // TODO: Remove this classId from all users who have it
             await deleteDoc(doc(this.db, 'classes', classId));
+            console.log('반 삭제 완료:', classId);
         } catch (error) {
-            console.error("Error deleting class:", error);
+            console.error("반 삭제 오류:", error);
             throw error;
         }
     }
 
-    setupEstablishmentListener(callback) {
-        try {
-            const q = query(collection(this.db, 'establishments'), orderBy('createdAt', 'desc'));
-            return onSnapshot(q, (querySnapshot) => {
-                const establishments = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                console.log('교육기관 실시간 업데이트:', establishments.length, '개');
-                callback(establishments);
-            }, (error) => {
-                console.error('교육기관 실시간 리스너 오류:', error);
-            });
-        } catch (error) {
-            console.error('교육기관 리스너 설정 오류:', error);
-            return null;
-        }
-    }
 
-    setupUserListener(callback) {
-        try {
-            const q = query(collection(this.db, 'users'), orderBy('createdAt', 'desc'));
-            return onSnapshot(q, (querySnapshot) => {
-                const users = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                console.log('사용자 실시간 업데이트:', users.length, '명');
-                callback(users);
-            }, (error) => {
-                console.error('사용자 실시간 리스너 오류:', error);
-            });
-        } catch (error) {
-            console.error('사용자 리스너 설정 오류:', error);
-            return null;
-        }
-    }
-
-    setupStoryListener(callback) {
-        try {
-            const q = query(collection(this.db, 'stories'), orderBy('createdAt', 'desc'));
-            return onSnapshot(q, (querySnapshot) => {
-                const stories = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                console.log('작품 실시간 업데이트:', stories.length, '개');
-                callback(stories);
-            }, (error) => {
-                console.error('작품 실시간 리스너 오류:', error);
-            });
-        } catch (error) {
-            console.error('작품 리스너 설정 오류:', error);
-            return null;
-        }
-    }
-
+    // ===================
+    // 교육기관(Establishments) 관리
+    // ===================
     async createEstablishment(establishmentData) {
         try {
             const docRef = await addDoc(collection(this.db, 'establishments'), {
@@ -151,7 +106,8 @@ class FirebaseService {
 
     async getAllEstablishments() {
         try {
-            const querySnapshot = await getDocs(collection(this.db, 'establishments'));
+            const q = query(collection(this.db, 'establishments'), orderBy('createdAt', 'desc'));
+            const querySnapshot = await getDocs(q);
             const establishments = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -165,15 +121,34 @@ class FirebaseService {
     }
 
     async deleteEstablishment(establishmentId) {
+        const batch = writeBatch(this.db);
+
         try {
-            await this.deleteUsersByEstablishment(establishmentId);
-            await deleteDoc(doc(this.db, 'establishments', establishmentId));
-            console.log('교육기관 삭제 완료:', establishmentId);
+            // Delete classes associated with the establishment
+            const classesQuery = query(collection(this.db, 'classes'), where('establishmentId', '==', establishmentId));
+            const classesSnapshot = await getDocs(classesQuery);
+            classesSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            // Delete users associated with the establishment
+            await this.deleteUsersByEstablishment(establishmentId); // This already handles stories
+
+            // Delete the establishment itself
+            const establishmentRef = doc(this.db, 'establishments', establishmentId);
+            batch.delete(establishmentRef);
+
+            await batch.commit();
+            console.log('교육기관 및 모든 관련 데이터 삭제 완료:', establishmentId);
         } catch (error) {
             console.error('교육기관 삭제 오류:', error);
             throw error;
         }
     }
+
+    // ===================
+    // 사용자(Users) 관리
+    // ===================
 
     async createUser(userData) {
         try {
@@ -220,7 +195,8 @@ class FirebaseService {
 
     async getAllUsers() {
         try {
-            const querySnapshot = await getDocs(collection(this.db, 'users'));
+            const q = query(collection(this.db, 'users'), orderBy('createdAt', 'desc'));
+            const querySnapshot = await getDocs(q);
             const users = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -281,7 +257,10 @@ class FirebaseService {
 
     async deleteUser(userId) {
         try {
+            // 사용자의 모든 작품도 삭제
             await this.deleteStoriesByUser(userId);
+
+            // 사용자 삭제
             await deleteDoc(doc(this.db, 'users', userId));
             console.log('사용자 삭제 완료:', userId);
         } catch (error) {
@@ -301,6 +280,10 @@ class FirebaseService {
             throw error;
         }
     }
+
+    // ===================
+    // 작품(Stories) 관리
+    // ===================
 
     async createStory(storyData) {
         try {
@@ -347,6 +330,8 @@ class FirebaseService {
                 return [];
             }
 
+            // Firestore 'in' query has a limit of 10 elements.
+            // Chunk the userIds array into arrays of 10.
             const chunks = [];
             for (let i = 0; i < userIds.length; i += 10) {
                 chunks.push(userIds.slice(i, i + 10));
@@ -367,6 +352,7 @@ class FirebaseService {
                 allStories.push(...stories);
             }
 
+            // Sort by creation time descending as the query was done in chunks
             allStories.sort((a, b) => {
                 const aTime = a.createdAt?.seconds || 0;
                 const bTime = b.createdAt?.seconds || 0;
@@ -421,11 +407,14 @@ class FirebaseService {
             if (storyDoc.exists()) {
                 const storyData = storyDoc.data();
                 if (storyData.originalImgUrl) {
+                    // Supabase URL에서 파일 경로 추출
                     const filePath = new URL(storyData.originalImgUrl).pathname.split('/images/').pop();
                     if(filePath) {
+                         // Supabase 스토리지 서비스의 파일 삭제 메소드 호출
                          await window.supabaseStorageService.deleteImage(filePath);
                     }
                 }
+                 // Firestore 문서 삭제
                 await deleteDoc(storyDocRef);
                 console.log('작품 삭제 완료:', storyId);
             } else {
@@ -450,32 +439,25 @@ class FirebaseService {
         }
     }
 
+    // ===================
+    // 파일 업로드/삭제 (Supabase Storage)
+    // ===================
+
     async uploadImage(file, path) {
         try {
             console.log('이미지 업로드 시작:', path);
-            const storageRef = ref(this.storage, path);
-            const snapshot = await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(snapshot.ref);
+            const downloadURL = await window.supabaseStorageService.uploadImage(file, path);
             console.log('이미지 업로드 완료:', downloadURL);
-            return {
-                url: downloadURL,
-                path: path
-            };
+            return downloadURL;
         } catch (error) {
             console.error('이미지 업로드 오류:', error);
             throw error;
         }
     }
 
-    async deleteFile(path) {
-        try {
-            const storageRef = ref(this.storage, path);
-            await deleteObject(storageRef);
-            console.log('파일 삭제 완료:', path);
-        } catch (error) {
-            console.error('파일 삭제 오류:', error);
-        }
-    }
+    // ===================
+    // 유틸리티 함수들
+    // ===================
 
     async checkUserExists(name, establishmentId = null) {
         try {
@@ -522,6 +504,7 @@ class FirebaseService {
         }
     }
 
+    // Timestamp를 Date 문자열로 변환
     formatDate(timestamp) {
         if (!timestamp || !timestamp.toDate) {
             return new Date().toLocaleDateString('ko-KR');
@@ -529,6 +512,7 @@ class FirebaseService {
         return timestamp.toDate().toLocaleDateString('ko-KR');
     }
 
+    // Base64를 File 객체로 변환
     base64ToFile(base64String, fileName) {
         const arr = base64String.split(',');
         const mime = arr[0].match(/:(.*?);/)[1];
@@ -542,6 +526,7 @@ class FirebaseService {
     }
 }
 
+// 전역 서비스 인스턴스 생성
 window.firebaseService = new FirebaseService();
 
 console.log('Firebase 서비스 클래스 로드 완료');
