@@ -21,6 +21,7 @@ const roleMap = {
 let establishments = [];
 let users = [];
 let classes = [];
+let stories = [];
 
 export function initializeAdminPage() {
     console.log('관리자 페이지 초기화 시작...');
@@ -28,13 +29,14 @@ export function initializeAdminPage() {
     window.openEditModal = openEditModal;
     window.deleteEstablishment = deleteEstablishment;
     window.openEditThemeModal = openEditThemeModal;
-    window.activateTheme = activateTheme; // 활성화 함수 전역 등록
+    window.activateTheme = activateTheme;
     window.deleteTheme = deleteTheme;
     window.deleteClass = deleteClass;
     window.openEditMemberModal = openEditMemberModal;
     window.deleteMember = deleteMember;
     window.resetPassword = resetPassword;
-    window.handleRoleChange = handleRoleChange; 
+    window.handleRoleChange = handleRoleChange;
+    window.startProduction = startProduction;
 
     document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
     document.getElementById('adminLogoutButton').addEventListener('click', handleAdminLogout);
@@ -52,6 +54,8 @@ export function initializeAdminPage() {
     document.getElementById('addThemeButton').addEventListener('click', addTheme);
     document.getElementById('addMemberButton').addEventListener('click', addMember);
     document.getElementById('updateMemberPermissionButton').addEventListener('click', updateMemberPermission);
+    document.getElementById('bulkProductionButton').addEventListener('click', startBulkProduction);
+
 
     document.getElementById('saveEstablishmentChangesButton').addEventListener('click', saveEstablishmentChanges);
     document.getElementById('closeEditEstablishmentModalButton').addEventListener('click', closeEditModal);
@@ -91,9 +95,10 @@ function checkAdminLoginState() {
 
 async function loadDataAndRender() {
     try {
-        [establishments, users] = await Promise.all([
+        [establishments, users, stories] = await Promise.all([
             window.firebaseService.getAllEstablishments(),
-            window.firebaseService.getAllUsers()
+            window.firebaseService.getAllUsers(),
+            window.firebaseService.getAllStories()
         ]);
         await renderAll();
     } catch (error) {
@@ -109,6 +114,8 @@ async function renderAll() {
     await renderMemberList();
     renderMemberPermissionOptions();
     renderPermissionList();
+    await renderStorybookMakerList();
+    
     if(document.getElementById('classEstablishmentSelect').value) {
         await renderClassList();
     }
@@ -700,5 +707,75 @@ async function resetPassword(id) {
     } catch (error) {
         console.error('비밀번호 초기화 오류:', error);
         alert('비밀번호 초기화 중 오류가 발생했습니다.');
+    }
+}
+
+async function renderStorybookMakerList() {
+    const listElement = document.getElementById('storybookMakerList');
+    listElement.innerHTML = '';
+
+    const registeredStories = stories.filter(story => story.status === 'registered');
+
+    if (registeredStories.length === 0) {
+        listElement.innerHTML = '<li>등록된 작품이 없습니다.</li>';
+        return;
+    }
+    
+    registeredStories.forEach(story => {
+        const uploader = users.find(u => u.id === story.uploaderId);
+        const establishment = establishments.find(est => est.id === story.establishmentId);
+        const li = document.createElement('li');
+        
+        li.innerHTML = `
+            <div class="item-content">
+                <div class="item-main-info">${story.title}</div>
+                <div class="item-sub-info">
+                    <span>등록자: ${uploader ? uploader.name : '알수없음'}</span>
+                    <span>소속: ${establishment ? establishment.name : '소속없음'}</span>
+                </div>
+            </div>
+            <div class="item-actions">
+                <div class="button-group-list">
+                    <button class="btn-edit" onclick="startProduction('${story.id}')">제작하기</button>
+                </div>
+            </div>
+        `;
+        listElement.appendChild(li);
+    });
+}
+
+async function startProduction(storyId) {
+    if (!confirm('해당 작품의 동화책 제작을 시작하시겠습니까? 시작하면 선생님이 등록을 취소할 수 없습니다.')) return;
+    
+    try {
+        await window.firebaseService.updateStory(storyId, { status: 'in_production' });
+        alert('작품의 진행 상태가 "제작중"으로 변경되었습니다.');
+        await loadDataAndRender(); 
+    } catch (error) {
+        console.error('제작 상태 변경 오류:', error);
+        alert('상태 변경 중 오류가 발생했습니다.');
+    }
+}
+
+async function startBulkProduction() {
+    const registeredStories = stories.filter(story => story.status === 'registered');
+    if (registeredStories.length === 0) {
+        alert('제작을 시작할 작품이 없습니다.');
+        return;
+    }
+
+    if (!confirm(`등록된 ${registeredStories.length}개의 모든 작품을 '제작중' 상태로 변경하시겠습니까?`)) return;
+
+    try {
+        const updatePromises = registeredStories.map(story => 
+            window.firebaseService.updateStory(story.id, { status: 'in_production' })
+        );
+        await Promise.all(updatePromises);
+
+        alert('모든 등록된 작품이 "제작중" 상태로 변경되었습니다.');
+        await loadDataAndRender();
+    } catch (error) {
+        console.error('일괄 제작 상태 변경 오류:', error);
+        alert('일괄 제작 처리 중 오류가 발생했습니다.');
     }
 }
