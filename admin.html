@@ -187,8 +187,8 @@
         import('./firebase-service.js').then(() => {
             console.log('Firebase 서비스 로드 완료');
             import('./admin-firebase.js').then((module) => {
-                window.initializeAdminPage = module.initializeAdminPage;
-                
+                console.log('admin-firebase.js 모듈 로드 완료.');
+
                 // 전역 스코프에 함수 할당 (모달 등에서 사용)
                 window.addEstablishment = module.addEstablishment;
                 window.deleteEstablishment = module.deleteEstablishment;
@@ -209,8 +209,12 @@
                 window.closeEditModal = module.closeEditModal;
                 window.closeEditMemberModal = module.closeEditMemberModal;
 
-                // 페이지 초기화 함수 호출
-                initializeAdminPage();
+                // DOM이 완전히 로드된 후 페이지 초기화 함수 호출
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', module.initializeAdminPage);
+                } else {
+                    module.initializeAdminPage();
+                }
             });
         }).catch(error => {
             console.error('Firebase 서비스 로드 실패:', error);
