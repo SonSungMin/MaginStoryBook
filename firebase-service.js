@@ -1,5 +1,3 @@
-// firebase-service.js - Firebase 데이터베이스 서비스
-
 import {
     collection,
     doc,
@@ -29,9 +27,42 @@ class FirebaseService {
         this.storage = window.firebase.storage;
     }
 
-    // ===================
-    // 실시간 리스너 (실시간 업데이트용)
-    // ===================
+    async createClass(classData) {
+        try {
+            const docRef = await addDoc(collection(this.db, 'classes'), {
+                ...classData,
+                createdAt: serverTimestamp(),
+            });
+            return docRef.id;
+        } catch (error) {
+            console.error("Error creating class:", error);
+            throw error;
+        }
+    }
+
+    async getClassesByEstablishment(establishmentId) {
+        try {
+            const q = query(
+                collection(this.db, 'classes'),
+                where('establishmentId', '==', establishmentId),
+                orderBy('createdAt', 'desc')
+            );
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("Error getting classes:", error);
+            throw error;
+        }
+    }
+
+    async deleteClass(classId) {
+        try {
+            await deleteDoc(doc(this.db, 'classes', classId));
+        } catch (error) {
+            console.error("Error deleting class:", error);
+            throw error;
+        }
+    }
 
     setupEstablishmentListener(callback) {
         try {
@@ -90,10 +121,6 @@ class FirebaseService {
         }
     }
 
-    // ===================
-    // 교육기관(Establishments) 관리
-    // ===================
-
     async createEstablishment(establishmentData) {
         try {
             const docRef = await addDoc(collection(this.db, 'establishments'), {
@@ -139,10 +166,7 @@ class FirebaseService {
 
     async deleteEstablishment(establishmentId) {
         try {
-            // 관련 사용자들도 삭제
             await this.deleteUsersByEstablishment(establishmentId);
-
-            // 교육기관 삭제
             await deleteDoc(doc(this.db, 'establishments', establishmentId));
             console.log('교육기관 삭제 완료:', establishmentId);
         } catch (error) {
@@ -150,10 +174,6 @@ class FirebaseService {
             throw error;
         }
     }
-
-    // ===================
-    // 사용자(Users) 관리
-    // ===================
 
     async createUser(userData) {
         try {
@@ -261,10 +281,7 @@ class FirebaseService {
 
     async deleteUser(userId) {
         try {
-            // 사용자의 모든 작품도 삭제
             await this.deleteStoriesByUser(userId);
-
-            // 사용자 삭제
             await deleteDoc(doc(this.db, 'users', userId));
             console.log('사용자 삭제 완료:', userId);
         } catch (error) {
@@ -284,10 +301,6 @@ class FirebaseService {
             throw error;
         }
     }
-
-    // ===================
-    // 작품(Stories) 관리
-    // ===================
 
     async createStory(storyData) {
         try {
@@ -408,14 +421,11 @@ class FirebaseService {
             if (storyDoc.exists()) {
                 const storyData = storyDoc.data();
                 if (storyData.originalImgUrl) {
-                    // Supabase URL에서 파일 경로 추출
                     const filePath = new URL(storyData.originalImgUrl).pathname.split('/images/').pop();
                     if(filePath) {
-                         // Supabase 스토리지 서비스의 파일 삭제 메소드 호출
                          await window.supabaseStorageService.deleteImage(filePath);
                     }
                 }
-                 // Firestore 문서 삭제
                 await deleteDoc(storyDocRef);
                 console.log('작품 삭제 완료:', storyId);
             } else {
@@ -439,10 +449,6 @@ class FirebaseService {
             throw error;
         }
     }
-
-    // ===================
-    // 파일 업로드/삭제 (Firebase Storage)
-    // ===================
 
     async uploadImage(file, path) {
         try {
@@ -468,13 +474,8 @@ class FirebaseService {
             console.log('파일 삭제 완료:', path);
         } catch (error) {
             console.error('파일 삭제 오류:', error);
-            // 파일이 이미 삭제되었거나 존재하지 않을 수 있으므로 에러를 throw하지 않음
         }
     }
-
-    // ===================
-    // 유틸리티 함수들
-    // ===================
 
     async checkUserExists(name, establishmentId = null) {
         try {
@@ -521,7 +522,6 @@ class FirebaseService {
         }
     }
 
-    // Timestamp를 Date 문자열로 변환
     formatDate(timestamp) {
         if (!timestamp || !timestamp.toDate) {
             return new Date().toLocaleDateString('ko-KR');
@@ -529,7 +529,6 @@ class FirebaseService {
         return timestamp.toDate().toLocaleDateString('ko-KR');
     }
 
-    // Base64를 File 객체로 변환
     base64ToFile(base64String, fileName) {
         const arr = base64String.split(',');
         const mime = arr[0].match(/:(.*?);/)[1];
@@ -543,7 +542,6 @@ class FirebaseService {
     }
 }
 
-// 전역 서비스 인스턴스 생성
 window.firebaseService = new FirebaseService();
 
 console.log('Firebase 서비스 클래스 로드 완료');
