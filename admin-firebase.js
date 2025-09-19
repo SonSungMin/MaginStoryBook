@@ -28,6 +28,7 @@ export function initializeAdminPage() {
     window.openEditModal = openEditModal;
     window.deleteEstablishment = deleteEstablishment;
     window.openEditThemeModal = openEditThemeModal;
+    window.activateTheme = activateTheme; // 활성화 함수 전역 등록
     window.deleteTheme = deleteTheme;
     window.deleteClass = deleteClass;
     window.openEditMemberModal = openEditMemberModal;
@@ -328,10 +329,13 @@ async function renderThemeList() {
         const themeList = await window.firebaseService.getThemesByEstablishment(establishmentId);
         themeList.forEach(t => {
             const li = document.createElement('li');
+            const activeClass = t.isActive ? 'active' : '';
+            const buttonText = t.isActive ? '활성중' : '활성화';
             li.innerHTML = `
                 <div class="item-content"><div class="item-main-info">${t.name}</div></div>
                 <div class="item-actions">
                     <div class="button-group-list">
+                        <button class="btn-activate ${activeClass}" onclick="activateTheme('${t.establishmentId}', '${t.id}')">${buttonText}</button>
                         <button class="btn-edit" onclick="openEditThemeModal('${t.id}', '${t.name}')">수정</button>
                         <button onclick="deleteTheme('${t.id}')">삭제</button>
                     </div>
@@ -341,6 +345,17 @@ async function renderThemeList() {
     } catch (error) {
         console.error("테마 목록 로딩 오류:", error);
         listElement.innerHTML = '<li>테마 목록을 불러오는 데 실패했습니다.</li>';
+    }
+}
+
+async function activateTheme(establishmentId, themeId) {
+    try {
+        await window.firebaseService.updateThemeActivation(establishmentId, themeId);
+        alert('테마가 활성화되었습니다.');
+        await renderThemeList();
+    } catch (error) {
+        console.error('테마 활성화 오류:', error);
+        alert('테마 활성화 중 오류가 발생했습니다.');
     }
 }
 
