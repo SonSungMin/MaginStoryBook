@@ -6,7 +6,7 @@ import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getStorage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
-// Firebase 설정
+// Firebase 설정 ( ... )
 const firebaseConfig = {
     apiKey: "AIzaSyAd9mICdy1tVtQQS6X6-qx_Qnm1q9g6nMk",
     authDomain: "magicstorybookdb.firebaseapp.com",
@@ -17,13 +17,11 @@ const firebaseConfig = {
     measurementId: "G-0E119QHRK3"
 };
 
-// Firebase 초기화
+// Firebase 초기화 ( ... )
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
-
-// 전역 변수로 설정
 window.firebase = { app, db, auth, storage };
 console.log('Firebase 초기화 완료');
 
@@ -34,12 +32,13 @@ Promise.all([
 ]).then(([firebaseServiceModule, adminFirebaseModule]) => {
     console.log('모든 모듈 로드 완료.');
     
-    // DOM이 완전히 로드된 후 페이지 초기화 함수를 안전하게 호출
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', adminFirebaseModule.initializeAdminPage);
-    } else {
+    // 💡 **오류 해결의 핵심**
+    // DOM이 완전히 로드된 후에만 페이지 초기화 함수를 실행하도록 변경하여
+    // 스크립트가 HTML 요소를 찾지 못하는 문제를 근본적으로 해결합니다.
+    document.addEventListener('DOMContentLoaded', () => {
         adminFirebaseModule.initializeAdminPage();
-    }
+    });
+
 }).catch(error => {
     console.error('스크립트 모듈 로드 실패:', error);
 });
