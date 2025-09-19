@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const userInfoSpan = document.createElement('span');
-        userInfoSpan.style.float = 'right';
+        userInfoSpan.className = 'user-info'; // 클래스 추가
         const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
 
         if (loggedInUser) {
