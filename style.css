@@ -886,6 +886,45 @@ input:checked + .slider:before {
 }
 
 
+/* 카드 내 수정/삭제 버튼 */
+.story-card .card-actions {
+    width: 100%;
+    padding: 0 15px 5px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.card-actions button {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.card-actions button:hover {
+    background-color: #e0e0e0;
+}
+.card-actions .btn-edit {
+    color: var(--accent-color);
+}
+.card-actions .btn-delete {
+    color: var(--secondary-color);
+}
+
+/* 수정 모달의 미리보기 이미지 */
+#editPreviewImage {
+    max-width: 100%;
+    max-height: 150px;
+    object-fit: contain;
+    border-radius: 5px;
+    background-color: #f0f0f0;
+}
+
 
 /* 반응형 디자인 */
 @media (max-width: 992px) {
@@ -986,3 +1025,4 @@ input:checked + .slider:before {
         min-width: unset;
     }
 }
+
