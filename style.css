@@ -701,6 +701,20 @@ body {
     background-color: #f0f0f0;
 }
 
+/* 활성화 버튼 */
+.button-group-list .btn-activate {
+    color: var(--success-color);
+    border-color: var(--success-color);
+}
+.button-group-list .btn-activate:hover {
+    background-color: #e8f5e9;
+}
+.button-group-list .btn-activate.active {
+    background-color: var(--success-color);
+    color: var(--text-light);
+    font-weight: bold;
+}
+
 
 /* 반응형 디자인 */
 @media (max-width: 992px) {
@@ -789,3 +803,4 @@ body {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
