@@ -114,6 +114,10 @@
         <div class="modal-content">
             <span class="close-button" onclick="closeUploadModal()">&times;</span>
             <h2>새 그림 올리기</h2>
+            <div class="upload-options-container" style="margin-bottom: 15px;">
+                <select id="uploadEstablishmentSelect" class="form-control" style="display: none; margin-bottom: 10px;"></select>
+                <select id="uploadStudentSelect" class="form-control" style="display: none;"></select>
+            </div>
             <div class="upload-area">
                 <input type="file" id="drawingFileInput" accept="image/*" onchange="previewOriginalDrawing(event)" style="display: none;">
                 <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="previewOriginalDrawing(event)" style="display: none;">
@@ -277,4 +281,3 @@
     </script>
 </body>
 </html>
-
