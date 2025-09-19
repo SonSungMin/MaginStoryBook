@@ -312,7 +312,7 @@ class FirebaseService {
     
             if (userData.establishmentId) {
                 const estDocRef = doc(this.db, 'establishments', userData.establishmentId);
-                const estDoc = await getDoc(estDoc);
+                const estDoc = await getDoc(estDocRef);
                 if (estDoc.exists()) {
                     userData.establishmentName = estDoc.data().name;
                 } else {
