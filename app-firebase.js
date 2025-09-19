@@ -17,6 +17,8 @@ const classStoryGrid = document.querySelector('#class-story .story-grid');
 const teacherArtworkList = document.querySelector('#teacher-tools .artwork-list');
 const themeFilter = document.getElementById('themeFilter');
 const classThemeFilter = document.getElementById('classThemeFilter');
+const bulkRegisterButton = document.getElementById('bulkRegisterButton');
+
 
 // 모달 및 입력 관련 DOM 요소
 const uploadModal = document.getElementById('uploadModal');
@@ -150,6 +152,10 @@ function setupUIByRole() {
     } else {
         teacherToolsNavButton.style.display = 'none';
     }
+
+    if (['teacher', 'director'].includes(currentUser.role)) {
+        bulkRegisterButton.style.display = 'block';
+    }
 }
 
 /**
@@ -166,6 +172,7 @@ function setupEventListeners() {
 
     themeFilter.addEventListener('change', () => renderMyStoryCards(themeFilter.value));
     classThemeFilter.addEventListener('change', () => renderClassStoryCards(classThemeFilter.value));
+    bulkRegisterButton.addEventListener('click', handleBulkRegister);
     setupDragAndDrop();
     uploadEstablishmentSelect.addEventListener('change', populateStudentOptionsForAdmin);
 }
@@ -230,7 +237,7 @@ function renderClassStoryCards(filterThemeId = 'all') {
     }
 
     filteredStories.forEach(story => {
-        const storyCard = createStoryCardElement(story);
+        const storyCard = createStoryCardElement(story, true); // isClassStory = true
         classStoryGrid.appendChild(storyCard);
     });
 }
@@ -238,12 +245,17 @@ function renderClassStoryCards(filterThemeId = 'all') {
 /**
  * 스토리 카드 DOM 요소를 생성
  * @param {object} story - 스토리 데이터
+ * @param {boolean} isClassStory - '우리 반 이야기' 섹션 카드 여부
  * @returns {HTMLElement} - 생성된 스토리 카드 요소
  */
-function createStoryCardElement(story) {
+function createStoryCardElement(story, isClassStory = false) {
     const storyCard = document.createElement('div');
     storyCard.classList.add('story-card');
     storyCard.dataset.storyId = story.id;
+    // 일괄 등록을 위해 미등록 상태 표시
+    if (story.status === 'unregistered') {
+        storyCard.dataset.unregistered = 'true';
+    }
 
     const imageLink = document.createElement('a');
     imageLink.href = 'javascript:void(0)';
@@ -273,28 +285,26 @@ function createStoryCardElement(story) {
     if (canModify) {
         const cardActions = document.createElement('div');
         cardActions.classList.add('card-actions');
-        
-        // 기존 수정/삭제 버튼
         cardActions.innerHTML = `
             <button class="btn-edit" onclick="openEditStoryModal('${story.id}')"><i class="fas fa-edit"></i> 수정</button>
             <button class="btn-delete" onclick="deleteStory('${story.id}')"><i class="fas fa-trash"></i> 삭제</button>
         `;
-    
-        // 1. 등록/등록됨 버튼 추가
-        if (['teacher', 'director'].includes(currentUser.role)) {
+        
+        // 선생님/원장이고 '우리 반 이야기' 뷰일 때만 등록 버튼 추가
+        if (isClassStory && ['teacher', 'director'].includes(currentUser.role)) {
             const registerButton = document.createElement('button');
+            const status = story.status || 'unregistered';
             registerButton.dataset.storyId = story.id;
-            registerButton.dataset.status = story.status || 'unregistered';
-    
-            if (story.status === 'registered' || story.status === 'in_production') {
+            registerButton.dataset.status = status;
+            
+            if (status === 'registered' || status === 'in_production') {
                 registerButton.textContent = '등록됨';
                 registerButton.classList.add('btn-registered');
             } else {
                 registerButton.textContent = '등록';
                 registerButton.classList.add('btn-register');
             }
-    
-            registerButton.onclick = () => handleRegisterToggle(story.id, story.status);
+            registerButton.onclick = () => handleRegisterToggle(story.id, status);
             cardActions.appendChild(registerButton);
         }
         
@@ -327,6 +337,64 @@ function renderTeacherArtworkList() {
 }
 
 
+// --- 작품 등록 관련 ---
+
+/**
+ * 작품 등록/취소 토글 핸들러
+ * @param {string} storyId - 작품 ID
+ * @param {string} currentStatus - 현재 작품 상태
+ */
+async function handleRegisterToggle(storyId, currentStatus) {
+    if (currentStatus === 'in_production') {
+        alert('현재 제작중인 작품은 등록을 취소할 수 없습니다.');
+        return;
+    }
+
+    const isRegistering = (currentStatus === 'unregistered');
+    const confirmMessage = isRegistering ?
+        "이 작품을 동화 제작 목록에 등록하시겠습니까?" :
+        "이 작품의 등록을 취소하시겠습니까?";
+
+    if (confirm(confirmMessage)) {
+        try {
+            const newStatus = isRegistering ? 'registered' : 'unregistered';
+            await window.firebaseService.updateStory(storyId, { status: newStatus });
+            alert(isRegistering ? '작품이 등록되었습니다.' : '작품 등록이 취소되었습니다.');
+            await loadAndRenderStories(); // 목록 새로고침
+        } catch (error) {
+            console.error('작품 상태 변경 오류:', error);
+            alert('작품 상태 변경 중 오류가 발생했습니다.');
+        }
+    }
+}
+
+/**
+ * 미등록 작품 일괄 등록 핸들러
+ */
+async function handleBulkRegister() {
+    const unregisteredCards = classStoryGrid.querySelectorAll('.story-card[data-unregistered="true"]');
+    if (unregisteredCards.length === 0) {
+        alert('등록할 작품이 없습니다.');
+        return;
+    }
+
+    if (confirm(`미등록된 ${unregisteredCards.length}개의 작품을 모두 등록하시겠습니까?`)) {
+        try {
+            const updatePromises = Array.from(unregisteredCards).map(card => {
+                const storyId = card.dataset.storyId;
+                return window.firebaseService.updateStory(storyId, { status: 'registered' });
+            });
+            await Promise.all(updatePromises);
+            alert('모든 미등록 작품이 등록되었습니다.');
+            await loadAndRenderStories();
+        } catch (error) {
+            console.error('일괄 등록 처리 오류:', error);
+            alert('일괄 등록 중 오류가 발생했습니다.');
+        }
+    }
+}
+
+
 // --- 새 그림 올리기 / 수정 / 삭제 ---
 
 window.openUploadModal = function() {
@@ -337,7 +405,7 @@ window.openUploadModal = function() {
     }
 
     drawingFileInput.value = '';
-    document.getElementById('cameraInput').value = '';
+    // document.getElementById('cameraInput').value = '';
     previewImage.src = 'images/placeholder_preview.png';
     drawingTitleInput.value = '';
     drawingStoryInput.value = '';
