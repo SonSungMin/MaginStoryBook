@@ -4,6 +4,8 @@
 let currentUser = null;
 let myStories = [];
 let classStories = [];
+let allUsers = []; // 전체 사용자 목록 캐싱
+let allEstablishments = []; // 전체 교육기관 목록 캐싱
 
 // DOM 요소 캐싱
 const navButtons = document.querySelectorAll('.nav-button');
@@ -19,6 +21,9 @@ const drawingFileInput = document.getElementById('drawingFileInput');
 const previewImage = document.getElementById('previewImage');
 const drawingTitleInput = document.getElementById('drawingTitleInput');
 const drawingStoryInput = document.getElementById('drawingStoryInput');
+const uploadEstablishmentSelect = document.getElementById('uploadEstablishmentSelect');
+const uploadStudentSelect = document.getElementById('uploadStudentSelect');
+
 
 const editStoryModal = document.getElementById('editStoryModal');
 const editStoryIdInput = document.getElementById('editStoryId');
@@ -61,6 +66,15 @@ window.initializeApp = async function() {
         }
         currentUser = JSON.parse(loggedInUserData);
         console.log('로그인 사용자:', currentUser);
+
+        // 관리자 또는 교사인 경우, 사용자 및 기관 목록을 미리 로드
+        if (['admin', 'teacher', 'director'].includes(currentUser.role)) {
+            [allUsers, allEstablishments] = await Promise.all([
+                window.firebaseService.getAllUsers(),
+                window.firebaseService.getAllEstablishments()
+            ]);
+        }
+
 
         setupUIByRole();
         setupEventListeners();
@@ -139,6 +153,7 @@ function setupEventListeners() {
         activateSection(seasonCalendarButton.dataset.target);
     });
     setupDragAndDrop();
+    uploadEstablishmentSelect.addEventListener('change', populateStudentOptionsForAdmin);
 }
 
 /**
@@ -266,15 +281,54 @@ function renderTeacherArtworkList() {
 
 // --- 새 그림 올리기 / 수정 / 삭제 ---
 
+// [수정됨]
 window.openUploadModal = function() {
-    uploadModal.style.display = 'flex';
+    // 초기화
     drawingFileInput.value = '';
     document.getElementById('cameraInput').value = '';
     previewImage.src = 'images/placeholder_preview.png';
     drawingTitleInput.value = '';
     drawingStoryInput.value = '';
     currentOriginalFile = null;
+    uploadEstablishmentSelect.style.display = 'none';
+    uploadStudentSelect.style.display = 'none';
+    uploadEstablishmentSelect.innerHTML = '';
+    uploadStudentSelect.innerHTML = '';
+
+
+    // 역할에 따른 드롭다운 설정
+    if (['teacher', 'director'].includes(currentUser.role)) {
+        uploadStudentSelect.style.display = 'block';
+        uploadStudentSelect.innerHTML = '<option value="">(내 이름으로 올리기)</option>';
+        const students = allUsers.filter(u => u.establishmentId === currentUser.establishmentId && u.role === 'student');
+        students.forEach(student => {
+            uploadStudentSelect.innerHTML += `<option value="${student.id}">${student.name}</option>`;
+        });
+    } else if (currentUser.role === 'admin') {
+        uploadEstablishmentSelect.style.display = 'block';
+        uploadStudentSelect.style.display = 'block';
+        uploadEstablishmentSelect.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
+        allEstablishments.forEach(est => {
+            uploadEstablishmentSelect.innerHTML += `<option value="${est.id}">${est.name}</option>`;
+        });
+        uploadStudentSelect.innerHTML = '<option value="">-- 원생 선택 --</option>';
+    }
+
+    uploadModal.style.display = 'flex';
 };
+
+// [추가됨] 관리자가 교육기관을 선택했을 때 원생 목록을 채우는 함수
+function populateStudentOptionsForAdmin() {
+    const selectedEstId = uploadEstablishmentSelect.value;
+    uploadStudentSelect.innerHTML = '<option value="">-- 원생 선택 --</option>';
+    if (selectedEstId) {
+        const students = allUsers.filter(u => u.establishmentId === selectedEstId && u.role === 'student');
+        students.forEach(student => {
+            uploadStudentSelect.innerHTML += `<option value="${student.id}">${student.name}</option>`;
+        });
+    }
+}
+
 
 window.closeUploadModal = function() {
     uploadModal.style.display = 'none';
@@ -319,6 +373,7 @@ window.cancelCrop = function() {
     closeCropModal();
 };
 
+// [수정됨]
 window.saveStory = async function() {
     const title = drawingTitleInput.value.trim();
     const storyText = drawingStoryInput.value.trim();
@@ -326,18 +381,42 @@ window.saveStory = async function() {
         alert('그림을 업로드하고 제목을 입력해주세요!');
         return;
     }
+
+    let uploader = {
+        id: currentUser.id,
+        name: currentUser.name,
+        establishmentId: currentUser.establishmentId
+    };
+
+    // 교사/관리자가 다른 학생을 선택했는지 확인
+    const selectedStudentId = uploadStudentSelect.value;
+    if (selectedStudentId) {
+        const selectedStudent = allUsers.find(u => u.id === selectedStudentId);
+        if (selectedStudent) {
+            uploader = {
+                id: selectedStudent.id,
+                name: selectedStudent.name,
+                establishmentId: selectedStudent.establishmentId
+            };
+        }
+    } else if (currentUser.role === 'admin') {
+        alert('관리자는 반드시 교육기관과 원생을 선택해야 합니다.');
+        return;
+    }
+
+
     try {
         const timestamp = Date.now();
         const fileExtension = currentOriginalFile.name.split('.').pop() || 'png';
-        const imagePath = `${currentUser.id}/${timestamp}_original.${fileExtension}`;
+        const imagePath = `${uploader.id}/${timestamp}_original.${fileExtension}`;
         const imageUrl = await window.supabaseStorageService.uploadImage(currentOriginalFile, imagePath);
         
         console.log(`[저장 완료] 제목: "${title}", 최종 저장 URL: ${imageUrl}`);
 
         await window.firebaseService.createStory({
-            uploaderId: currentUser.id,
-            uploaderName: currentUser.name,
-            establishmentId: currentUser.establishmentId,
+            uploaderId: uploader.id,
+            uploaderName: uploader.name,
+            establishmentId: uploader.establishmentId,
             title,
             storyText,
             originalImgUrl: imageUrl,
