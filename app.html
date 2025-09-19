@@ -100,28 +100,16 @@
             <span class="close-button" onclick="closeUploadModal()">&times;</span>
             <h2>새 그림 올리기</h2>
             <div class="upload-area">
-                <input type="file" id="drawingFileInput" accept="image/*" onchange="previewOriginalDrawing(event)" style="display: none;">
-                <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="previewOriginalDrawing(event)" style="display: none;">
-                <div class="upload-options">
-                    <label for="cameraInput" class="file-upload-label">
-                        <i class="fas fa-camera"></i>
-                        <p>그림 사진 찍기</p>
-                    </label>
-                    <label for="drawingFileInput" class="file-upload-label">
-                        <i class="fas fa-upload"></i>
-                        <p>그림 업로드</p>
-                    </label>
                 </div>
-                <div id="originalDrawingPreview" class="drawing-preview">
-                    <img id="previewImage" src="images/placeholder_preview.png" alt="원본 그림 미리보기">
-                </div>
-            </div>
             <div class="upload-options-container" style="margin-bottom: 15px;">
                 <select id="uploadEstablishmentSelect" class="form-control" style="display: none; margin-bottom: 10px;"></select>
                 <select id="uploadStudentSelect" class="form-control" style="display: none; margin-bottom: 10px;"></select>
-                <select id="themeSelect" class="form-control" style="margin-bottom: 10px;">
-                    <option value="">-- 테마 선택 --</option>
-                </select>
+                
+                <div id="themeSelectContainer">
+                    <select id="themeSelect" class="form-control" style="margin-bottom: 10px;">
+                        <option value="">-- 테마 선택 --</option>
+                    </select>
+                </div>
             </div>
             <input type="text" id="drawingTitleInput" placeholder="그림 제목을 입력해주세요">
             <textarea id="drawingStoryInput" placeholder="그림에 대한 이야기를 들려주세요"></textarea>
@@ -272,3 +260,4 @@
     </script>
 </body>
 </html>
+
