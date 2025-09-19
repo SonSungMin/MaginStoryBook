@@ -312,7 +312,6 @@ class FirebaseService {
     
             if (userData.establishmentId) {
                 const estDocRef = doc(this.db, 'establishments', userData.establishmentId);
-                // [수정] 여기가 오류 지점이었습니다. estDoc -> estDocRef
                 const estDoc = await getDoc(estDocRef);
                 if (estDoc.exists()) {
                     userData.establishmentName = estDoc.data().name;
@@ -422,6 +421,7 @@ class FirebaseService {
         try {
             const docRef = await addDoc(collection(this.db, 'stories'), {
                 ...storyData,
+                status: 'unregistered', // 'unregistered', 'registered', 'in_production'
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
@@ -607,23 +607,3 @@ class FirebaseService {
 }
 
 window.firebaseService = new FirebaseService();
-
-async getStoriesByStatus(status) {
-        try {
-            const q = query(
-                collection(this.db, 'stories'),
-                where('status', '==', status),
-                orderBy('createdAt', 'desc')
-            );
-            const querySnapshot = await getDocs(q);
-            const stories = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            console.log(`'${status}' 상태인 작품 조회:`, stories.length, '개');
-            return stories;
-        } catch (error) {
-            console.error(`'${status}' 상태 작품 조회 오류:`, error);
-            throw error;
-        }
-    }
