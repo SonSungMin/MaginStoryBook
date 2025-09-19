@@ -47,24 +47,28 @@ export function updateSigunguOptions() {
     }
 }
 
-export function initializeAdminPage() {
-    console.log('관리자 페이지 초기화 시작...');
-    
-    document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
-    
+function checkAdminLoginState() {
     const loggedInAdmin = sessionStorage.getItem('loggedInAdmin');
     if (loggedInAdmin) {
         document.getElementById('admin-login-container').style.display = 'none';
         document.getElementById('admin-main-content').style.display = 'block';
-        document.getElementById('adminLogoutButton').addEventListener('click', handleAdminLogout);
-        
-        initializeAddressOptions();
-        setupEventListeners();
-        loadDataAndRender();
+        loadDataAndRender(); 
     } else {
         document.getElementById('admin-login-container').style.display = 'block';
         document.getElementById('admin-main-content').style.display = 'none';
     }
+}
+
+export function initializeAdminPage() {
+    console.log('관리자 페이지 초기화 시작...');
+    
+    document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
+    document.getElementById('adminLogoutButton').addEventListener('click', handleAdminLogout);
+
+    initializeAddressOptions();
+    setupEventListeners(); 
+
+    checkAdminLoginState(); 
 };
 
 async function loadDataAndRender() {
@@ -108,7 +112,7 @@ async function handleAdminLogin() {
 
     if (id === 'admin' && pwd === 'admin') {
         sessionStorage.setItem('loggedInAdmin', 'true');
-        initializeAdminPage(); // 로그인 성공 후 페이지 재초기화
+        checkAdminLoginState();
     } else {
         alert('아이디 또는 비밀번호가 올바르지 않습니다.');
     }
