@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="admin.css">
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Jua&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div id="admin-login-container" class="login-container">
@@ -23,64 +24,48 @@
                 <button id="adminLogoutButton" class="btn-back-to-login"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
             </div>
         </div>
-        
-        <!-- MODALS -->
-        <div id="editMemberModal" class="modal">
-            <!-- ... (기존과 동일) ... -->
-        </div>
-        <div id="editEstablishmentModal" class="modal">
-            <!-- ... (기존과 동일) ... -->
-        </div>
-        <div id="editThemeModal" class="modal">
-            <!-- ... (기존과 동일) ... -->
-        </div>
 
-        <!-- NEW: Storybook Production Modal -->
-        <div id="productionModal" class="modal">
-            <div class="modal-content large-modal">
-                <span class="close-button" id="closeProductionModal">&times;</span>
-                <h2>동화책 제작</h2>
-                <input type="hidden" id="productionStoryId">
-                <div class="production-area">
-                    <div class="production-section">
-                        <h3>앞표지</h3>
-                        <div class="cover-upload-area">
-                            <img id="coverPreview" src="images/placeholder_preview.png" alt="앞표지 미리보기">
-                            <label for="coverUploadInput" class="btn-secondary">표지 이미지 선택</label>
-                            <input type="file" id="coverUploadInput" accept="image/*" style="display:none;">
-                        </div>
-                    </div>
-                    <div class="production-section">
-                        <h3>내지</h3>
-                        <div id="contentPagesContainer" class="content-pages-container">
-                            <!-- JS will add pages here -->
-                        </div>
-                        <button id="addPageButton" class="btn-primary"><i class="fas fa-plus"></i> 페이지 추가</button>
-                    </div>
-                </div>
+        <div id="editEstablishmentModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="closeEditEstablishmentModalButton">&times;</span>
+                <h2>교육기관 정보 수정</h2>
+                <input type="hidden" id="editEstablishmentId">
+                <input type="text" id="editEstablishmentName" placeholder="교육기관 이름">
+                <input type="text" id="editEstablishmentPhone" placeholder="전화번호">
+                <select id="editEstablishmentSido"></select>
+                <select id="editEstablishmentSigungu"></select>
+                <input type="text" id="editEstablishmentAddressDetail" placeholder="상세주소">
                 <div class="button-group">
-                    <button class="btn-secondary" onclick="document.getElementById('productionModal').style.display='none'">취소</button>
-                    <button id="saveStorybookButton" class="btn-primary">제작 완료</button>
+                    <button id="cancelEditEstablishmentButton" class="btn-secondary">취소</button>
+                    <button id="saveEstablishmentChangesButton" class="btn-primary">저장</button>
                 </div>
             </div>
         </div>
 
-        <!-- NEW: Storybook Viewer Modal -->
-        <div id="storybookViewerModal" class="modal viewer-modal">
-            <div class="modal-content large-modal">
-                <span class="close-button" id="closeViewerModal">&times;</span>
-                <div class="storybook-viewer">
-                    <div class="viewer-page left">
-                        <img id="viewerImage" src="">
-                    </div>
-                    <div class="viewer-page right">
-                        <p id="viewerText"></p>
-                    </div>
+        <div id="editThemeModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="closeEditThemeModalButton">&times;</span>
+                <h2>테마 수정</h2>
+                <input type="hidden" id="editThemeId">
+                <input type="text" id="editThemeName" placeholder="새 테마 이름">
+                <div class="button-group">
+                    <button id="cancelEditThemeButton" class="btn-secondary">취소</button>
+                    <button id="saveThemeChangesButton" class="btn-primary">저장</button>
                 </div>
-                <div class="viewer-controls">
-                    <button id="prevPageButton"><i class="fas fa-arrow-left"></i> 이전</button>
-                    <span id="pageIndicator"></span>
-                    <button id="nextPageButton">다음 <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <div id="editMemberModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="closeEditMemberModalButton">&times;</span>
+                <h2>구성원 정보 수정</h2>
+                <input type="hidden" id="editMemberId">
+                <input type="text" id="editMemberName" placeholder="이름">
+                <input type="date" id="editMemberBirthdate">
+                <select id="editMemberClass" class="form-control"></select>
+                <div class="button-group">
+                    <button id="cancelEditMemberButton" class="btn-secondary">취소</button>
+                    <button id="saveMemberChangesButton" class="btn-primary">저장</button>
                 </div>
             </div>
         </div>
@@ -95,15 +80,96 @@
                 <button class="admin-nav-button" data-target="storybook-maker">동화책 만들기</button>
             </div>
 
-            <!-- ... (manage-establishments to manage-permissions sections are same) ... -->
+            <section id="manage-establishments" class="admin-section">
+                <h2>교육기관 관리</h2>
+                <div class="form-group">
+                    <input type="text" id="establishmentName" placeholder="교육기관 이름">
+                    <select id="establishmentSido"></select>
+                    <select id="establishmentSigungu"></select>
+                    <input type="text" id="establishmentAddressDetail" placeholder="상세주소">
+                    <input type="text" id="establishmentPhone" placeholder="전화번호">
+                    <input type="text" id="establishmentAdminName" placeholder="관리자 ID">
+                    <input type="password" id="establishmentAdminPwd" placeholder="관리자 비밀번호">
+                    <button id="addEstablishmentButton" class="btn-primary">등록</button>
+                </div>
+                <div class="data-list">
+                    <h3>등록된 교육기관 목록</h3>
+                    <ul id="establishmentList"></ul>
+                </div>
+            </section>
 
+            <section id="manage-classes" class="admin-section">
+                <h2>반 관리</h2>
+                <div class="form-group">
+                    <select id="classEstablishmentSelect"></select>
+                    <input type="text" id="className" placeholder="반 이름">
+                    <button id="addClassButton" class="btn-primary">추가</button>
+                </div>
+                <div class="data-list">
+                    <h3>반 목록</h3>
+                    <ul id="classList"></ul>
+                </div>
+            </section>
+            
+            <section id="manage-themes" class="admin-section">
+                <h2>테마 관리</h2>
+                <div class="form-group">
+                    <select id="themeEstablishmentSelect"></select>
+                    <input type="text" id="themeName" placeholder="테마 이름">
+                    <button id="addThemeButton" class="btn-primary">추가</button>
+                </div>
+                <div class="data-list">
+                    <h3>테마 목록</h3>
+                    <ul id="themeList"></ul>
+                </div>
+            </section>
+
+            <section id="manage-members" class="admin-section">
+                <h2>구성원 관리</h2>
+                <div class="form-group">
+                    <select id="memberEstablishment"></select>
+                    <select id="memberClass"></select>
+                    <input type="text" id="memberName" placeholder="이름">
+                    <input type="date" id="memberBirthdate">
+                    <input type="password" id="memberPwd" placeholder="초기 비밀번호">
+                    <select id="memberRole">
+                        <option value="student">원생</option>
+                        <option value="teacher">선생님</option>
+                        <option value="director">원장</option>
+                    </select>
+                    <button id="addMemberButton" class="btn-primary">등록</button>
+                </div>
+                <div class="data-list">
+                    <h3>구성원 목록</h3>
+                    <ul id="memberList"></ul>
+                </div>
+            </section>
+
+            <section id="manage-permissions" class="admin-section">
+                <h2>권한 관리</h2>
+                <div class="form-group">
+                    <select id="permissionMemberSelect"></select>
+                    <select id="permissionRoleSelect">
+                        <option value="student">원생</option>
+                        <option value="teacher">선생님</option>
+                        <option value="director">원장</option>
+                    </select>
+                    <button id="updateMemberPermissionButton" class="btn-primary">권한 변경</button>
+                </div>
+                <div class="data-list">
+                    <h3>전체 구성원 권한 현황</h3>
+                    <ul id="permissionList"></ul>
+                </div>
+            </section>
+            
             <section id="storybook-maker" class="admin-section">
                 <h2>동화책 만들기</h2>
+                 <div class="form-group">
+                    <button id="bulkProductionButton" class="btn-primary">모든 작품 제작 시작</button>
+                </div>
                 <div class="data-list">
                     <h3>선생님들이 등록한 작품</h3>
-                    <ul id="storybookMakerList">
-                        <!-- JS will populate this list -->
-                    </ul>
+                    <ul id="storybookMakerList"></ul>
                 </div>
             </section>
         </div>
@@ -112,7 +178,6 @@
     <div class="version-footer"></div>
     <script src="js/config.js"></script>
     <script src="js/version-injector.js" defer></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script type="module" src="./admin-initializer.js"></script>
 </body>
 </html>
