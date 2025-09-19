@@ -144,6 +144,24 @@ body {
     margin-bottom: 30px;
     color: var(--secondary-color);
 }
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.theme-filter-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.theme-filter-container label {
+    font-family: 'Jua', sans-serif;
+    font-size: 1.1em;
+}
+#themeFilter {
+    min-width: 150px;
+}
 
 /* 스토리 카드 그리드 */
 .story-grid {
