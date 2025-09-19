@@ -9,8 +9,8 @@
     --card-bg: #FFFFFF;
     --success-color: #4CAF50;
     --warning-color: #FFC107;
-    --header-bg: #FFD34E; /* ✨ 눈이 편한 금빛 노란색으로 변경 */
-    --ribbon-color: #E59400; /* ✨ 어울리는 따뜻한 주황색으로 변경 */
+    --header-bg: #FFD34E;
+    --ribbon-color: #E59400;
 }
 
 body {
@@ -40,13 +40,12 @@ body {
     padding: 5px 15px;
     font-size: 12px;
     font-family: Arial, sans-serif;
-    z-index: 1001; /* 다른 요소 위에 표시되도록 z-index 추가 */
+    z-index: 1001;
 }
-
 
 /* 헤더 (app.html) */
 .main-header {
-    background-color: var(--header-bg); /* ✨ 변경된 노란색 적용 */
+    background-color: var(--header-bg);
     padding: 15px 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -97,7 +96,7 @@ body {
 .nav-button:hover,
 .nav-button.active {
     background-color: var(--card-bg);
-    color: var(--ribbon-color); /* ✨ 포인트 색상 변경 */
+    color: var(--ribbon-color);
     font-weight: bold;
 }
 
