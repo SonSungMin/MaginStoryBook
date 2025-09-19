@@ -27,11 +27,13 @@ export function initializeAdminPage() {
 
     window.openEditModal = openEditModal;
     window.deleteEstablishment = deleteEstablishment;
+    window.openEditThemeModal = openEditThemeModal;
+    window.deleteTheme = deleteTheme;
     window.deleteClass = deleteClass;
     window.openEditMemberModal = openEditMemberModal;
     window.deleteMember = deleteMember;
     window.resetPassword = resetPassword;
-    window.handleRoleChange = handleRoleChange; // 권한 변경 함수를 전역으로 노출
+    window.handleRoleChange = handleRoleChange; 
 
     document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
     document.getElementById('adminLogoutButton').addEventListener('click', handleAdminLogout);
@@ -46,12 +48,17 @@ export function initializeAdminPage() {
 
     document.getElementById('addEstablishmentButton').addEventListener('click', addEstablishment);
     document.getElementById('addClassButton').addEventListener('click', addClass);
+    document.getElementById('addThemeButton').addEventListener('click', addTheme);
     document.getElementById('addMemberButton').addEventListener('click', addMember);
     document.getElementById('updateMemberPermissionButton').addEventListener('click', updateMemberPermission);
 
     document.getElementById('saveEstablishmentChangesButton').addEventListener('click', saveEstablishmentChanges);
     document.getElementById('closeEditEstablishmentModalButton').addEventListener('click', closeEditModal);
     document.getElementById('cancelEditEstablishmentButton').addEventListener('click', closeEditModal);
+
+    document.getElementById('saveThemeChangesButton').addEventListener('click', saveThemeChanges);
+    document.getElementById('closeEditThemeModalButton').addEventListener('click', closeEditThemeModal);
+    document.getElementById('cancelEditThemeButton').addEventListener('click', closeEditThemeModal);
     
     document.getElementById('saveMemberChangesButton').addEventListener('click', saveMemberChanges);
     document.getElementById('closeEditMemberModalButton').addEventListener('click', closeEditMemberModal);
@@ -60,6 +67,7 @@ export function initializeAdminPage() {
     document.getElementById('establishmentSido').addEventListener('change', updateSigunguOptions);
     document.getElementById('editEstablishmentSido').addEventListener('change', updateEditSigunguOptions);
     document.getElementById('classEstablishmentSelect').addEventListener('change', renderClassList);
+    document.getElementById('themeEstablishmentSelect').addEventListener('change', renderThemeList);
     document.getElementById('memberEstablishment').addEventListener('change', () => {
         filterMembersByEstablishment();
         updateMemberClassOptions();
@@ -96,11 +104,15 @@ async function renderAll() {
     renderEstablishmentList();
     renderEstablishmentOptions();
     renderClassEstablishmentOptions();
+    renderThemeEstablishmentOptions();
     await renderMemberList();
     renderMemberPermissionOptions();
     renderPermissionList();
     if(document.getElementById('classEstablishmentSelect').value) {
         await renderClassList();
+    }
+    if(document.getElementById('themeEstablishmentSelect').value) {
+        await renderThemeList();
     }
 }
 
@@ -117,7 +129,6 @@ function handleAdminLogin() {
 
 function handleAdminLogout() {
     sessionStorage.removeItem('loggedInAdmin');
-    //location.reload();
     window.location.href = 'index.html';
 }
 
@@ -215,7 +226,7 @@ function renderEstablishmentList() {
 }
 
 async function deleteEstablishment(id) {
-    if (!confirm('정말 이 교육기관을 삭제하시겠습니까? 관련 구성원과 반도 모두 삭제됩니다.')) return;
+    if (!confirm('정말 이 교육기관을 삭제하시겠습니까? 관련 구성원, 반, 테마 정보가 모두 삭제됩니다.')) return;
     try {
         await window.firebaseService.deleteEstablishment(id);
         alert('교육기관 및 관련 데이터가 삭제되었습니다.');
@@ -228,6 +239,13 @@ async function deleteEstablishment(id) {
 
 function renderClassEstablishmentOptions() {
     const select = document.getElementById('classEstablishmentSelect');
+    select.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
+    establishments.forEach(est => {
+        select.innerHTML += `<option value="${est.id}">${est.name}</option>`;
+    });
+}
+function renderThemeEstablishmentOptions() {
+    const select = document.getElementById('themeEstablishmentSelect');
     select.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
     establishments.forEach(est => {
         select.innerHTML += `<option value="${est.id}">${est.name}</option>`;
@@ -282,6 +300,63 @@ async function deleteClass(id) {
     } catch (error) {
         console.error("반 삭제 오류:", error);
         alert("반 삭제 중 오류가 발생했습니다.");
+    }
+}
+async function addTheme() {
+    const establishmentId = document.getElementById('themeEstablishmentSelect').value;
+    const name = document.getElementById('themeName').value.trim();
+    if (!establishmentId || !name) return alert('교육기관을 선택하고 테마 이름을 입력해주세요.');
+    
+    try {
+        await window.firebaseService.createTheme({ establishmentId, name });
+        alert('테마가 등록되었습니다.');
+        document.getElementById('themeName').value = '';
+        await renderThemeList();
+    } catch (error) {
+        console.error("테마 등록 오류:", error);
+        alert("테마 등록 중 오류가 발생했습니다.");
+    }
+}
+
+async function renderThemeList() {
+    const establishmentId = document.getElementById('themeEstablishmentSelect').value;
+    const listElement = document.getElementById('themeList');
+    listElement.innerHTML = '';
+    if (!establishmentId) return;
+
+    try {
+        const themeList = await window.firebaseService.getThemesByEstablishment(establishmentId);
+        themeList.forEach(t => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <div class="item-content"><div class="item-main-info">${t.name}</div></div>
+                <div class="item-actions">
+                    <div class="button-group-list">
+                        <button class="btn-edit" onclick="openEditThemeModal('${t.id}', '${t.name}')">수정</button>
+                        <button onclick="deleteTheme('${t.id}')">삭제</button>
+                    </div>
+                </div>`;
+            listElement.appendChild(li);
+        });
+    } catch (error) {
+        console.error("테마 목록 로딩 오류:", error);
+        listElement.innerHTML = '<li>테마 목록을 불러오는 데 실패했습니다.</li>';
+    }
+}
+
+async function deleteTheme(id) {
+    if (!confirm('정말 이 테마를 삭제하시겠습니까?')) return;
+    try {
+        const canDelete = await window.firebaseService.isThemeDeletable(id);
+        if (!canDelete) {
+            return alert('해당 테마를 사용하는 그림 이야기가 있어 삭제할 수 없습니다.');
+        }
+        await window.firebaseService.deleteTheme(id);
+        alert('테마가 삭제되었습니다.');
+        await renderThemeList();
+    } catch (error) {
+        console.error("테마 삭제 오류:", error);
+        alert("테마 삭제 중 오류가 발생했습니다.");
     }
 }
 
@@ -401,12 +476,6 @@ async function updateMemberPermission() {
     }
 }
 
-/**
- * [수정됨] 권한 목록에서 역할(Role) 변경 시 호출되는 함수
- * @param {HTMLSelectElement} selectElement - 변경이 일어난 select 요소
- * @param {string} userId - 대상 사용자의 ID
- * @param {string} oldRole - 변경 전 역할
- */
 async function handleRoleChange(selectElement, userId, oldRole) {
     const newRole = selectElement.value;
     const user = users.find(u => u.id === userId);
@@ -418,20 +487,17 @@ async function handleRoleChange(selectElement, userId, oldRole) {
         try {
             await window.firebaseService.updateUserRole(userId, newRole);
             alert('권한이 성공적으로 변경되었습니다.');
-            await loadDataAndRender(); // 데이터 및 UI 새로고침
+            await loadDataAndRender(); 
         } catch (error) {
             console.error('권한 변경 오류:', error);
             alert('권한 변경 중 오류가 발생했습니다.');
-            selectElement.value = oldRole; // 실패 시 원래 값으로 되돌림
+            selectElement.value = oldRole; 
         }
     } else {
-        selectElement.value = oldRole; // 취소 시 원래 값으로 되돌림
+        selectElement.value = oldRole; 
     }
 }
 
-/**
- * [수정됨] 구성원 권한 현황 목록을 렌더링하고, 각 항목에 권한 수정 드롭다운과 삭제 버튼을 추가합니다.
- */
 function renderPermissionList() {
     const listElement = document.getElementById('permissionList');
     listElement.innerHTML = '';
@@ -440,12 +506,9 @@ function renderPermissionList() {
         const li = document.createElement('li');
 
         let actionsHtml = '';
-        // 'admin' 역할은 수정하거나 삭제할 수 없습니다.
         if (user.role !== 'admin') {
-            // 권한 변경을 위한 select (드롭다운) 생성
             let roleOptions = '';
             for (const roleKey in roleMap) {
-                // admin 권한은 이 목록에서 선택 불가
                 if (roleKey === 'admin') continue;
                 const selected = user.role === roleKey ? 'selected' : '';
                 roleOptions += `<option value="${roleKey}" ${selected}>${roleMap[roleKey]}</option>`;
@@ -462,7 +525,6 @@ function renderPermissionList() {
             </div>
             `;
         } else {
-            // admin 계정은 '수정 불가' 텍스트 표시
             actionsHtml = `<div class="item-actions"><span>수정 불가</span></div>`;
         }
 
@@ -523,6 +585,31 @@ async function saveEstablishmentChanges() {
         await loadDataAndRender();
     } catch (error) {
         console.error('교육기관 정보 수정 오류:', error);
+        alert('정보 수정 중 오류가 발생했습니다.');
+    }
+}
+function openEditThemeModal(id, currentName) {
+    document.getElementById('editThemeId').value = id;
+    document.getElementById('editThemeName').value = currentName;
+    document.getElementById('editThemeModal').style.display = 'flex';
+}
+
+function closeEditThemeModal() {
+    document.getElementById('editThemeModal').style.display = 'none';
+}
+
+async function saveThemeChanges() {
+    const id = document.getElementById('editThemeId').value;
+    const name = document.getElementById('editThemeName').value.trim();
+    if (!name) return alert('테마 이름을 입력해주세요.');
+
+    try {
+        await window.firebaseService.updateTheme(id, { name });
+        alert('테마 정보가 성공적으로 수정되었습니다.');
+        closeEditThemeModal();
+        await renderThemeList();
+    } catch (error) {
+        console.error('테마 정보 수정 오류:', error);
         alert('정보 수정 중 오류가 발생했습니다.');
     }
 }
