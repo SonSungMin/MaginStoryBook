@@ -7,6 +7,7 @@ let classStories = [];
 let allUsers = []; // 전체 사용자 목록 캐싱
 let allEstablishments = []; // 전체 교육기관 목록 캐싱
 let themes = []; // 테마 목록 캐싱
+let activeTheme = null; // 활성 테마 캐싱
 
 // DOM 요소 캐싱
 const navButtons = document.querySelectorAll('.nav-button');
@@ -15,6 +16,7 @@ const myStoryGrid = document.querySelector('#my-story .story-grid');
 const classStoryGrid = document.querySelector('#class-story .story-grid');
 const teacherArtworkList = document.querySelector('#teacher-tools .artwork-list');
 const themeFilter = document.getElementById('themeFilter');
+const classThemeFilter = document.getElementById('classThemeFilter');
 
 // 모달 및 입력 관련 DOM 요소
 const uploadModal = document.getElementById('uploadModal');
@@ -79,7 +81,10 @@ window.initializeApp = async function() {
             ]);
         }
         
-        themes = await window.firebaseService.getThemesByEstablishment(currentUser.establishmentId);
+        [themes, activeTheme] = await Promise.all([
+             window.firebaseService.getThemesByEstablishment(currentUser.establishmentId),
+             window.firebaseService.getActiveTheme(currentUser.establishmentId)
+        ]);
         populateThemeFilter();
 
 
@@ -153,6 +158,7 @@ function setupEventListeners() {
     });
 
     themeFilter.addEventListener('change', () => renderMyStoryCards(themeFilter.value));
+    classThemeFilter.addEventListener('change', () => renderClassStoryCards(classThemeFilter.value));
     setupDragAndDrop();
     uploadEstablishmentSelect.addEventListener('change', populateStudentOptionsForAdmin);
 }
@@ -206,10 +212,17 @@ function renderMyStoryCards(filterThemeId = 'all') {
 
 /**
  * '우리 반 이야기' 섹션의 카드들을 렌더링
+ * @param {string} filterThemeId - 필터링할 테마 ID
  */
-function renderClassStoryCards() {
+function renderClassStoryCards(filterThemeId = 'all') {
     classStoryGrid.innerHTML = '';
-    classStories.forEach(story => {
+
+    let filteredStories = classStories;
+    if (filterThemeId !== 'all') {
+        filteredStories = classStories.filter(story => story.themeId === filterThemeId);
+    }
+
+    filteredStories.forEach(story => {
         const storyCard = createStoryCardElement(story);
         classStoryGrid.appendChild(storyCard);
     });
@@ -300,7 +313,8 @@ window.openUploadModal = function() {
     uploadEstablishmentSelect.innerHTML = '';
     uploadStudentSelect.innerHTML = '';
 
-    populateThemeOptions(themeSelect);
+    // 활성 테마가 있으면 자동으로 선택
+    populateThemeOptions(themeSelect, activeTheme ? activeTheme.id : null);
 
     if (['teacher', 'director'].includes(currentUser.role)) {
         uploadStudentSelect.style.display = 'block';
@@ -512,8 +526,10 @@ window.closeStoryDetailModal = function() {
 
 function populateThemeFilter() {
     themeFilter.innerHTML = '<option value="all">전체보기</option>';
+    classThemeFilter.innerHTML = '<option value="all">전체보기</option>';
     themes.forEach(theme => {
         themeFilter.innerHTML += `<option value="${theme.id}">${theme.name}</option>`;
+        classThemeFilter.innerHTML += `<option value="${theme.id}">${theme.name}</option>`;
     });
 }
 
