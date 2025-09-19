@@ -79,8 +79,14 @@ window.initializeApp = async function() {
  */
 async function loadAndRenderStories() {
     try {
+        console.log('작품 데이터 로드를 시작합니다...');
         myStories = await window.firebaseService.getStoriesByUser(currentUser.id);
         classStories = await window.firebaseService.getStoriesByEstablishment(currentUser.establishmentId);
+        
+        // ✨ [콘솔 로그 추가] 로드된 데이터 확인
+        console.log('Firebase에서 가져온 [내 작품] 데이터:', myStories);
+        console.log('Firebase에서 가져온 [우리 반 작품] 데이터:', classStories);
+
 
         renderMyStoryCards();
         renderClassStoryCards();
@@ -88,6 +94,7 @@ async function loadAndRenderStories() {
         if (['teacher', 'director', 'admin'].includes(currentUser.role)) {
             renderTeacherArtworkList();
         }
+        console.log('작품 렌더링이 완료되었습니다.');
     } catch (error) {
         console.error('작품 로드 및 렌더링 오류:', error);
         myStories = [];
@@ -196,8 +203,12 @@ function createStoryCardElement(story) {
     };
 
     const img = document.createElement('img');
-    // ✨ 여기가 핵심 수정 사항입니다. 'originalImgUrl'을 사용합니다.
-    img.src = story.originalImgUrl || 'images/placeholder_preview.png';
+    const imageUrl = story.originalImgUrl || 'images/placeholder_preview.png';
+
+    // ✨ [콘솔 로그 추가] 각 카드의 이미지 URL 확인
+    console.log(`[카드 렌더링] 제목: "${story.title}", 이미지 URL: ${imageUrl}`);
+    
+    img.src = imageUrl;
     img.alt = story.title;
     imageLink.appendChild(img);
     storyCard.appendChild(imageLink);
@@ -235,8 +246,12 @@ function renderTeacherArtworkList() {
         artworkItem.dataset.title = story.title;
         artworkItem.dataset.storyText = story.storyText;
         const uploaderName = story.uploaderName || '알 수 없음';
-        // ✨ 여기도 'originalImgUrl'을 사용하도록 수정했습니다.
-        artworkItem.innerHTML = `<img src="${story.originalImgUrl || 'images/placeholder_preview.png'}" alt="${story.title}"><span>${story.title} (${uploaderName})</span>`;
+        
+        const imageUrl = story.originalImgUrl || 'images/placeholder_preview.png';
+        // ✨ [콘솔 로그 추가] 선생님 도구함 목록의 이미지 URL 확인
+        console.log(`[선생님 도구함] 제목: "${story.title}", 이미지 URL: ${imageUrl}`);
+        
+        artworkItem.innerHTML = `<img src="${imageUrl}" alt="${story.title}"><span>${story.title} (${uploaderName})</span>`;
         teacherArtworkList.appendChild(artworkItem);
     });
     attachDragAndDropListeners();
@@ -310,6 +325,10 @@ window.saveStory = async function() {
         const fileExtension = currentOriginalFile.name.split('.').pop() || 'png';
         const imagePath = `public/${currentUser.id}/${timestamp}_original.${fileExtension}`;
         const imageUrl = await window.supabaseStorageService.uploadImage(currentOriginalFile, imagePath);
+        
+        // ✨ [콘솔 로그 추가] 저장 시 생성된 최종 URL 확인
+        console.log(`[저장 완료] 제목: "${title}", 최종 저장 URL: ${imageUrl}`);
+
         await window.firebaseService.createStory({
             uploaderId: currentUser.id,
             uploaderName: currentUser.name,
@@ -317,7 +336,7 @@ window.saveStory = async function() {
             title,
             storyText,
             originalImgUrl: imageUrl,
-            aiProcessed: false // AI 처리를 안했으므로 false
+            aiProcessed: false
         });
         alert('그림이 저장되었습니다!');
         closeUploadModal();
@@ -385,8 +404,12 @@ function openStoryDetailModal(storyId) {
     const story = [...myStories, ...classStories].find(s => s.id === storyId);
     if (!story) return;
     detailStoryTitle.textContent = story.title;
-    // ✨ 여기도 'originalImgUrl'을 사용하도록 수정하고, AI 이미지는 숨깁니다.
-    detailOriginalImg.src = story.originalImgUrl || 'images/placeholder_preview.png';
+    
+    const imageUrl = story.originalImgUrl || 'images/placeholder_preview.png';
+    // ✨ [콘솔 로그 추가] 상세 보기 모달의 이미지 URL 확인
+    console.log(`[상세 보기] 제목: "${story.title}", 이미지 URL: ${imageUrl}`);
+    
+    detailOriginalImg.src = imageUrl;
     detailStoryText.textContent = story.storyText || '이야기가 없습니다.';
     const displayDate = story.createdAt ? window.firebaseService.formatDate(story.createdAt) : new Date().toLocaleDateString('ko-KR');
     detailStoryDate.textContent = displayDate;
