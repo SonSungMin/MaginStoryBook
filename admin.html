@@ -157,6 +157,8 @@
         </div>
     </div>
 
+    <div class="version-footer">v1.1</div>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <script type="module">
@@ -188,7 +190,6 @@
             console.log('Firebase 서비스 로드 완료');
             import('./admin-firebase.js').then((module) => {
                 console.log('admin-firebase.js 모듈 로드 완료.');
-
                 // 전역 스코프에 함수 할당 (모달 등에서 사용)
                 window.addEstablishment = module.addEstablishment;
                 window.deleteEstablishment = module.deleteEstablishment;
@@ -210,11 +211,7 @@
                 window.closeEditMemberModal = module.closeEditMemberModal;
 
                 // DOM이 완전히 로드된 후 페이지 초기화 함수 호출
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', module.initializeAdminPage);
-                } else {
-                    module.initializeAdminPage();
-                }
+                document.addEventListener('DOMContentLoaded', module.initializeAdminPage);
             });
         }).catch(error => {
             console.error('Firebase 서비스 로드 실패:', error);
