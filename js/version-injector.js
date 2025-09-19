@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
 
         if (loggedInUser) {
-            userInfoSpan.textContent = `${loggedInUser.establishmentName || '소속 없음'} ${loggedInUser.name}님`;
+            userInfoSpan.textContent = `${loggedInUser.establishmentName || '소속 없음'} - ${loggedInUser.name}님  `;
         }
 
         footer.appendChild(versionSpan);
