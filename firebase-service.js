@@ -45,13 +45,16 @@ class FirebaseService {
     async getThemesByEstablishment(establishmentId) {
         if (!establishmentId) return [];
         try {
+            // [수정] orderBy를 쿼리에서 제거하고 클라이언트에서 정렬합니다.
             const q = query(
                 collection(this.db, 'themes'),
-                where('establishmentId', '==', establishmentId),
-                orderBy('createdAt', 'desc')
+                where('establishmentId', '==', establishmentId)
             );
             const querySnapshot = await getDocs(q);
-            return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const themes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // 클라이언트 측 정렬
+            themes.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            return themes;
         } catch (error) {
             console.error("테마 조회 오류:", error);
             throw error;
@@ -242,11 +245,10 @@ class FirebaseService {
 
     async getUserByNameAndPassword(name, password) {
         try {
+            // [수정] 복합 색인 방지를 위해 'name'으로만 쿼리 후 클라이언트에서 'password' 필터링
             const q = query(
                 collection(this.db, 'users'),
-                where('name', '==', name),
-                where('password', '==', password),
-                limit(1)
+                where('name', '==', name)
             );
             const querySnapshot = await getDocs(q);
     
@@ -255,7 +257,13 @@ class FirebaseService {
                 return null;
             }
     
-            const userDoc = querySnapshot.docs[0];
+            // 클라이언트 측에서 비밀번호 확인
+            const userDoc = querySnapshot.docs.find(doc => doc.data().password === password);
+            if (!userDoc) {
+                console.log('비밀번호 불일치:', name);
+                return null;
+            }
+
             const userData = {
                 id: userDoc.id,
                 ...userDoc.data()
@@ -385,16 +393,18 @@ class FirebaseService {
 
     async getStoriesByUser(userId) {
         try {
+            // [수정] orderBy를 쿼리에서 제거하고 클라이언트에서 정렬합니다.
             const q = query(
                 collection(this.db, 'stories'),
-                where('uploaderId', '==', userId),
-                orderBy('createdAt', 'desc')
+                where('uploaderId', '==', userId)
             );
             const querySnapshot = await getDocs(q);
             const stories = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
+            // 클라이언트 측 정렬
+            stories.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
             console.log('사용자 작품 조회:', userId, '-', stories.length, '개');
             return stories;
         } catch (error) {
@@ -516,23 +526,20 @@ class FirebaseService {
     // ===================
     async checkUserExists(name, establishmentId = null) {
         try {
-            let q;
-            if (establishmentId) {
-                q = query(
-                    collection(this.db, 'users'),
-                    where('name', '==', name),
-                    where('establishmentId', '==', establishmentId),
-                    limit(1)
-                );
-            } else {
-                q = query(
-                    collection(this.db, 'users'),
-                    where('name', '==', name),
-                    limit(1)
-                );
-            }
-
+            // [수정] 복합 색인 방지를 위해 'name'으로만 쿼리 후 클라이언트에서 'establishmentId' 필터링
+            const q = query(
+                collection(this.db, 'users'),
+                where('name', '==', name)
+            );
+            
             const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) return false;
+
+            if (establishmentId) {
+                // 기관 ID가 있는 경우, 클라이언트 측에서 추가 필터링
+                return querySnapshot.docs.some(doc => doc.data().establishmentId === establishmentId);
+            }
+            
             return !querySnapshot.empty;
         } catch (error) {
             console.error('사용자 존재 확인 오류:', error);
