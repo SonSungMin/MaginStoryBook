@@ -560,7 +560,7 @@ class FirebaseService {
             throw error;
         }
     }
-
+    
     // ===================
     // 동화책(Storybooks) 관리
     // ===================
@@ -580,7 +580,7 @@ class FirebaseService {
 
     async getStorybookByStoryId(storyId) {
         try {
-            const q = query(collection(this.db, 'storybooks'), where('storyId', '==', storyId), limit(1));
+            const q = query(collection(this.db, 'storybooks'), where('originalStoryId', '==', storyId), limit(1));
             const querySnapshot = await getDocs(q);
             if (querySnapshot.empty) {
                 return null;
@@ -591,6 +591,7 @@ class FirebaseService {
             throw error;
         }
     }
+
 
     // ===================
     // 유틸리티 함수들
@@ -638,3 +639,4 @@ class FirebaseService {
 }
 
 window.firebaseService = new FirebaseService();
+
