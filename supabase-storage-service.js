@@ -16,31 +16,49 @@ class SupabaseStorageService {
      */
     async uploadImage(file, path) {
         try {
-            // 1. 파일 업로드
             const { data, error: uploadError } = await this.supabase
                 .storage
                 .from('images') // Supabase에 생성한 버킷 이름
                 .upload(path, file, {
                     cacheControl: '3600',
-                    upsert: true 
+                    upsert: true
                 });
 
             if (uploadError) throw uploadError;
 
-            // 2. 업로드된 파일의 공개 URL 가져오기
             const { data: { publicUrl } } = this.supabase
                 .storage
                 .from('images')
                 .getPublicUrl(path);
 
             if (!publicUrl) throw new Error('Public URL could not be generated.');
-            
+
             console.log('Supabase - Image uploaded successfully:', publicUrl);
             return publicUrl;
 
         } catch (error) {
             console.error('Supabase - Image upload failed:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Supabase Storage에서 파일을 삭제합니다.
+     * @param {string} path - 삭제할 파일의 경로
+     */
+    async deleteImage(path) {
+        try {
+            const { error } = await this.supabase
+                .storage
+                .from('images')
+                .remove([path]);
+
+            if (error) throw error;
+
+            console.log('Supabase - Image deleted successfully:', path);
+        } catch (error) {
+            console.error('Supabase - Image deletion failed:', error);
+            // 파일이 이미 없어도 오류를 던지지 않도록 처리
         }
     }
 }
