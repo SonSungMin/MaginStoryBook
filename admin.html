@@ -194,33 +194,15 @@
             </section>
 
             <section id="storybook-maker" class="admin-section">
-                <h2>동화책 만들기</h2>
-                <div class="teacher-dashboard">
-                    <div class="tool-box">
-                        <h3>작품 목록</h3>
-                        <div class="artwork-list">
-                        </div>
-                    </div>
-                    <div class="tool-box">
-                        <h3>동화책 페이지 구성</h3>
-                        <div class="storybook-layout" id="storybook-dropzone">
-                            <div class="page-slot"><span class="slot-label">표지</span></div>
-                            <div class="page-slot"></div>
-                            <div class="page-slot"></div>
-                            <div class="page-slot"></div>
-                            <div class="page-slot"></div>
-                            <div class="page-slot"><span class="slot-label">뒷표지</span></div>
-                        </div>
-                        <button class="btn-primary mt-3" onclick="previewStorybook()">동화책 미리보기</button>
-                        <button class="btn-secondary mt-1" onclick="exportStorybook()">PDF 내보내기</button>
-                    </div>
-                    <div class="tool-box page-preview-box">
-                        <h3>페이지 미리보기</h3>
-                        <div class="page-preview" id="current-page-preview">
-                            <img src="images/placeholder_preview.png" alt="미리보기 이미지">
-                            <p class="preview-text">선택된 페이지의 그림과 이야기가 여기에 표시됩니다.</p>
-                        </div>
-                    </div>
+                <h2>동화책 만들기</h2>            
+                <div class="form-group">
+                    <button id="bulkProductionButton" class="btn-primary">선택된 작품 일괄 제작</button>
+                </div>
+            
+                <div class="data-list">
+                    <h3>선생님들이 등록한 작품</h3>
+                    <ul id="storybookMakerList">
+                        </ul>
                 </div>
             </section>
         </div>
@@ -236,3 +218,4 @@
 
 </body>
 </html>
+
