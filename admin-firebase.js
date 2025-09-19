@@ -62,8 +62,18 @@ function checkAdminLoginState() {
 export function initializeAdminPage() {
     console.log('관리자 페이지 초기화 시작...');
     
-    document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
-    document.getElementById('adminLogoutButton').addEventListener('click', handleAdminLogout);
+    const loginButton = document.getElementById('adminLoginButton');
+    if (loginButton) {
+        console.log('로그인 버튼을 찾았으며, 클릭 이벤트를 연결합니다.');
+        loginButton.addEventListener('click', handleAdminLogin);
+    } else {
+        console.error('오류: 로그인 버튼을 찾을 수 없습니다.');
+    }
+
+    const logoutButton = document.getElementById('adminLogoutButton');
+    if(logoutButton) {
+        logoutButton.addEventListener('click', handleAdminLogout);
+    }
 
     initializeAddressOptions();
     setupEventListeners(); 
@@ -106,11 +116,13 @@ function activateAdminSection(targetId) {
     }
 }
 
-async function handleAdminLogin() {
+export async function handleAdminLogin() {
+    console.log('로그인 버튼 클릭됨, handleAdminLogin 함수 실행.');
     const id = document.getElementById('adminId').value.trim();
     const pwd = document.getElementById('adminPwd').value.trim();
 
     if (id === 'admin' && pwd === 'admin') {
+        console.log('관리자 인증 성공.');
         sessionStorage.setItem('loggedInAdmin', 'true');
         checkAdminLoginState();
     } else {
@@ -118,7 +130,7 @@ async function handleAdminLogin() {
     }
 }
 
-function handleAdminLogout() {
+export function handleAdminLogout() {
     sessionStorage.removeItem('loggedInAdmin');
     location.reload();
 }
