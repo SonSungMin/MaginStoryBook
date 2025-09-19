@@ -20,10 +20,9 @@
                 <nav class="main-nav">
                     <button class="nav-button active" data-target="my-story"><i class="fas fa-book-open"></i> 내 그림 이야기</button>
                     <button class="nav-button" data-target="class-story"><i class="fas fa-users"></i> 우리 반 이야기</button>
-                    <button class="nav-button" data-target="teacher-tools" id="teacherToolsNavButton" style="display: none;"><i class="fas fa-pencil-alt"></i> 선생님 도구함</button>
+                    <button class="nav-button" data-target="teacher-tools" id="teacherToolsNavButton" style="display: none;"><i class="fas fa-magic"></i> 동화책 만들기</button>
                 </nav>
                 <div class="header-right">
-                    <button class="season-calendar-button" data-target="season-calendar"><i class="fas fa-calendar-alt"></i> 우리들의 사계절</button>
                     <button class="logout-button" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
                 </div>
             </div>
@@ -31,7 +30,15 @@
 
         <main class="content-area container">
             <section id="my-story" class="app-section active">
-                <h2>내 그림 이야기</h2>
+                <div class="section-header">
+                    <h2>내 그림 이야기</h2>
+                    <div class="theme-filter-container">
+                        <label for="themeFilter">테마별 보기:</label>
+                        <select id="themeFilter" class="form-control">
+                            <option value="all">전체보기</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="story-grid">
                     <div class="story-card upload-card" onclick="openUploadModal()">
                         <i class="fas fa-plus-circle"></i>
@@ -47,7 +54,7 @@
             </section>
 
             <section id="teacher-tools" class="app-section">
-                <h2>선생님 도구함</h2>
+                <h2>동화책 만들기</h2>
                 <div class="teacher-dashboard">
                     <div class="tool-box">
                         <h3>작품 목록</h3>
@@ -77,36 +84,6 @@
                     </div>
                 </div>
             </section>
-
-            <section id="season-calendar" class="app-section">
-                <h2>우리들의 사계절</h2>
-                <div class="season-gallery">
-                    <div class="season-card">
-                        <h3>봄 이야기</h3>
-                        <img src="images/season_spring_thumb.png" alt="봄 썸네일">
-                        <p>새싹처럼 피어나는 우리들의 첫 이야기</p>
-                        <button class="btn-view-book">보기</button>
-                    </div>
-                    <div class="season-card">
-                        <h3>여름 이야기</h3>
-                        <img src="images/season_summer_thumb.png" alt="여름 썸네일">
-                        <p>햇살 가득 신나는 여름의 추억</p>
-                        <button class="btn-view-book">보기</button>
-                    </div>
-                    <div class="season-card">
-                        <h3>가을 이야기</h3>
-                        <img src="images/season_autumn_thumb.png" alt="가을 썸네일">
-                        <p>단풍잎처럼 알록달록한 가을 추억</p>
-                        <button class="btn-view-book">보기</button>
-                    </div>
-                    <div class="season-card">
-                        <h3>겨울 이야기</h3>
-                        <img src="images/season_winter_thumb.png" alt="겨울 썸네일">
-                        <p>눈꽃같이 반짝이는 겨울 이야기</p>
-                        <button class="btn-view-book">보기</button>
-                    </div>
-                </div>
-            </section>
         </main>
     </div>
 
@@ -133,7 +110,10 @@
             </div>
             <div class="upload-options-container" style="margin-bottom: 15px;">
                 <select id="uploadEstablishmentSelect" class="form-control" style="display: none; margin-bottom: 10px;"></select>
-                <select id="uploadStudentSelect" class="form-control" style="display: none;"></select>
+                <select id="uploadStudentSelect" class="form-control" style="display: none; margin-bottom: 10px;"></select>
+                <select id="themeSelect" class="form-control" style="margin-bottom: 10px;">
+                    <option value="">-- 테마 선택 --</option>
+                </select>
             </div>
             <input type="text" id="drawingTitleInput" placeholder="그림 제목을 입력해주세요">
             <textarea id="drawingStoryInput" placeholder="그림에 대한 이야기를 들려주세요"></textarea>
@@ -152,6 +132,9 @@
             <div class="drawing-preview">
                 <img id="editPreviewImage" src="images/placeholder_preview.png" alt="수정할 그림 미리보기">
             </div>
+            <select id="editThemeSelect" class="form-control mt-3">
+                <option value="">-- 테마 선택 --</option>
+            </select>
             <input type="text" id="editDrawingTitleInput" placeholder="그림 제목" class="mt-3">
             <textarea id="editDrawingStoryInput" placeholder="그림 이야기"></textarea>
             <div class="button-group">
@@ -171,7 +154,7 @@
                     <img id="detailOriginalImg" src="" alt="원본 그림">
                 </div>
                 <p id="detailStoryText" class="detail-story-text"></p>
-                <p class="detail-info">작성일: <span id="detailStoryDate"></span></p>
+                <p class="detail-info">작성일: <span id="detailStoryDate"></span> / 테마: <span id="detailStoryTheme"></span></p>
             </div>
             <div class="button-group mt-3">
                 <button class="btn-primary" onclick="shareStory()">친구에게 공유</button>
@@ -281,4 +264,3 @@
     </script>
 </body>
 </html>
-
