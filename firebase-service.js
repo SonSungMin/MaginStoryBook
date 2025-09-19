@@ -24,6 +24,75 @@ class FirebaseService {
         this.db = window.firebase.db;
         this.storage = window.firebase.storage;
     }
+    
+    // ===================
+    // 테마(Themes) 관리
+    // ===================
+    async createTheme(themeData) {
+        try {
+            const docRef = await addDoc(collection(this.db, 'themes'), {
+                ...themeData,
+                createdAt: serverTimestamp(),
+            });
+            console.log('테마 생성 성공:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error("테마 생성 오류:", error);
+            throw error;
+        }
+    }
+
+    async getThemesByEstablishment(establishmentId) {
+        if (!establishmentId) return [];
+        try {
+            const q = query(
+                collection(this.db, 'themes'),
+                where('establishmentId', '==', establishmentId),
+                orderBy('createdAt', 'desc')
+            );
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("테마 조회 오류:", error);
+            throw error;
+        }
+    }
+
+    async updateTheme(themeId, updateData) {
+        try {
+            await updateDoc(doc(this.db, 'themes', themeId), updateData);
+            console.log('테마 업데이트 완료:', themeId);
+        } catch (error) {
+            console.error('테마 업데이트 오류:', error);
+            throw error;
+        }
+    }
+
+    async deleteTheme(themeId) {
+        try {
+            await deleteDoc(doc(this.db, 'themes', themeId));
+            console.log('테마 삭제 완료:', themeId);
+        } catch (error) {
+            console.error("테마 삭제 오류:", error);
+            throw error;
+        }
+    }
+
+    async isThemeDeletable(themeId) {
+        try {
+            const q = query(
+                collection(this.db, 'stories'),
+                where('themeId', '==', themeId),
+                limit(1)
+            );
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.empty;
+        } catch (error) {
+            console.error('테마 사용 여부 확인 오류:', error);
+            return false;
+        }
+    }
+
 
     // ===================
     // 반(Classes) 관리
@@ -45,8 +114,6 @@ class FirebaseService {
     async getClassesByEstablishment(establishmentId) {
         if (!establishmentId) return [];
         try {
-            // Firestore composite index is required for filtering and ordering on different fields.
-            // To avoid this requirement for simplicity, we will fetch and then sort on the client-side.
             const q = query(
                 collection(this.db, 'classes'),
                 where('establishmentId', '==', establishmentId)
@@ -54,7 +121,6 @@ class FirebaseService {
             const querySnapshot = await getDocs(q);
             const classes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-            // Sort by createdAt timestamp descending
             classes.sort((a, b) => {
                 const aTime = a.createdAt?.seconds || 0;
                 const bTime = b.createdAt?.seconds || 0;
@@ -70,7 +136,6 @@ class FirebaseService {
 
     async deleteClass(classId) {
         try {
-            // TODO: Unassign this classId from all users who have it
             await deleteDoc(doc(this.db, 'classes', classId));
             console.log('반 삭제 완료:', classId);
         } catch (error) {
@@ -131,17 +196,20 @@ class FirebaseService {
         const batch = writeBatch(this.db);
 
         try {
-            // Delete classes associated with the establishment
             const classesQuery = query(collection(this.db, 'classes'), where('establishmentId', '==', establishmentId));
             const classesSnapshot = await getDocs(classesQuery);
             classesSnapshot.forEach(doc => {
                 batch.delete(doc.ref);
             });
+            
+            const themesQuery = query(collection(this.db, 'themes'), where('establishmentId', '==', establishmentId));
+            const themesSnapshot = await getDocs(themesQuery);
+            themesSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
 
-            // Delete users associated with the establishment (which also handles their stories)
             await this.deleteUsersByEstablishment(establishmentId);
 
-            // Delete the establishment itself
             const establishmentRef = doc(this.db, 'establishments', establishmentId);
             batch.delete(establishmentRef);
 
@@ -275,10 +343,8 @@ class FirebaseService {
 
     async deleteUser(userId) {
         try {
-            // 사용자의 모든 작품도 삭제
             await this.deleteStoriesByUser(userId);
 
-            // 사용자 삭제
             await deleteDoc(doc(this.db, 'users', userId));
             console.log('사용자 삭제 완료:', userId);
         } catch (error) {
