@@ -82,7 +82,7 @@ async function loadAndRenderStories() {
         console.log('작품 데이터 로드를 시작합니다...');
         myStories = await window.firebaseService.getStoriesByUser(currentUser.id);
         
-        // ✨ 여기가 핵심 수정 사항입니다.
+        // ✨ 관리자일 경우와 아닐 경우를 분리하여 데이터를 로드합니다.
         if (currentUser.role === 'admin') {
             // 관리자는 모든 기관의 작품을 불러옵니다.
             console.log('관리자 권한으로 모든 작품을 로드합니다.');
@@ -94,7 +94,7 @@ async function loadAndRenderStories() {
         }
         
         console.log('Firebase에서 가져온 [내 작품] 데이터:', myStories);
-        console.log('Firebase에서 가져온 [선생님 도구함용] 데이터:', classStories);
+        console.log('Firebase에서 가져온 [선생님 도구함/우리반] 데이터:', classStories);
 
         renderMyStoryCards();
         renderClassStoryCards();
