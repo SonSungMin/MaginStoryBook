@@ -10,8 +10,8 @@
     --card-bg: #FFFFFF;
     --success-color: #4CAF50;
     --warning-color: #FFC107;
-    --header-bg: #A0D2EB; /* ✨ 부드러운 하늘색 계열로 변경 */
-    --ribbon-color: #4A90E2; /* ✨ 로고 리본 색상과 통일 (조금 더 진한 파란색) */
+    --header-bg: #FFF1A0; /* ✨ 부드러운 노란색 계열로 변경 */
+    --ribbon-color: #FDB813; /* ✨ 어울리는 금빛 노란색으로 변경 */
 }
 
 body {
@@ -30,9 +30,9 @@ body {
 
 /* 헤더 (app.html) */
 .main-header {
-    background-color: var(--header-bg); /* ✨ 변경된 하늘색 적용 */
+    background-color: var(--header-bg); /* ✨ 변경된 노란색 적용 */
     padding: 15px 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* 그림자 연하게 수정 */
 }
 
 .main-header .container {
@@ -46,7 +46,7 @@ body {
     display: flex;
     align-items: center;
     font-size: 1.8em;
-    color: var(--text-dark); /* 로고 텍스트 색상 변경 (흰색 -> 어두운색) */
+    color: var(--text-dark); 
     font-weight: bold;
     margin: 0;
     white-space: nowrap;
@@ -621,7 +621,7 @@ body {
     flex-wrap: wrap;
 }
 .detail-image-area img {
-    max-width: 90%; /* 이미지 하나만 표시하므로 크기 키움 */
+    max-width: 90%;
     height: auto;
     max-height: 400px;
     object-fit: contain;
