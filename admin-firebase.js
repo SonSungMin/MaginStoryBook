@@ -46,6 +46,11 @@ export function initializeAdminPage() {
     window.previewStorybook = previewStorybook;
     window.closeStorybookViewer = closeStorybookViewer;
     window.saveStorybook = saveStorybook;
+    window.openAiGenerationModal = openAiGenerationModal;
+    window.closeAiGenerationModal = closeAiGenerationModal;
+    window.handleAiGeneration = handleAiGeneration;
+    window.applyAiResult = applyAiResult;
+
 
     document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
     document.getElementById('adminLogoutButton').addEventListener('click', handleAdminLogout);
@@ -900,6 +905,95 @@ function previewPageImage(inputElement) {
         reader.readAsDataURL(file);
     }
 }
+
+// --- AI 생성 팝업 관련 ---
+function openAiGenerationModal() {
+    const originalImgSrc = document.getElementById('originalStoryImg').src;
+    const originalStoryText = document.getElementById('originalStoryText').textContent;
+
+    document.getElementById('aiOriginalImage').src = originalImgSrc;
+    document.getElementById('aiStoryText').value = originalStoryText;
+
+    // 결과 영역 초기화
+    document.getElementById('aiResultArea').innerHTML = '<p>AI 생성 버튼을 눌러 새로운 그림과 이야기를 만들어보세요.</p>';
+    document.getElementById('applyAiResultButton').style.display = 'none';
+    
+    document.getElementById('aiGenerationModal').style.display = 'flex';
+}
+
+function closeAiGenerationModal() {
+    document.getElementById('aiGenerationModal').style.display = 'none';
+}
+
+async function handleAiGeneration() {
+    const storyText = document.getElementById('aiStoryText').value;
+    const originalImgSrc = document.getElementById('aiOriginalImage').src;
+
+    if (!storyText) {
+        alert("AI에게 전달할 이야기를 입력해주세요.");
+        return;
+    }
+
+    // 로딩 스피너 표시
+    const spinner = document.getElementById('aiLoadingSpinner');
+    const resultArea = document.getElementById('aiResultArea');
+    const applyButton = document.getElementById('applyAiResultButton');
+
+    spinner.style.display = 'block';
+    resultArea.innerHTML = '';
+    applyButton.style.display = 'none';
+
+    // Gemini Nano Banana API 호출 시뮬레이션
+    // TODO: 실제 Gemini API 연동 코드로 교체해야 합니다.
+    console.log("--- AI Generation Request ---");
+    console.log("Image:", originalImgSrc);
+    console.log("Text:", storyText);
+    console.log("-----------------------------");
+
+    setTimeout(() => {
+        // 시뮬레이션 결과
+        const generatedImageUrl = 'images/sample_ai_generated_default.png'; // 예시 결과 이미지
+        const generatedText = `(AI가 생성한 새로운 이야기) ${storyText} 그림 속 아이는 행복하게 웃고 있었어요. 따스한 햇살 아래, 모든 것이 반짝이는 오후였답니다.`;
+
+        resultArea.innerHTML = `
+            <img src="${generatedImageUrl}" alt="AI Generated Image" id="aiGeneratedImagePreview">
+            <p id="aiGeneratedTextPreview">${generatedText}</p>
+        `;
+        
+        spinner.style.display = 'none';
+        applyButton.style.display = 'block'; // 적용하기 버튼 표시
+
+    }, 2500); // 2.5초 후 결과 반환 시뮬레이션
+}
+
+function applyAiResult() {
+    const generatedImgSrc = document.getElementById('aiGeneratedImagePreview')?.src;
+    const generatedText = document.getElementById('aiGeneratedTextPreview')?.textContent;
+
+    if (generatedImgSrc && generatedText) {
+        // 현재 열려있는 첫 번째 내용 페이지에 적용
+        const firstPageItem = document.querySelector('#content-pages-container .page-item');
+        if (firstPageItem) {
+            firstPageItem.querySelector('.page-image-preview').src = generatedImgSrc;
+            firstPageItem.querySelector('.page-text-input').value = generatedText;
+            // 새 이미지가 아니므로 isNew 플래그를 false로 설정해야 할 수 있음 (저장 로직에 따라)
+             firstPageItem.querySelector('.page-image-preview').dataset.isNew = "false";
+        } else {
+            // 페이지가 없다면 새로 추가하고 적용
+            addStoryPage();
+            const newPageItem = document.querySelector('#content-pages-container .page-item:last-child');
+            newPageItem.querySelector('.page-image-preview').src = generatedImgSrc;
+            newPageItem.querySelector('.page-text-input').value = generatedText;
+            newPageItem.querySelector('.page-image-preview').dataset.isNew = "false";
+
+        }
+        alert("AI 생성 결과가 동화책 내용에 적용되었습니다.");
+        closeAiGenerationModal();
+    } else {
+        alert("적용할 AI 생성 결과가 없습니다.");
+    }
+}
+
 
 // --- 동화책 뷰어 및 저장 관련 ---
 async function saveStorybook() {
