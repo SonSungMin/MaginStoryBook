@@ -22,7 +22,8 @@ let establishments = [];
 let users = [];
 let classes = [];
 let stories = [];
-let storybookPages = []; // 동화책 미리보기 데이터
+let themes = [];
+let storybookPages = []; 
 let currentPageIndex = 0;
 
 export function initializeAdminPage() {
@@ -70,7 +71,14 @@ export function initializeAdminPage() {
     document.getElementById('addMemberButton').addEventListener('click', addMember);
     document.getElementById('updateMemberPermissionButton').addEventListener('click', updateMemberPermission);
     document.getElementById('bulkProductionButton').addEventListener('click', startBulkProduction);
-    document.getElementById('storybookEstablishmentFilter').addEventListener('change', () => renderStorybookMakerList());
+    
+    document.getElementById('storybookEstablishmentFilter').addEventListener('change', async () => {
+        await populateThemeFilterOptions();
+        await renderStorybookMakerList();
+    });
+    document.getElementById('storybookThemeFilter').addEventListener('change', renderStorybookMakerList);
+    document.getElementById('storybookStatusFilter').addEventListener('change', renderStorybookMakerList);
+    
     document.getElementById('addPageButton').addEventListener('click', addStoryPage);
 
 
@@ -117,10 +125,13 @@ function checkAdminLoginState() {
 
 async function loadDataAndRender() {
     try {
-        [establishments, users, stories] = await Promise.all([
-            window.firebaseService.getAllEstablishments(),
+        const establishmentDocs = await window.firebaseService.getAllEstablishments();
+        establishments = establishmentDocs;
+
+        [users, stories, themes] = await Promise.all([
             window.firebaseService.getAllUsers(),
-            window.firebaseService.getAllStories()
+            window.firebaseService.getAllStories(),
+            Promise.all(establishments.map(e => window.firebaseService.getThemesByEstablishment(e.id))).then(results => results.flat())
         ]);
         await renderAll();
     } catch (error) {
@@ -134,6 +145,7 @@ async function renderAll() {
     renderClassEstablishmentOptions();
     renderThemeEstablishmentOptions();
     renderStorybookFilterOptions();
+    await populateThemeFilterOptions();
     await renderMemberList();
     renderMemberPermissionOptions();
     renderPermissionList();
@@ -342,7 +354,7 @@ async function addTheme() {
         await window.firebaseService.createTheme({ establishmentId, name });
         alert('테마가 등록되었습니다.');
         document.getElementById('themeName').value = '';
-        await renderThemeList();
+        await loadDataAndRender();
     } catch (error) {
         console.error("테마 등록 오류:", error);
         alert("테마 등록 중 오류가 발생했습니다.");
@@ -398,7 +410,7 @@ async function deleteTheme(id) {
         }
         await window.firebaseService.deleteTheme(id);
         alert('테마가 삭제되었습니다.');
-        await renderThemeList();
+        await loadDataAndRender();
     } catch (error) {
         console.error("테마 삭제 오류:", error);
         alert("테마 삭제 중 오류가 발생했습니다.");
@@ -735,67 +747,85 @@ async function resetPassword(id) {
 
 // --- 동화책 만들기 관련 기능 ---
 
+async function populateThemeFilterOptions() {
+    const establishmentId = document.getElementById('storybookEstablishmentFilter').value;
+    const themeFilter = document.getElementById('storybookThemeFilter');
+    themeFilter.innerHTML = '<option value="all">전체 테마</option>';
+
+    if (establishmentId === 'all') {
+        const uniqueThemes = [...new Map(themes.map(item => [item['name'], item])).values()];
+        uniqueThemes.sort((a,b) => a.name.localeCompare(b.name));
+        uniqueThemes.forEach(theme => {
+            themeFilter.innerHTML += `<option value="${theme.id}">${theme.name}</option>`;
+        });
+    } else {
+        const establishmentThemes = await window.firebaseService.getThemesByEstablishment(establishmentId);
+        establishmentThemes.forEach(theme => {
+            themeFilter.innerHTML += `<option value="${theme.id}">${theme.name}</option>`;
+        });
+    }
+}
+
 function renderStorybookFilterOptions() {
     const select = document.getElementById('storybookEstablishmentFilter');
-    select.innerHTML = '<option value="all">전체보기</option>';
+    select.innerHTML = '<option value="all">전체 교육기관</option>';
     establishments.forEach(est => {
         select.innerHTML += `<option value="${est.id}">${est.name}</option>`;
     });
 }
 
-// [수정된 함수]
 async function renderStorybookMakerList() {
     const listElement = document.getElementById('storybookMakerList');
     listElement.innerHTML = '';
     const selectedEstId = document.getElementById('storybookEstablishmentFilter').value;
+    const selectedThemeId = document.getElementById('storybookThemeFilter').value;
+    const selectedStatus = document.getElementById('storybookStatusFilter').value;
 
     let displayStories = stories.filter(story => ['registered', 'in_production', 'completed'].includes(story.status));
 
+    // 필터링 로직
     if (selectedEstId !== 'all') {
         displayStories = displayStories.filter(story => story.establishmentId === selectedEstId);
-    } else {
-        displayStories.sort((a, b) => (a.establishmentId || '').localeCompare(b.establishmentId || ''));
     }
+    if (selectedThemeId !== 'all') {
+        displayStories = displayStories.filter(story => story.themeId === selectedThemeId);
+    }
+    if (selectedStatus !== 'all') {
+        displayStories = displayStories.filter(story => story.status === selectedStatus);
+    }
+    
+    displayStories.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
     if (displayStories.length === 0) {
-        listElement.innerHTML = '<li>등록된 작품이 없습니다.</li>';
+        listElement.innerHTML = '<li>조건에 맞는 작품이 없습니다.</li>';
         return;
     }
     
-    let lastEstablishmentId = null;
     displayStories.forEach(story => {
-        if (selectedEstId === 'all' && story.establishmentId !== lastEstablishmentId) {
-            if (lastEstablishmentId !== null) {
-                const hr = document.createElement('hr');
-                hr.className = 'establishment-divider';
-                listElement.appendChild(hr);
-            }
-            lastEstablishmentId = story.establishmentId;
-        }
-
         const uploader = users.find(u => u.id === story.uploaderId);
         const establishment = establishments.find(est => est.id === story.establishmentId);
         const li = document.createElement('li');
         li.dataset.storyId = story.id;
-        li.style.cursor = 'pointer';
-        li.addEventListener('click', (e) => {
-            if (e.target.tagName !== 'BUTTON') {
-                openStorybookProductionModal(story.id);
-            }
-        });
+        
+        const statusMap = {
+            'in_production': '제작중',
+            'completed': '제작 완료',
+            'registered': '등록됨'
+        };
+        const statusText = statusMap[story.status] || '알 수 없음';
         
         let actionButton;
         if (story.status === 'completed') {
              actionButton = `<button class="btn-edit" onclick="event.stopPropagation(); openStorybookProductionModal('${story.id}')">수정하기</button>`;
         } else if (story.status === 'in_production') {
-            actionButton = `<button class="btn-disabled" disabled>제작중</button>`;
-        } else {
+            actionButton = `<button class="btn-disabled" disabled>제작중</button> <button class="btn-edit" onclick="event.stopPropagation(); openStorybookProductionModal('${story.id}')">수정하기</button>`;
+        } else { // registered
             actionButton = `<button class="btn-edit" onclick="event.stopPropagation(); startProduction('${story.id}')">제작하기</button>`;
         }
 
         li.innerHTML = `
             <div class="item-content">
-                <div class="item-main-info">${story.title}</div>
+                <div class="item-main-info">${story.title} <span class="story-status-${story.status}">(${statusText})</span></div>
                 <div class="item-sub-info">
                     <span>등록자: ${uploader ? uploader.name : '알수없음'}</span>
                     <span>소속: ${establishment ? establishment.name : '소속없음'}</span>
@@ -845,7 +875,7 @@ async function startBulkProduction() {
         await Promise.all(updatePromises);
 
         alert('모든 등록된 작품이 "제작중" 상태로 변경되었습니다.');
-        await renderStorybookMakerList();
+        await loadDataAndRender();
     } catch (error) {
         console.error('일괄 제작 상태 변경 오류:', error);
         alert('일괄 제작 처리 중 오류가 발생했습니다.');
@@ -853,7 +883,6 @@ async function startBulkProduction() {
 }
 
 // --- 동화책 제작 팝업 관련 ---
-// [수정된 함수]
 async function openStorybookProductionModal(storyId) {
     const story = stories.find(s => s.id === storyId);
     if (!story) {
@@ -881,35 +910,20 @@ async function openStorybookProductionModal(storyId) {
         addStoryPage();
     };
 
-    if (story.status === 'completed') {
-        const storybook = await window.firebaseService.getStorybookByStoryId(storyId);
-        if (storybook && storybook.pages && storybook.pages.length > 0) {
-            document.getElementById('productionStorybookId').value = storybook.id; // 기존 동화책 ID 저장
+    const storybook = await window.firebaseService.getStorybookByStoryId(storyId);
+    if (storybook && storybook.pages && storybook.pages.length > 0) {
+        document.getElementById('productionStorybookId').value = storybook.id;
 
-            // 표지 채우기
-            const coverPage = storybook.pages[0];
-            const coverImagePreview = document.querySelector('.cover-section .page-image-preview');
-            coverImagePreview.src = coverPage.image || 'images/placeholder_preview.png';
-            coverImagePreview.dataset.isNew = "false";
-            document.querySelector('.cover-section .page-text-input').value = coverPage.text || '';
+        const coverPage = storybook.pages[0];
+        const coverImagePreview = document.querySelector('.cover-section .page-image-preview');
+        coverImagePreview.src = coverPage.image || 'images/placeholder_preview.png';
+        coverImagePreview.dataset.isNew = "false";
+        document.querySelector('.cover-section .page-text-input').value = coverPage.text || '';
 
-            // 내용 페이지 채우기
-            const contentPages = storybook.pages.slice(1);
-            contentPages.forEach(page => {
-                const pageItem = document.createElement('div');
-                pageItem.className = 'page-item';
-                pageItem.innerHTML = `
-                    <div class="page-image-area" onclick="this.querySelector('.page-image-input').click()">
-                        <img src="${page.image || 'images/placeholder_preview.png'}" class="page-image-preview" data-is-new="false">
-                        <input type="file" class="page-image-input" accept="image/*" onchange="previewPageImage(this)">
-                    </div>
-                    <textarea class="page-text-input" placeholder="동화 내용을 입력하세요.">${page.text || ''}</textarea>
-                `;
-                contentContainer.appendChild(pageItem);
-            });
-        } else {
-            resetModal();
-        }
+        const contentPages = storybook.pages.slice(1);
+        contentPages.forEach(page => {
+            addStoryPage(page.image, page.text);
+        });
     } else {
         resetModal();
     }
@@ -920,16 +934,17 @@ function closeStorybookProductionModal() {
     document.getElementById('storybookProductionModal').style.display = 'none';
 }
 
-function addStoryPage() {
+function addStoryPage(imageUrl = 'images/placeholder_preview.png', text = '') {
     const container = document.getElementById('content-pages-container');
     const pageItem = document.createElement('div');
     pageItem.className = 'page-item';
     pageItem.innerHTML = `
         <div class="page-image-area" onclick="this.querySelector('.page-image-input').click()">
-            <img src="images/placeholder_preview.png" class="page-image-preview" data-is-new="true">
+            <img src="${imageUrl}" class="page-image-preview" data-is-new="${imageUrl === 'images/placeholder_preview.png'}">
             <input type="file" class="page-image-input" accept="image/*" onchange="previewPageImage(this)">
         </div>
-        <textarea class="page-text-input" placeholder="동화 내용을 입력하세요."></textarea>
+        <textarea class="page-text-input" placeholder="동화 내용을 입력하세요.">${text}</textarea>
+        <button class="btn-remove-page" onclick="this.parentElement.remove()">&times;</button>
     `;
     container.appendChild(pageItem);
 }
@@ -1023,11 +1038,7 @@ function applyAiResult() {
             firstPageItem.querySelector('.page-text-input').value = generatedText;
             firstPageItem.querySelector('.page-image-preview').dataset.isNew = "false";
         } else {
-            addStoryPage();
-            const newPageItem = document.querySelector('#content-pages-container .page-item:last-child');
-            newPageItem.querySelector('.page-image-preview').src = generatedImgSrc;
-            newPageItem.querySelector('.page-text-input').value = generatedText;
-            newPageItem.querySelector('.page-image-preview').dataset.isNew = "false";
+            addStoryPage(generatedImgSrc, generatedText);
         }
         alert("AI 생성 결과가 동화책 내용에 적용되었습니다.");
         closeAiGenerationModal();
@@ -1038,7 +1049,6 @@ function applyAiResult() {
 
 
 // --- 동화책 뷰어 및 저장 관련 ---
-// [수정된 함수]
 async function saveStorybook() {
     const storyId = document.getElementById('productionStoryId').value;
     const existingStorybookId = document.getElementById('productionStorybookId').value;
@@ -1080,11 +1090,9 @@ async function saveStorybook() {
 
         if (story.status !== 'completed') {
             await window.firebaseService.updateStory(storyId, { status: 'completed' });
-            const storyIndex = stories.findIndex(s => s.id === storyId);
-            if(storyIndex > -1) stories[storyIndex].status = 'completed';
         }
         
-        await renderStorybookMakerList();
+        await loadDataAndRender();
         alert("동화책이 성공적으로 저장되었습니다!");
         closeStorybookProductionModal();
 
@@ -1126,21 +1134,15 @@ function closeStorybookViewer() {
 function updateViewer() {
     if(!storybookPages[currentPageIndex]) return;
     const page = storybookPages[currentPageIndex];
-    const viewerImage = document.getElementById('viewerImage');
-    const viewerText = document.getElementById('viewerText');
-    const pageIndicator = document.getElementById('pageIndicator');
+    document.getElementById('viewerImage').src = page.image;
+    document.getElementById('viewerText').textContent = page.text;
+    document.getElementById('pageIndicator').textContent = `${currentPageIndex + 1} / ${storybookPages.length}`;
+
     const nextPageButton = document.getElementById('nextPageButton');
-
-    if (viewerImage) viewerImage.src = page.image;
-    if (viewerText) viewerText.textContent = page.text;
-    if (pageIndicator) pageIndicator.textContent = `${currentPageIndex + 1} / ${storybookPages.length}`;
-
-    if (nextPageButton) {
-        if (currentPageIndex === storybookPages.length - 1) {
-            nextPageButton.innerHTML = '처음으로 <i class="fas fa-redo"></i>';
-        } else {
-            nextPageButton.innerHTML = '다음 <i class="fas fa-arrow-right"></i>';
-        }
+    if (currentPageIndex === storybookPages.length - 1) {
+        nextPageButton.innerHTML = '처음으로 <i class="fas fa-redo"></i>';
+    } else {
+        nextPageButton.innerHTML = '다음 <i class="fas fa-arrow-right"></i>';
     }
 }
 
@@ -1155,7 +1157,7 @@ function showNextPage() {
     if (currentPageIndex < storybookPages.length - 1) {
         currentPageIndex++;
     } else {
-        currentPageIndex = 0; // 마지막 페이지에서 누르면 처음으로 이동
+        currentPageIndex = 0; // 마지막 페이지에서 누르면 처음으로
     }
     updateViewer();
 }
