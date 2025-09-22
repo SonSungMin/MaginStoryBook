@@ -255,9 +255,7 @@
 .button-group-list .btn-preview:hover {
     background-color: #e8f5e9;
 }
-.button-group-list .btn-edit:hover {
-    background-color: #eaf2fa;
-}
+.button-group-list .btn-edit:hover,
 .button-group-list .btn-produce:hover {
     background-color: #eaf2fa;
 }
