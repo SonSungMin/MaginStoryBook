@@ -860,12 +860,15 @@ async function openStorybookProductionModal(storyId) {
         alert('작품 정보를 찾을 수 없습니다.');
         return;
     }
+    const uploader = users.find(u => u.id === story.uploaderId);
+    const authorName = uploader ? uploader.name : '알 수 없음';
+
 
     // 모달 필드 초기화
     document.getElementById('productionStoryId').value = storyId;
     document.getElementById('productionStorybookId').value = ''; 
     document.getElementById('originalStoryImg').src = story.originalImgUrl || 'images/placeholder_preview.png';
-    document.getElementById('originalStoryTitle').textContent = story.title;
+    document.getElementById('originalStoryTitle').textContent = `${story.title} (작성자: ${authorName})`;
     document.getElementById('originalStoryText').textContent = story.storyText;
     
     const contentContainer = document.getElementById('content-pages-container');
