@@ -242,6 +242,13 @@
     color: #337ab7;
     border-color: #337ab7;
 }
+.button-group-list .btn-preview {
+    color: var(--success-color);
+    border-color: var(--success-color);
+}
+.button-group-list .btn-preview:hover {
+    background-color: #e8f5e9;
+}
 .button-group-list .btn-edit:hover {
     background-color: #eaf2fa;
 }
@@ -487,7 +494,7 @@
 .ai-generation-area {
     display: flex;
     gap: 20px;
-    height: 60vh; /* Adjust height as needed */
+    height: 60vh;
 }
 .ai-input-section, .ai-output-section {
     flex: 1;
@@ -543,12 +550,24 @@
 .viewer-modal {
     background-color: rgba(0,0,0,0.8);
 }
-.viewer-modal .close-button {
+.viewer-modal .modal-content {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+.viewer-close-button {
+    position: absolute;
+    top: 15px;
+    right: 25px;
     color: #fff;
+    font-size: 35px;
+    font-weight: bold;
+    cursor: pointer;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
     opacity: 0.8;
+    z-index: 1001;
 }
-.viewer-modal .close-button:hover {
+.viewer-close-button:hover {
     opacity: 1;
 }
 .storybook-viewer {
@@ -585,14 +604,16 @@
     margin-top: 20px;
 }
 .viewer-controls button {
-    background: rgba(255,255,255,0.1);
-    border: 2px solid var(--text-light);
-    color: var(--text-light);
-    padding: 8px 15px;
-    border-radius: 20px;
+    background: rgba(40, 40, 40, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 25px;
     cursor: pointer;
     margin: 0 10px;
     transition: background-color 0.2s, color 0.2s;
+    font-family: 'Jua', sans-serif;
+    font-size: 1em;
 }
 .viewer-controls button:hover {
     background-color: var(--text-light);
@@ -601,7 +622,10 @@
 .viewer-controls span {
     font-weight: bold;
     color: white;
+    font-size: 1.2em;
+    vertical-align: middle;
 }
+
 /* 작품 목록 구분선 */
 .establishment-divider {
     border: 0;
