@@ -404,45 +404,73 @@ window.openUploadModal = function() {
         return;
     }
 
-    drawingFileInput.value = '';
+    if (drawingFileInput) {
+        drawingFileInput.value = '';
+    }
     // document.getElementById('cameraInput').value = '';
-    previewImage.src = 'images/placeholder_preview.png';
-    drawingTitleInput.value = '';
-    drawingStoryInput.value = '';
+    if (previewImage) {
+        previewImage.src = 'images/placeholder_preview.png';
+    }
+    if (drawingTitleInput) {
+        drawingTitleInput.value = '';
+    }
+    if (drawingStoryInput) {
+        drawingStoryInput.value = '';
+    }
     currentOriginalFile = null;
-    uploadEstablishmentSelect.style.display = 'none';
-    uploadStudentSelect.style.display = 'none';
-    uploadEstablishmentSelect.innerHTML = '';
-    uploadStudentSelect.innerHTML = '';
+    if (uploadEstablishmentSelect) {
+        uploadEstablishmentSelect.style.display = 'none';
+        uploadEstablishmentSelect.innerHTML = '';
+    }
+    if (uploadStudentSelect) {
+        uploadStudentSelect.style.display = 'none';
+        uploadStudentSelect.innerHTML = '';
+    }
     
     // [수정] 사용자 역할에 따른 테마 선택 UI 처리
     if (currentUser.role === 'student') {
         // 원생은 테마 선택 UI 숨김
-        themeSelectContainer.style.display = 'none';
+        if (themeSelectContainer) {
+            themeSelectContainer.style.display = 'none';
+        }
     } else {
         // 교사/관리자는 테마 선택 UI 표시 및 활성 테마 자동 선택
-        themeSelectContainer.style.display = 'block';
+        if (themeSelectContainer) {
+            themeSelectContainer.style.display = 'block';
+        }
         populateThemeOptions(themeSelect, activeTheme ? activeTheme.id : null);
     }
 
     if (['teacher', 'director'].includes(currentUser.role)) {
-        uploadStudentSelect.style.display = 'block';
-        uploadStudentSelect.innerHTML = '<option value="">(내 이름으로 올리기)</option>';
-        const students = allUsers.filter(u => u.establishmentId === currentUser.establishmentId && u.role === 'student');
-        students.forEach(student => {
-            uploadStudentSelect.innerHTML += `<option value="${student.id}">${student.name}</option>`;
-        });
+        if (uploadStudentSelect) {
+            uploadStudentSelect.style.display = 'block';
+            uploadStudentSelect.innerHTML = '<option value="">(내 이름으로 올리기)</option>';
+            const students = allUsers.filter(u => u.establishmentId === currentUser.establishmentId && u.role === 'student');
+            students.forEach(student => {
+                uploadStudentSelect.innerHTML += `<option value="${student.id}">${student.name}</option>`;
+            });
+        }
     } else if (currentUser.role === 'admin') {
-        uploadEstablishmentSelect.style.display = 'block';
-        uploadStudentSelect.style.display = 'block';
-        uploadEstablishmentSelect.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
-        allEstablishments.forEach(est => {
-            uploadEstablishmentSelect.innerHTML += `<option value="${est.id}">${est.name}</option>`;
-        });
-        uploadStudentSelect.innerHTML = '<option value="">-- 원생 선택 --</option>';
+        if (uploadEstablishmentSelect) {
+            uploadEstablishmentSelect.style.display = 'block';
+        }
+        if (uploadStudentSelect) {
+            uploadStudentSelect.style.display = 'block';
+        }
+        if (uploadEstablishmentSelect) {
+            uploadEstablishmentSelect.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
+            allEstablishments.forEach(est => {
+                uploadEstablishmentSelect.innerHTML += `<option value="${est.id}">${est.name}</option>`;
+            });
+        }
+        if (uploadStudentSelect) {
+            uploadStudentSelect.innerHTML = '<option value="">-- 원생 선택 --</option>';
+        }
     }
 
-    uploadModal.style.display = 'flex';
+    if (uploadModal) {
+        uploadModal.style.display = 'flex';
+    }
 };
 
 function populateStudentOptionsForAdmin() {
