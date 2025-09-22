@@ -283,7 +283,9 @@ function createStoryCardElement(story, isClassStory = false) {
     cardActions.classList.add('card-actions');
     
     const canModify = currentUser.id === story.uploaderId || ['teacher', 'director', 'admin'].includes(currentUser.role);
-    if (canModify && story.status !== 'completed') {
+
+    // [수정] '&& story.status !== 'completed'' 조건을 제거하여 완료된 항목도 수정 가능하게 변경
+    if (canModify) {
         cardActions.innerHTML += `
             <button class="btn-edit" onclick="openEditStoryModal('${story.id}')"><i class="fas fa-edit"></i> 수정</button>
             <button class="btn-delete" onclick="deleteStory('${story.id}')"><i class="fas fa-trash"></i> 삭제</button>
