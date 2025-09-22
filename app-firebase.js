@@ -186,6 +186,14 @@ function activateSection(targetId) {
     const targetSection = document.getElementById(targetId);
     if (targetSection) {
         targetSection.classList.add('active');
+        
+        // 💡 오류 해결의 핵심: 각 탭을 누를 때마다 해당 목록을 새로 렌더링하도록 변경합니다.
+        if (targetId === 'my-story') {
+            renderMyStoryCards(themeFilter.value);
+        } else if (targetId === 'class-story') {
+            renderClassStoryCards(classThemeFilter.value);
+        }
+        
         if (targetId === 'teacher-tools' && currentUser.role !== 'admin') {
              alert('이 기능은 관리자만 사용할 수 있습니다.');
              activateSection('my-story');
@@ -404,25 +412,17 @@ window.openUploadModal = function() {
         return;
     }
 
-    if (drawingFileInput) {
-        drawingFileInput.value = '';
-    }
+    if(drawingFileInput) drawingFileInput.value = '';
     // document.getElementById('cameraInput').value = '';
-    if (previewImage) {
-        previewImage.src = 'images/placeholder_preview.png';
-    }
-    if (drawingTitleInput) {
-        drawingTitleInput.value = '';
-    }
-    if (drawingStoryInput) {
-        drawingStoryInput.value = '';
-    }
+    if(previewImage) previewImage.src = 'images/placeholder_preview.png';
+    if(drawingTitleInput) drawingTitleInput.value = '';
+    if(drawingStoryInput) drawingStoryInput.value = '';
     currentOriginalFile = null;
-    if (uploadEstablishmentSelect) {
+    if(uploadEstablishmentSelect) {
         uploadEstablishmentSelect.style.display = 'none';
         uploadEstablishmentSelect.innerHTML = '';
     }
-    if (uploadStudentSelect) {
+    if(uploadStudentSelect) {
         uploadStudentSelect.style.display = 'none';
         uploadStudentSelect.innerHTML = '';
     }
@@ -430,19 +430,15 @@ window.openUploadModal = function() {
     // [수정] 사용자 역할에 따른 테마 선택 UI 처리
     if (currentUser.role === 'student') {
         // 원생은 테마 선택 UI 숨김
-        if (themeSelectContainer) {
-            themeSelectContainer.style.display = 'none';
-        }
+        if(themeSelectContainer) themeSelectContainer.style.display = 'none';
     } else {
         // 교사/관리자는 테마 선택 UI 표시 및 활성 테마 자동 선택
-        if (themeSelectContainer) {
-            themeSelectContainer.style.display = 'block';
-        }
+        if(themeSelectContainer) themeSelectContainer.style.display = 'block';
         populateThemeOptions(themeSelect, activeTheme ? activeTheme.id : null);
     }
 
     if (['teacher', 'director'].includes(currentUser.role)) {
-        if (uploadStudentSelect) {
+        if(uploadStudentSelect) {
             uploadStudentSelect.style.display = 'block';
             uploadStudentSelect.innerHTML = '<option value="">(내 이름으로 올리기)</option>';
             const students = allUsers.filter(u => u.establishmentId === currentUser.establishmentId && u.role === 'student');
@@ -451,26 +447,19 @@ window.openUploadModal = function() {
             });
         }
     } else if (currentUser.role === 'admin') {
-        if (uploadEstablishmentSelect) {
-            uploadEstablishmentSelect.style.display = 'block';
-        }
-        if (uploadStudentSelect) {
-            uploadStudentSelect.style.display = 'block';
-        }
-        if (uploadEstablishmentSelect) {
+        if(uploadEstablishmentSelect) uploadEstablishmentSelect.style.display = 'block';
+        if(uploadStudentSelect) uploadStudentSelect.style.display = 'block';
+        
+        if(uploadEstablishmentSelect) {
             uploadEstablishmentSelect.innerHTML = '<option value="">-- 교육기관 선택 --</option>';
             allEstablishments.forEach(est => {
                 uploadEstablishmentSelect.innerHTML += `<option value="${est.id}">${est.name}</option>`;
             });
         }
-        if (uploadStudentSelect) {
-            uploadStudentSelect.innerHTML = '<option value="">-- 원생 선택 --</option>';
-        }
+        if(uploadStudentSelect) uploadStudentSelect.innerHTML = '<option value="">-- 원생 선택 --</option>';
     }
 
-    if (uploadModal) {
-        uploadModal.style.display = 'flex';
-    }
+    if(uploadModal) uploadModal.style.display = 'flex';
 };
 
 function populateStudentOptionsForAdmin() {
