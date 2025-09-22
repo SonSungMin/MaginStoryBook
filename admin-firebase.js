@@ -45,6 +45,7 @@ export function initializeAdminPage() {
     window.previewPageImage = previewPageImage;
     window.previewStorybook = previewStorybook;
     window.closeStorybookViewer = closeStorybookViewer;
+    window.saveStorybook = saveStorybook;
 
     document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
     document.getElementById('adminLogoutButton').addEventListener('click', handleAdminLogout);
@@ -742,12 +743,11 @@ async function renderStorybookMakerList() {
     listElement.innerHTML = '';
     const selectedEstId = document.getElementById('storybookEstablishmentFilter').value;
 
-    let displayStories = stories.filter(story => ['registered', 'in_production'].includes(story.status));
+    let displayStories = stories.filter(story => ['registered', 'in_production', 'completed'].includes(story.status));
 
     if (selectedEstId !== 'all') {
         displayStories = displayStories.filter(story => story.establishmentId === selectedEstId);
     } else {
-        // 소속별로 정렬
         displayStories.sort((a, b) => (a.establishmentId || '').localeCompare(b.establishmentId || ''));
     }
 
@@ -771,6 +771,7 @@ async function renderStorybookMakerList() {
         const establishment = establishments.find(est => est.id === story.establishmentId);
         const li = document.createElement('li');
         li.dataset.storyId = story.id;
+        li.style.cursor = 'pointer';
         li.addEventListener('click', (e) => {
             if (e.target.tagName !== 'BUTTON') {
                 openStorybookProductionModal(story.id);
@@ -778,7 +779,9 @@ async function renderStorybookMakerList() {
         });
         
         let actionButton;
-        if (story.status === 'in_production') {
+        if (story.status === 'completed') {
+             actionButton = `<button class="btn-disabled" disabled>제작완료</button>`;
+        } else if (story.status === 'in_production') {
             actionButton = `<button class="btn-disabled" disabled>제작중</button>`;
         } else {
             actionButton = `<button class="btn-edit" onclick="event.stopPropagation(); startProduction('${story.id}')">제작하기</button>`;
@@ -809,7 +812,6 @@ async function startProduction(storyId) {
         await window.firebaseService.updateStory(storyId, { status: 'in_production' });
         alert('작품의 진행 상태가 "제작중"으로 변경되었습니다.');
         
-        // 실시간 데이터 업데이트
         const storyIndex = stories.findIndex(s => s.id === storyId);
         if(storyIndex > -1) stories[storyIndex].status = 'in_production';
         
@@ -831,7 +833,7 @@ async function startBulkProduction() {
 
     try {
         const updatePromises = registeredStories.map(story => {
-            story.status = 'in_production'; // 로컬 데이터 우선 변경
+            story.status = 'in_production';
             return window.firebaseService.updateStory(story.id, { status: 'in_production' });
         });
         await Promise.all(updatePromises);
@@ -851,14 +853,16 @@ function openStorybookProductionModal(storyId) {
         alert('작품 정보를 찾을 수 없습니다.');
         return;
     }
-
+    
+    document.getElementById('productionStoryId').value = storyId;
     document.getElementById('originalStoryImg').src = story.originalImgUrl || 'images/placeholder_preview.png';
     document.getElementById('originalStoryTitle').textContent = story.title;
     document.getElementById('originalStoryText').textContent = story.storyText;
     
     // 내용 초기화
+    document.querySelector('.cover-section .page-image-preview').src = 'images/placeholder_preview.png';
+    document.querySelector('.cover-section .page-text-input').value = '';
     document.getElementById('content-pages-container').innerHTML = '';
-    // 기본으로 1개 페이지 추가
     addStoryPage(); 
 
     document.getElementById('storybookProductionModal').style.display = 'flex';
@@ -874,7 +878,7 @@ function addStoryPage() {
     pageItem.className = 'page-item';
     pageItem.innerHTML = `
         <div class="page-image-area" onclick="this.querySelector('.page-image-input').click()">
-            <img src="images/placeholder_preview.png" class="page-image-preview">
+            <img src="images/placeholder_preview.png" class="page-image-preview" data-is-new="true">
             <input type="file" class="page-image-input" accept="image/*" onchange="previewPageImage(this)">
         </div>
         <textarea class="page-text-input" placeholder="동화 내용을 입력하세요."></textarea>
@@ -886,24 +890,76 @@ function previewPageImage(inputElement) {
     const file = inputElement.files[0];
     if (file) {
         const reader = new FileReader();
+        const preview = inputElement.closest('.page-image-area').querySelector('.page-image-preview');
+        
         reader.onload = function(e) {
-            const preview = inputElement.previousElementSibling;
             preview.src = e.target.result;
+            preview.dataset.isNew = "true"; // 새 파일이 업로드되었음을 표시
+            preview.dataset.file = file.name; // 파일 추적을 위해 이름 저장 (선택적)
         }
         reader.readAsDataURL(file);
     }
 }
 
-// --- 동화책 뷰어 관련 ---
-function previewStorybook() {
-    storybookPages = []; // 미리보기 데이터 초기화
+// --- 동화책 뷰어 및 저장 관련 ---
+async function saveStorybook() {
+    const storyId = document.getElementById('productionStoryId').value;
+    const story = stories.find(s => s.id === storyId);
+    if(!story) return alert("원본 작품 정보를 찾을 수 없습니다.");
+
+    if(!confirm("동화책을 저장하시겠습니까? 저장 후에는 수정할 수 없습니다.")) return;
+
+    // 1. 페이지 데이터 수집 및 업로드
+    const pageElements = document.querySelectorAll('.production-area .page-item');
+    const pagesData = [];
     
-    // 표지 정보 수집
+    try {
+        for(const page of pageElements) {
+            const text = page.querySelector('.page-text-input').value;
+            const imgElement = page.querySelector('.page-image-preview');
+            const fileInput = page.querySelector('.page-image-input');
+            let imageUrl = imgElement.src;
+
+            // 새로운 이미지가 업로드된 경우에만 스토리지에 업로드
+            if (imgElement.dataset.isNew === "true" && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const imagePath = `storybooks/${storyId}/${Date.now()}_${file.name}`;
+                imageUrl = await window.supabaseStorageService.uploadImage(file, imagePath);
+            }
+            pagesData.push({ image: imageUrl, text });
+        }
+
+        // 2. Firestore에 동화책 데이터 저장
+        await window.firebaseService.createStorybook({
+            originalStoryId: storyId,
+            pages: pagesData,
+            authorId: story.uploaderId
+        });
+
+        // 3. 원본 작품 상태를 'completed'로 변경
+        await window.firebaseService.updateStory(storyId, { status: 'completed' });
+        
+        // 4. 로컬 데이터 갱신 및 UI 새로고침
+        story.status = 'completed';
+        await renderStorybookMakerList();
+
+        alert("동화책이 성공적으로 저장되었습니다!");
+        closeStorybookProductionModal();
+
+    } catch(error) {
+        console.error("동화책 저장 오류:", error);
+        alert("동화책 저장 중 오류가 발생했습니다.");
+    }
+}
+
+
+function previewStorybook() {
+    storybookPages = [];
+    
     const coverImage = document.querySelector('.cover-section .page-image-preview').src;
     const coverText = document.querySelector('.cover-section .page-text-input').value;
     storybookPages.push({ image: coverImage, text: coverText });
 
-    // 내용 페이지 정보 수집
     const contentPages = document.querySelectorAll('#content-pages-container .page-item');
     contentPages.forEach(page => {
         const image = page.querySelector('.page-image-preview').src;
@@ -926,6 +982,7 @@ function closeStorybookViewer() {
 }
 
 function updateViewer() {
+    if(!storybookPages[currentPageIndex]) return;
     const page = storybookPages[currentPageIndex];
     document.getElementById('viewerImage').src = page.image;
     document.getElementById('viewerText').textContent = page.text;
