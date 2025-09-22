@@ -737,16 +737,28 @@ body {
 }
 
 
-/* NEW: Storybook Viewer Styles */
+/* Storybook Viewer Styles */
 .viewer-modal {
     background-color: rgba(0,0,0,0.8);
 }
-.viewer-modal .close-button {
+.viewer-modal .modal-content {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+.viewer-close-button {
+    position: absolute;
+    top: 15px;
+    right: 25px;
     color: #fff;
+    font-size: 35px;
+    font-weight: bold;
+    cursor: pointer;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
     opacity: 0.8;
+    z-index: 1001;
 }
-.viewer-modal .close-button:hover {
+.viewer-close-button:hover {
     opacity: 1;
 }
 .storybook-viewer {
@@ -783,14 +795,16 @@ body {
     margin-top: 20px;
 }
 .viewer-controls button {
-    background: rgba(255,255,255,0.1);
-    border: 2px solid var(--text-light);
-    color: var(--text-light);
-    padding: 8px 15px;
-    border-radius: 20px;
+    background: rgba(40, 40, 40, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 25px;
     cursor: pointer;
     margin: 0 10px;
     transition: background-color 0.2s, color 0.2s;
+    font-family: 'Jua', sans-serif;
+    font-size: 1em;
 }
 .viewer-controls button:hover {
     background-color: var(--text-light);
@@ -799,6 +813,8 @@ body {
 .viewer-controls span {
     font-weight: bold;
     color: white;
+    font-size: 1.2em;
+    vertical-align: middle;
 }
 
 /* 카드 내 동화책 보기 버튼 스타일 추가 */
