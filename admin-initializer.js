@@ -32,12 +32,9 @@ Promise.all([
 ]).then(([firebaseServiceModule, adminFirebaseModule]) => {
     console.log('모든 모듈 로드 완료.');
     
-    // 💡 **오류 해결의 핵심**
-    // DOM이 완전히 로드된 후에만 페이지 초기화 함수를 실행하도록 변경하여
-    // 스크립트가 HTML 요소를 찾지 못하는 문제를 근본적으로 해결합니다.
-    document.addEventListener('DOMContentLoaded', () => {
-        adminFirebaseModule.initializeAdminPage();
-    });
+    // 💡 오류 해결의 핵심: DOMContentLoaded 이벤트를 기다리지 않고 바로 초기화 함수를 실행합니다.
+    // admin.html 파일에서 스크립트를 body 태그 맨 끝에서 로드하므로 DOM은 이미 준비된 상태입니다.
+    adminFirebaseModule.initializeAdminPage();
 
 }).catch(error => {
     console.error('스크립트 모듈 로드 실패:', error);
