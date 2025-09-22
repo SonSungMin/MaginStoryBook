@@ -8,8 +8,6 @@ let allUsers = []; // 전체 사용자 목록 캐싱
 let allEstablishments = []; // 전체 교육기관 목록 캐싱
 let themes = []; // 테마 목록 캐싱
 let activeTheme = null; // 활성 테마 캐싱
-let storybookPages = []; // 동화책 미리보기 데이터
-let currentPageIndex = 0;
 
 
 // DOM 요소 캐싱
@@ -73,7 +71,6 @@ window.initializeApp = async function() {
 
     // 전역 함수 할당
     window.openStorybookViewer = openStorybookViewer;
-    window.closeStorybookViewer = closeStorybookViewer;
     
     try {
         const loggedInUserData = sessionStorage.getItem('loggedInUser');
@@ -178,9 +175,10 @@ function setupEventListeners() {
     setupDragAndDrop();
     uploadEstablishmentSelect.addEventListener('change', populateStudentOptionsForAdmin);
     
-    // 동화책 뷰어 컨트롤
-    document.getElementById('prevPageButton').addEventListener('click', showPrevPage);
-    document.getElementById('nextPageButton').addEventListener('click', showNextPage);
+    // 사진 찍기 버튼 이벤트 리스너 추가
+    document.getElementById('cameraButton').addEventListener('click', () => {
+        document.getElementById('cameraInput').click();
+    });
 }
 
 /**
@@ -695,55 +693,13 @@ function attachDragAndDropListeners() {
     });
 }
 
-// --- 동화책 뷰어 관련 (공통 소스) ---
+// --- 동화책 뷰어 관련 (공통 소스 사용) ---
 async function openStorybookViewer(storyId) {
-    try {
-        const storybook = await window.firebaseService.getStorybookByStoryId(storyId);
-        if (storybook && storybook.pages && storybook.pages.length > 0) {
-            storybookPages = storybook.pages;
-            currentPageIndex = 0;
-            updateViewer();
-            document.getElementById('storybookViewerModal').style.display = 'flex';
-        } else {
-            alert('제작된 동화책을 찾을 수 없습니다.');
-        }
-    } catch (error) {
-        console.error("동화책 로딩 오류:", error);
-        alert("동화책을 불러오는 중 오류가 발생했습니다.");
-    }
-}
-
-function closeStorybookViewer() {
-    document.getElementById('storybookViewerModal').style.display = 'none';
-}
-
-function updateViewer() {
-    if(!storybookPages[currentPageIndex]) return;
-    const page = storybookPages[currentPageIndex];
-    document.getElementById('viewerImage').src = page.image;
-    document.getElementById('viewerText').textContent = page.text;
-    document.getElementById('pageIndicator').textContent = `${currentPageIndex + 1} / ${storybookPages.length}`;
-
-    const nextPageButton = document.getElementById('nextPageButton');
-    if (currentPageIndex === storybookPages.length - 1) {
-        nextPageButton.innerHTML = '처음으로 <i class="fas fa-redo"></i>';
+    // 공통 뷰어 모듈(storybook-viewer.js)이 로드되었는지 확인하고 호출합니다.
+    if (window.magicStorybook && typeof window.magicStorybook.openStorybookViewer === 'function') {
+        window.magicStorybook.openStorybookViewer(storyId);
     } else {
-        nextPageButton.innerHTML = '다음 <i class="fas fa-arrow-right"></i>';
+        console.error('Storybook Viewer is not loaded.');
+        alert('동화책 보기 기능을 불러오는 데 실패했습니다.');
     }
-}
-
-function showPrevPage() {
-    if (currentPageIndex > 0) {
-        currentPageIndex--;
-        updateViewer();
-    }
-}
-
-function showNextPage() {
-    if (currentPageIndex < storybookPages.length - 1) {
-        currentPageIndex++;
-    } else {
-        currentPageIndex = 0; // 마지막 페이지에서 누르면 처음으로
-    }
-    updateViewer();
 }
