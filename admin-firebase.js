@@ -22,12 +22,12 @@ let establishments = [];
 let users = [];
 let classes = [];
 let stories = [];
-let storybooks = [];
+let storybooks = []; // 동화책 데이터 저장 변수 추가
 let themes = [];
-let storybookPages = [];
+let storybookPages = []; 
 let currentPageIndex = 0;
 
-function initializeAdminPage() {
+export function initializeAdminPage() {
     console.log('관리자 페이지 초기화 시작...');
 
     // 전역 함수 할당
@@ -54,9 +54,10 @@ function initializeAdminPage() {
     window.handleAiGeneration = handleAiGeneration;
     window.applyAiResult = applyAiResult;
 
+
     document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
     document.getElementById('adminLogoutButton').addEventListener('click', handleAdminLogout);
-
+    
     document.querySelectorAll('.admin-nav-button').forEach(button => {
         button.addEventListener('click', () => {
             document.querySelectorAll('.admin-nav-button').forEach(btn => btn.classList.remove('active'));
@@ -72,14 +73,14 @@ function initializeAdminPage() {
     document.getElementById('addMemberButton').addEventListener('click', addMember);
     document.getElementById('updateMemberPermissionButton').addEventListener('click', updateMemberPermission);
     document.getElementById('bulkProductionButton').addEventListener('click', startBulkProduction);
-
+    
     document.getElementById('storybookEstablishmentFilter').addEventListener('change', async () => {
         await populateThemeFilterOptions();
         await renderStorybookMakerList();
     });
     document.getElementById('storybookThemeFilter').addEventListener('change', renderStorybookMakerList);
     document.getElementById('storybookStatusFilter').addEventListener('change', renderStorybookMakerList);
-
+    
     document.getElementById('addPageButton').addEventListener('click', addStoryPage);
 
 
@@ -103,7 +104,7 @@ function initializeAdminPage() {
         filterMembersByEstablishment();
         updateMemberClassOptions();
     });
-
+    
     // 동화책 뷰어 컨트롤
     document.getElementById('prevPageButton').addEventListener('click', showPrevPage);
     document.getElementById('nextPageButton').addEventListener('click', showNextPage);
@@ -152,7 +153,7 @@ async function renderAll() {
     renderMemberPermissionOptions();
     renderPermissionList();
     await renderStorybookMakerList();
-
+    
     if(document.getElementById('classEstablishmentSelect').value) {
         await renderClassList();
     }
@@ -231,11 +232,11 @@ async function addEstablishment() {
     try {
         if (await window.firebaseService.checkEstablishmentExists(name)) return alert('이미 존재하는 교육기관명입니다.');
         if (await window.firebaseService.checkUserExists(adminName)) return alert('관리자 이름(ID)이 이미 존재합니다.');
-
+        
         const address = { sido, sigungu, detail: addressDetail };
         const establishmentId = await window.firebaseService.createEstablishment({ name, address, phone, adminName });
         await window.firebaseService.createUser({ name: adminName, password: adminPwd, role: 'director', establishmentId });
-
+        
         alert('교육기관이 등록되었습니다!');
         await loadDataAndRender();
     } catch (error) {
@@ -301,7 +302,7 @@ async function addClass() {
     const establishmentId = document.getElementById('classEstablishmentSelect').value;
     const name = document.getElementById('className').value.trim();
     if (!establishmentId || !name) return alert('교육기관을 선택하고 반 이름을 입력해주세요.');
-
+    
     try {
         await window.firebaseService.createClass({ establishmentId, name });
         alert('반이 등록되었습니다.');
@@ -351,7 +352,7 @@ async function addTheme() {
     const establishmentId = document.getElementById('themeEstablishmentSelect').value;
     const name = document.getElementById('themeName').value.trim();
     if (!establishmentId || !name) return alert('교육기관을 선택하고 테마 이름을 입력해주세요.');
-
+    
     try {
         await window.firebaseService.createTheme({ establishmentId, name });
         alert('테마가 등록되었습니다.');
@@ -448,7 +449,7 @@ async function addMember() {
     const role = document.getElementById('memberRole').value;
     if (!establishmentId || !name || !birthdate || !password || !role) return alert('모든 필드를 입력해주세요.');
     if ((role === 'student' || role === 'teacher') && !classId) return alert('원생 또는 선생님은 반드시 반을 선택해야 합니다.');
-
+    
     try {
         if (await window.firebaseService.checkUserExists(name, establishmentId)) {
             return alert(`해당 교육기관에 이미 '${name}'이라는 이름의 구성원이 있습니다.`);
@@ -467,7 +468,7 @@ async function renderMemberList(filterEstId = null) {
     listElement.innerHTML = '';
     filterEstId = filterEstId || document.getElementById('memberEstablishment').value;
     let filteredUsers = users.filter(u => u.role !== 'admin' && (!filterEstId || u.establishmentId === filterEstId));
-
+    
     const allClasses = await Promise.all(establishments.map(est => window.firebaseService.getClassesByEstablishment(est.id)));
     const classMap = Object.fromEntries(allClasses.flat().map(c => [c.id, c.name]));
 
@@ -541,19 +542,19 @@ async function handleRoleChange(selectElement, userId, oldRole) {
     if (!user) return;
 
     const confirmation = confirm(`${user.name}님의 권한을 '${roleMap[oldRole]}'에서 '${roleMap[newRole]}'(으)로 변경하시겠습니까?`);
-
+    
     if (confirmation) {
         try {
             await window.firebaseService.updateUserRole(userId, newRole);
             alert('권한이 성공적으로 변경되었습니다.');
-            await loadDataAndRender();
+            await loadDataAndRender(); 
         } catch (error) {
             console.error('권한 변경 오류:', error);
             alert('권한 변경 중 오류가 발생했습니다.');
-            selectElement.value = oldRole;
+            selectElement.value = oldRole; 
         }
     } else {
-        selectElement.value = oldRole;
+        selectElement.value = oldRole; 
     }
 }
 
@@ -609,18 +610,18 @@ function openEditModal(id) {
     document.getElementById('editEstablishmentId').value = id;
     document.getElementById('editEstablishmentName').value = establishment.name;
     document.getElementById('editEstablishmentPhone').value = establishment.phone || '';
-
+    
     const sidoSelect = document.getElementById('editEstablishmentSido');
     sidoSelect.innerHTML = '<option value="">-- 시/도 선택 --</option>';
     for (const sido in addressData) {
         sidoSelect.innerHTML += `<option value="${sido}">${sido}</option>`;
     }
     sidoSelect.value = establishment.address.sido;
-
+    
     updateEditSigunguOptions();
     document.getElementById('editEstablishmentSigungu').value = establishment.address.sigungu;
     document.getElementById('editEstablishmentAddressDetail').value = establishment.address.detail;
-
+    
     document.getElementById('editEstablishmentModal').style.display = 'flex';
 }
 
@@ -676,7 +677,7 @@ async function saveThemeChanges() {
 async function openEditMemberModal(id) {
     const user = users.find(u => u.id === id);
     if (!user) return alert('구성원 정보를 찾을 수 없습니다.');
-
+    
     document.getElementById('editMemberId').value = id;
     document.getElementById('editMemberName').value = user.name;
     document.getElementById('editMemberBirthdate').value = user.birthdate;
@@ -698,7 +699,7 @@ async function openEditMemberModal(id) {
             alert("반 목록을 불러오는 데 실패했습니다.");
         }
     }
-
+    
     document.getElementById('editMemberModal').style.display = 'flex';
 }
 
@@ -711,7 +712,7 @@ async function saveMemberChanges() {
     const name = document.getElementById('editMemberName').value.trim();
     const birthdate = document.getElementById('editMemberBirthdate').value;
     const classId = document.getElementById('editMemberClass').value;
-
+    
     if (!name || !birthdate) return alert('모든 필드를 입력해주세요.');
 
     const currentUserData = users.find(u => u.id === id);
@@ -736,7 +737,7 @@ async function resetPassword(id) {
         return alert('생년월일 정보가 없어 비밀번호를 초기화할 수 없습니다.');
     }
     if (!confirm(`${user.name}님의 비밀번호를 생년월일(YYYYMMDD)로 초기화하시겠습니까?`)) return;
-
+    
     const newPassword = user.birthdate.replace(/-/g, '');
     try {
         await window.firebaseService.updateUser(id, { password: newPassword });
@@ -794,28 +795,28 @@ async function renderStorybookMakerList() {
     if (selectedStatus !== 'all') {
         displayStories = displayStories.filter(story => story.status === selectedStatus);
     }
-
+    
     displayStories.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
     if (displayStories.length === 0) {
         listElement.innerHTML = '<li>조건에 맞는 작품이 없습니다.</li>';
         return;
     }
-
+    
     displayStories.forEach(story => {
         const uploader = users.find(u => u.id === story.uploaderId);
         const establishment = establishments.find(est => est.id === story.establishmentId);
         const hasStorybook = storybooks.some(sb => sb.originalStoryId === story.id);
         const li = document.createElement('li');
         li.dataset.storyId = story.id;
-
+        
         const statusMap = {
             'in_production': '제작중',
             'completed': '제작 완료',
             'registered': '등록됨'
         };
         const statusText = statusMap[story.status] || '알 수 없음';
-
+        
         let actionButtons = '';
         if (story.status === 'completed' || story.status === 'in_production') {
             if (hasStorybook) {
@@ -846,15 +847,15 @@ async function renderStorybookMakerList() {
 
 async function startProduction(storyId) {
     if (!confirm('해당 작품의 동화책 제작을 시작하시겠습니까? 시작하면 선생님이 등록을 취소할 수 없습니다.')) return;
-
+    
     try {
         await window.firebaseService.updateStory(storyId, { status: 'in_production' });
         alert('작품의 진행 상태가 "제작중"으로 변경되었습니다.');
-
+        
         const storyIndex = stories.findIndex(s => s.id === storyId);
         if(storyIndex > -1) stories[storyIndex].status = 'in_production';
-
-        await renderStorybookMakerList();
+        
+        await renderStorybookMakerList(); 
     } catch (error) {
         console.error('제작 상태 변경 오류:', error);
         alert('상태 변경 중 오류가 발생했습니다.');
@@ -896,11 +897,11 @@ async function openStorybookProductionModal(storyId) {
     const authorName = uploader ? uploader.name : '알 수 없음';
 
     document.getElementById('productionStoryId').value = storyId;
-    document.getElementById('productionStorybookId').value = '';
+    document.getElementById('productionStorybookId').value = ''; 
     document.getElementById('originalStoryImg').src = story.originalImgUrl || 'images/placeholder_preview.png';
     document.getElementById('originalStoryTitle').textContent = `${story.title} (작성자: ${authorName})`;
     document.getElementById('originalStoryText').textContent = story.storyText;
-
+    
     const contentContainer = document.getElementById('content-pages-container');
     contentContainer.innerHTML = '';
 
@@ -955,7 +956,7 @@ function previewPageImage(inputElement) {
     if (file) {
         const reader = new FileReader();
         const preview = inputElement.closest('.page-image-area').querySelector('.page-image-preview');
-
+        
         reader.onload = function(e) {
             preview.src = e.target.result;
             preview.dataset.isNew = "true";
@@ -975,7 +976,7 @@ function openAiGenerationModal() {
 
     document.getElementById('aiResultArea').innerHTML = '<p>AI 생성 버튼을 눌러 새로운 그림과 이야기를 만들어보세요.</p>';
     document.getElementById('applyAiResultButton').style.display = 'none';
-
+    
     document.getElementById('aiGenerationModal').style.display = 'flex';
 }
 
@@ -1060,7 +1061,7 @@ async function saveStorybook() {
 
     const pageElements = document.querySelectorAll('.production-area .page-item');
     const pagesData = [];
-
+    
     try {
         for(const page of pageElements) {
             const text = page.querySelector('.page-text-input').value;
@@ -1076,13 +1077,13 @@ async function saveStorybook() {
             }
             pagesData.push({ image: imageUrl, text });
         }
-
+        
         const storybookData = {
             originalStoryId: storyId,
             pages: pagesData,
             authorId: story.uploaderId
         };
-
+        
         if (existingStorybookId) {
             await window.firebaseService.updateStorybook(existingStorybookId, storybookData);
         } else {
@@ -1092,7 +1093,7 @@ async function saveStorybook() {
         if (story.status !== 'completed') {
             await window.firebaseService.updateStory(storyId, { status: 'completed' });
         }
-
+        
         await loadDataAndRender();
         alert("동화책이 성공적으로 저장되었습니다!");
         closeStorybookProductionModal();
@@ -1106,7 +1107,7 @@ async function saveStorybook() {
 
 function previewStorybook() {
     storybookPages = [];
-
+    
     const coverImage = document.querySelector('.cover-section .page-image-preview').src;
     const coverText = document.querySelector('.cover-section .page-text-input').value;
     storybookPages.push({ image: coverImage, text: coverText });
@@ -1122,7 +1123,7 @@ function previewStorybook() {
         alert('미리보기할 페이지가 없습니다.');
         return;
     }
-
+    
     currentPageIndex = 0;
     updateViewer();
     document.getElementById('storybookViewerModal').style.display = 'flex';
@@ -1179,6 +1180,3 @@ function showNextPage() {
     }
     updateViewer();
 }
-
-// 파일 맨 마지막에 추가
-export default initializeAdminPage;
