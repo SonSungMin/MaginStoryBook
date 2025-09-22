@@ -53,6 +53,7 @@ export function initializeAdminPage() {
     window.closeAiGenerationModal = closeAiGenerationModal;
     window.handleAiGeneration = handleAiGeneration;
     window.applyAiResult = applyAiResult;
+    window.exportStorybookPDF = exportStorybookPDF;
 
 
     document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
@@ -1102,6 +1103,46 @@ async function saveStorybook() {
         console.error("동화책 저장 오류:", error);
         alert("동화책 저장 중 오류가 발생했습니다.");
     }
+}
+
+async function exportStorybookPDF() {
+    const { jsPDF } = window.jspdf;
+    const storybookViewer = document.querySelector('.storybook-viewer');
+
+    if (storybookPages.length === 0) {
+        alert('미리보기할 페이지가 없습니다.');
+        return;
+    }
+
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const viewerWidth = storybookViewer.offsetWidth;
+    const viewerHeight = storybookViewer.offsetHeight;
+
+    for (let i = 0; i < storybookPages.length; i++) {
+        const page = storybookPages[i];
+        document.getElementById('viewerImage').src = page.image;
+        document.getElementById('viewerText').textContent = page.text;
+
+        await new Promise(resolve => setTimeout(resolve, 500)); 
+
+        const canvas = await html2canvas(storybookViewer, {
+            scale: 2,
+            useCORS: true, 
+            allowTaint: true 
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const imgProps = doc.getImageProperties(imgData);
+        const pdfWidth = doc.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        if (i > 0) {
+            doc.addPage();
+        }
+        doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    }
+
+    doc.save('storybook.pdf');
 }
 
 
