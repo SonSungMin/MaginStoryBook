@@ -1062,7 +1062,7 @@ async function saveStorybook() {
                 // ▼▼▼ 핵심 수정 사항 ▼▼▼
                 // 파일 확장자를 추출하고, 타임스탬프와 랜덤 문자열을 조합하여
                 // 중복되지 않고 URL에 안전한 파일명을 생성합니다.
-                const fileExtension = file.name.split('.pop() || 'png';
+                const fileExtension = file.name.split('.pop() || 'png');
                 const safeFileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
                 const imagePath = `storybooks/${storyId}/${safeFileName}`;
                 // ▲▲▲ 핵심 수정 사항 ▲▲▲
