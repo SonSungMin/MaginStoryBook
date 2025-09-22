@@ -74,6 +74,7 @@
             <div class="modal-content large-modal">
                 <span class="close-button" onclick="closeStorybookProductionModal()">&times;</span>
                 <h2>동화책 제작</h2>
+                <input type="hidden" id="productionStoryId">
                 <div class="production-area">
                     <div class="production-section original-info">
                         <h3>원본 정보</h3>
@@ -81,27 +82,26 @@
                         <h4 id="originalStoryTitle"></h4>
                         <p id="originalStoryText"></p>
                     </div>
-                    <div class="production-section-group">
-                        <div class="production-section cover-section">
-                            <h3>표지 제작</h3>
-                            <div class="page-item">
-                                <div class="page-image-area">
-                                    <img src="images/placeholder_preview.png" class="page-image-preview">
-                                    <input type="file" class="page-image-input" accept="image/*" onchange="previewPageImage(this)">
-                                </div>
-                                <textarea class="page-text-input" placeholder="표지 제목과 이야기를 입력하세요."></textarea>
+                    <div class="production-section cover-section">
+                        <h3>표지 제작</h3>
+                        <div class="page-item">
+                            <div class="page-image-area" onclick="this.querySelector('.page-image-input').click()">
+                                <img src="images/placeholder_preview.png" class="page-image-preview">
+                                <input type="file" class="page-image-input" accept="image/*" onchange="previewPageImage(this)">
                             </div>
+                            <textarea class="page-text-input" placeholder="표지 제목과 이야기를 입력하세요."></textarea>
                         </div>
-                        <div class="production-section content-section">
-                            <h3>동화 내용 제작 <button id="addPageButton" class="btn-add-page">+</button></h3>
-                            <div id="content-pages-container">
-                                </div>
-                        </div>
+                    </div>
+                    <div class="production-section content-section">
+                        <h3>동화 내용 제작 <button id="addPageButton" class="btn-add-page">+</button></h3>
+                        <div id="content-pages-container">
+                            </div>
                     </div>
                 </div>
                 <div class="button-group">
                     <button class="btn-secondary" onclick="closeStorybookProductionModal()">닫기</button>
-                    <button class="btn-primary" onclick="previewStorybook()">동화책 미리보기</button>
+                    <button class="btn-secondary" onclick="previewStorybook()">미리보기</button>
+                    <button class="btn-primary" onclick="saveStorybook()">저장하기</button>
                 </div>
             </div>
         </div>
