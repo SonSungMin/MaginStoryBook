@@ -578,40 +578,45 @@ body {
     margin-bottom: 20px;
 }
 
-.upload-options {
+.upload-button-group {
     display: flex;
     gap: 10px;
     justify-content: center;
     margin-bottom: 15px;
 }
 
-.upload-options .file-upload-label {
+.upload-button-group .file-upload-label,
+.upload-button-group .camera-button {
     flex: 1;
     margin-bottom: 0;
-}
-
-.file-upload-label {
-    display: block;
-    background-color: var(--accent-color);
-    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
     padding: 10px 15px;
     border-radius: 25px;
     cursor: pointer;
     font-family: 'Jua', sans-serif;
     font-size: 1.1em;
     transition: background-color 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 15px;
+    border: none;
+    color: var(--text-light);
 }
-.file-upload-label:hover {
+
+.upload-button-group .file-upload-label {
+    background-color: var(--accent-color);
+}
+.upload-button-group .file-upload-label:hover {
     background-color: #55aaff;
 }
-#drawingFileInput, #cameraInput {
-    display: none;
+
+.upload-button-group .camera-button {
+    background-color: var(--success-color);
 }
+.upload-button-group .camera-button:hover {
+    background-color: #45a049;
+}
+
 
 .drawing-preview {
     border: 1px solid var(--border-color);
