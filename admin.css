@@ -342,17 +342,22 @@
 .modal-content.large-modal {
     max-width: 800px;
     width: 90%;
-    max-height: 90vh; /* 화면 높이의 90%를 넘지 않도록 설정 */
-    overflow-y: auto;   /* 내용이 넘칠 경우 모달 자체에 스크롤 생성 */
-    display: flex; /* 내부 컨텐츠 정렬을 위해 flex로 변경 */
+    max-height: 90vh;
+    display: flex;
     flex-direction: column;
+    /* 💡 오류 해결의 핵심 1: 모달 콘텐츠 자체의 스크롤을 제거합니다. */
+    overflow-y: hidden; 
 }
 .production-area {
     display: flex;
     flex-direction: column;
     gap: 20px;
     text-align: left;
-    /* 💡 오류 해결의 핵심: 고정 높이를 제거하여 내용에 따라 높이가 유동적으로 변하게 합니다. */
+    /* 💡 오류 해결의 핵심 2: 콘텐츠 영역이 남은 공간을 모두 차지하고, 내용이 넘칠 때 자체적으로 스크롤되도록 설정합니다. */
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px; /* 스크롤 영역에 내부 여백 추가 */
+    margin: 0 -15px; /* 부모 여백에 맞춤 */
 }
 .production-section {
     border: 1px solid var(--border-color);
@@ -394,9 +399,6 @@
 }
 .content-section {
     min-height: 200px;
-}
-#content-pages-container {
-    /* 이 컨테이너는 이제 자체 스크롤이 필요 없습니다. */
 }
 .page-item {
     display: flex;
@@ -455,6 +457,13 @@
     cursor: pointer;
 }
 
+/* 💡 오류 해결의 핵심 3: 버튼 그룹을 스크롤 영역 밖으로 빼고, 하단에 고정시킵니다. */
+.modal-content .button-group {
+    flex-shrink: 0; /* 버튼 그룹 영역이 줄어들지 않도록 설정 */
+    padding-top: 15px; /* 상단 콘텐츠와의 여백 확보 */
+}
+
+
 /* 동화책 뷰어 스타일 */
 .viewer-modal {
     background-color: rgba(0,0,0,0.7);
@@ -511,3 +520,4 @@
     background: #ccc;
     margin: 15px 0;
 }
+
