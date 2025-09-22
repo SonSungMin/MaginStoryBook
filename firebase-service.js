@@ -591,6 +591,20 @@ class FirebaseService {
             throw error;
         }
     }
+    
+    // [추가] 동화책 업데이트 함수
+    async updateStorybook(storybookId, storybookData) {
+        try {
+            await updateDoc(doc(this.db, 'storybooks', storybookId), {
+                ...storybookData,
+                updatedAt: serverTimestamp()
+            });
+            console.log('동화책 업데이트 성공:', storybookId);
+        } catch (error) {
+            console.error('동화책 업데이트 오류:', error);
+            throw error;
+        }
+    }
 
 
     // ===================
@@ -639,4 +653,3 @@ class FirebaseService {
 }
 
 window.firebaseService = new FirebaseService();
-
