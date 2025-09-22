@@ -46,7 +46,7 @@ export function initializeAdminPage() {
     window.previewPageImage = previewPageImage;
     window.previewStorybook = previewStorybook;
     window.closeStorybookViewer = closeStorybookViewer;
-    window.previewStorybookFromList = previewStorybookFromList; // 미리보기 함수 추가
+    window.previewStorybookFromList = previewStorybookFromList;
     window.saveStorybook = saveStorybook;
     window.openAiGenerationModal = openAiGenerationModal;
     window.closeAiGenerationModal = closeAiGenerationModal;
@@ -815,13 +815,11 @@ async function renderStorybookMakerList() {
         const statusText = statusMap[story.status] || '알 수 없음';
         
         let actionButtons = '';
-        if (story.status === 'completed') {
+        if (story.status === 'completed' || story.status === 'in_production') {
              actionButtons = `
                 <button class="btn-preview" onclick="event.stopPropagation(); previewStorybookFromList('${story.id}')">미리보기</button>
                 <button class="btn-edit" onclick="event.stopPropagation(); openStorybookProductionModal('${story.id}')">수정하기</button>
              `;
-        } else if (story.status === 'in_production') {
-            actionButtons = `<button class="btn-disabled" disabled>제작중</button>`;
         } else { // registered
             actionButtons = `<button class="btn-edit" onclick="event.stopPropagation(); startProduction('${story.id}')">제작하기</button>`;
         }
@@ -1137,7 +1135,7 @@ async function previewStorybookFromList(storyId) {
             updateViewer();
             document.getElementById('storybookViewerModal').style.display = 'flex';
         } else {
-            alert('제작된 동화책을 찾을 수 없습니다.');
+            alert('아직 제작된 동화책이 없습니다. [수정하기] 버튼을 눌러 먼저 동화책을 제작해주세요.');
         }
     } catch (error) {
         console.error("동화책 로딩 오류:", error);
