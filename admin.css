@@ -126,11 +126,11 @@
     flex-wrap: wrap;
     gap: 15px;
     margin-bottom: 30px;
-    justify-content: center;
+    align-items: center;
 }
 .form-group input, .form-group select {
     flex: 1;
-    min-width: 200px;
+    min-width: 180px;
     padding: 10px 15px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -138,7 +138,7 @@
     font-size: 1em;
 }
 .form-group button {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
     padding: 10px 25px;
     border-radius: 25px;
     font-family: 'Jua', sans-serif;
@@ -199,7 +199,7 @@
     font-size: 13px;
     color: #666;
     display: flex;
-    justify-content: space-between;
+    gap: 15px;
     margin-top: 2px;
 }
 
@@ -237,13 +237,19 @@
 .button-group-list button:hover {
     background-color: #eee;
 }
-.button-group-list .btn-edit {
+.button-group-list .btn-edit,
+.button-group-list .btn-disabled {
     color: #337ab7;
     border-color: #337ab7;
 }
 .button-group-list .btn-edit:hover {
     background-color: #eaf2fa;
 }
+.button-group-list .btn-disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+}
+
 .button-group-list .btn-reset-pwd {
     color: #f0ad4e;
     border-color: #f0ad4e;
@@ -403,6 +409,7 @@
     gap: 15px;
     align-items: center;
     margin-bottom: 15px;
+    position: relative;
 }
 .page-image-area {
     flex: 0 0 100px;
@@ -453,6 +460,22 @@
     background-color: transparent;
     color: var(--success-color);
     cursor: pointer;
+}
+.btn-remove-page {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    line-height: 20px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
 }
 
 .modal-content .button-group {
@@ -518,11 +541,15 @@
 
 /* 동화책 뷰어 스타일 */
 .viewer-modal {
-    background-color: rgba(0,0,0,0.7);
+    background-color: rgba(0,0,0,0.8);
 }
 .viewer-modal .close-button {
     color: #fff;
-    text-shadow: 0 1px 0 #000;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    opacity: 0.8;
+}
+.viewer-modal .close-button:hover {
+    opacity: 1;
 }
 .storybook-viewer {
     display: flex;
@@ -558,18 +585,18 @@
     margin-top: 20px;
 }
 .viewer-controls button {
-    background: none;
-    border: 2px solid var(--accent-color);
-    color: var(--accent-color);
+    background: rgba(255,255,255,0.1);
+    border: 2px solid var(--text-light);
+    color: var(--text-light);
     padding: 8px 15px;
     border-radius: 20px;
     cursor: pointer;
     margin: 0 10px;
-    transition: background-color 0.3s, color 0.3s;
+    transition: background-color 0.2s, color 0.2s;
 }
 .viewer-controls button:hover {
-    background-color: var(--accent-color);
-    color: var(--text-light);
+    background-color: var(--text-light);
+    color: var(--text-dark);
 }
 .viewer-controls span {
     font-weight: bold;
@@ -582,4 +609,14 @@
     background: #ccc;
     margin: 15px 0;
 }
-
+.item-main-info .story-status-in_production {
+    color: var(--warning-color);
+    font-weight: bold;
+}
+.item-main-info .story-status-completed {
+    color: var(--success-color);
+    font-weight: bold;
+}
+.item-main-info .story-status-registered {
+    color: var(--accent-color);
+}
