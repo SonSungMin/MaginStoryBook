@@ -462,10 +462,11 @@ class FirebaseService {
                 console.log('교육기관에 사용자가 없음:', establishmentId);
                 return [];
             }
-
+            
+            // Firestore 'in' 쿼리는 최대 30개의 비교 값을 지원하도록 변경됨
             const chunks = [];
-            for (let i = 0; i < userIds.length; i += 10) {
-                chunks.push(userIds.slice(i, i + 10));
+            for (let i = 0; i < userIds.length; i += 30) {
+                chunks.push(userIds.slice(i, i + 30));
             }
 
             const allStories = [];
@@ -666,5 +667,4 @@ class FirebaseService {
     }
 }
 
-// 클래스 정의가 끝난 후, 외부에 인스턴스를 생성합니다.
 window.firebaseService = new FirebaseService();
