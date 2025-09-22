@@ -22,7 +22,7 @@ let establishments = [];
 let users = [];
 let classes = [];
 let stories = [];
-let storybooks = []; // 동화책 데이터 저장 변수 추가
+let storybooks = [];
 let themes = [];
 let storybookPages = []; 
 let currentPageIndex = 0;
@@ -133,7 +133,7 @@ async function loadDataAndRender() {
         [users, stories, storybooks, themes] = await Promise.all([
             window.firebaseService.getAllUsers(),
             window.firebaseService.getAllStories(),
-            window.firebaseService.getAllStorybooks(), // 모든 동화책 데이터 가져오기
+            window.firebaseService.getAllStorybooks(),
             Promise.all(establishments.map(e => window.firebaseService.getThemesByEstablishment(e.id))).then(results => results.flat())
         ]);
         await renderAll();
