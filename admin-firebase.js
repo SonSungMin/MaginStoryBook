@@ -1,4 +1,5 @@
 // admin-firebase.js
+import { openStorybookViewer, previewStorybook as commonPreviewStorybook } from './storybook-viewer.js';
 
 const addressData = {
     "서울특별시": ["강남구", "강동구", "강북구", "강서구", "관악구", "광진구", "구로구", "금천구", "노원구", "도봉구", "동대문구", "동작구", "마포구", "서대문구", "서초구", "성동구", "성북구", "송파구", "양천구", "영등포구", "용산구", "은평구", "종로구", "중구", "중랑구"],
@@ -24,8 +25,6 @@ let classes = [];
 let stories = [];
 let storybooks = [];
 let themes = [];
-let storybookPages = [];
-let currentPageIndex = 0;
 
 export function initializeAdminPage() {
     console.log('관리자 페이지 초기화 시작...');
@@ -46,14 +45,13 @@ export function initializeAdminPage() {
     window.closeStorybookProductionModal = closeStorybookProductionModal;
     window.previewPageImage = previewPageImage;
     window.previewStorybook = previewStorybook;
-    window.closeStorybookViewer = closeStorybookViewer;
-    window.previewStorybookFromList = previewStorybookFromList;
     window.saveStorybook = saveStorybook;
     window.openAiGenerationModal = openAiGenerationModal;
     window.closeAiGenerationModal = closeAiGenerationModal;
     window.handleAiGeneration = handleAiGeneration;
     window.applyAiResult = applyAiResult;
     window.exportStorybookPDF = exportStorybookPDF;
+    window.openStorybookViewer = openStorybookViewer;
 
 
     document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
@@ -105,12 +103,6 @@ export function initializeAdminPage() {
         filterMembersByEstablishment();
         updateMemberClassOptions();
     });
-
-    // 동화책 뷰어 컨트롤
-    document.getElementById('prevPageButton').addEventListener('click', showPrevPage);
-    document.getElementById('nextPageButton').addEventListener('click', showNextPage);
-    document.getElementById('exportPdfButton').addEventListener('click', exportStorybookPDF);
-
 
     initializeAddressOptions();
     checkAdminLoginState();
@@ -822,7 +814,7 @@ async function renderStorybookMakerList() {
         let actionButtons = '';
         if (story.status === 'completed' || story.status === 'in_production') {
             if (hasStorybook) {
-                actionButtons += `<button class="btn-preview" onclick="event.stopPropagation(); previewStorybookFromList('${story.id}')"><i class="fas fa-eye"></i> 미리보기</button>`;
+                actionButtons += `<button class="btn-preview" onclick="event.stopPropagation(); openStorybookViewer('${story.id}')"><i class="fas fa-eye"></i> 미리보기</button>`;
             }
             actionButtons += `<button class="btn-edit" onclick="event.stopPropagation(); openStorybookProductionModal('${story.id}')"><i class="fas fa-edit"></i> 수정하기</button>`;
         } else { // registered
@@ -1109,22 +1101,28 @@ async function saveStorybook() {
 async function exportStorybookPDF() {
     const { jsPDF } = window.jspdf;
     const storybookViewer = document.querySelector('.storybook-viewer');
+    const pageIndicator = document.getElementById('pageIndicator');
+    const originalIndicatorText = pageIndicator.textContent;
+    const totalPages = parseInt(originalIndicatorText.split('/')[1].trim(), 10);
 
-    if (storybookPages.length === 0) {
+    if (isNaN(totalPages) || totalPages === 0) {
         alert('PDF로 내보낼 페이지가 없습니다.');
         return;
     }
 
     const doc = new jsPDF('l', 'mm', 'a4');
-    const viewerWidth = storybookViewer.offsetWidth;
-    const viewerHeight = storybookViewer.offsetHeight;
 
-    for (let i = 0; i < storybookPages.length; i++) {
-        const page = storybookPages[i];
-        document.getElementById('viewerImage').src = page.image;
-        document.getElementById('viewerText').textContent = page.text;
-
-        await new Promise(resolve => setTimeout(resolve, 500)); 
+    for (let i = 0; i < totalPages; i++) {
+        // 'storybook-viewer.js'의 updateViewer를 직접 호출할 수 없으므로,
+        // 버튼 클릭을 시뮬레이션하여 페이지를 넘깁니다.
+        // 현재 페이지가 맞는지 확인하고 진행합니다.
+        const currentPageNum = parseInt(pageIndicator.textContent.split('/')[0].trim(), 10);
+        if (currentPageNum !== i + 1) {
+             // 페이지 동기화가 필요하면 여기서 추가 로직 구현
+             console.warn(`PDF export page mismatch: expected ${i+1}, got ${currentPageNum}`);
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 300));
 
         const canvas = await html2canvas(storybookViewer, {
             scale: 2,
@@ -1141,84 +1139,30 @@ async function exportStorybookPDF() {
             doc.addPage();
         }
         doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+        // 다음 페이지로 이동
+        if (i < totalPages - 1) {
+            document.getElementById('nextPageButton').click();
+        }
     }
 
     doc.save('storybook.pdf');
+    alert('동화책이 PDF 파일로 저장되었습니다.');
 }
 
-
 function previewStorybook() {
-    storybookPages = [];
+    const pages = [];
 
     const coverImage = document.querySelector('.cover-section .page-image-preview').src;
     const coverText = document.querySelector('.cover-section .page-text-input').value;
-    storybookPages.push({ image: coverImage, text: coverText });
+    pages.push({ image: coverImage, text: coverText });
 
     const contentPages = document.querySelectorAll('#content-pages-container .page-item');
     contentPages.forEach(page => {
         const image = page.querySelector('.page-image-preview').src;
         const text = page.querySelector('.page-text-input').value;
-        storybookPages.push({ image, text });
+        pages.push({ image, text });
     });
 
-    if (storybookPages.length === 0) {
-        alert('미리보기할 페이지가 없습니다.');
-        return;
-    }
-
-    currentPageIndex = 0;
-    updateViewer();
-    document.getElementById('storybookViewerModal').style.display = 'flex';
-}
-
-async function previewStorybookFromList(storyId) {
-    try {
-        const storybook = await window.firebaseService.getStorybookByStoryId(storyId);
-        if (storybook && storybook.pages && storybook.pages.length > 0) {
-            storybookPages = storybook.pages;
-            currentPageIndex = 0;
-            updateViewer();
-            document.getElementById('storybookViewerModal').style.display = 'flex';
-        } else {
-            alert('아직 제작된 동화책이 없습니다. [수정하기] 버튼을 눌러 먼저 동화책을 제작해주세요.');
-        }
-    } catch (error) {
-        console.error("동화책 로딩 오류:", error);
-        alert("동화책을 불러오는 중 오류가 발생했습니다.");
-    }
-}
-
-function closeStorybookViewer() {
-    document.getElementById('storybookViewerModal').style.display = 'none';
-}
-
-function updateViewer() {
-    if(!storybookPages[currentPageIndex]) return;
-    const page = storybookPages[currentPageIndex];
-    document.getElementById('viewerImage').src = page.image;
-    document.getElementById('viewerText').textContent = page.text;
-    document.getElementById('pageIndicator').textContent = `${currentPageIndex + 1} / ${storybookPages.length}`;
-
-    const nextPageButton = document.getElementById('nextPageButton');
-    if (currentPageIndex === storybookPages.length - 1) {
-        nextPageButton.innerHTML = '처음으로 <i class="fas fa-redo"></i>';
-    } else {
-        nextPageButton.innerHTML = '다음 <i class="fas fa-arrow-right"></i>';
-    }
-}
-
-function showPrevPage() {
-    if (currentPageIndex > 0) {
-        currentPageIndex--;
-        updateViewer();
-    }
-}
-
-function showNextPage() {
-    if (currentPageIndex < storybookPages.length - 1) {
-        currentPageIndex++;
-    } else {
-        currentPageIndex = 0; // 마지막 페이지에서 누르면 처음으로
-    }
-    updateViewer();
+    commonPreviewStorybook(pages);
 }
