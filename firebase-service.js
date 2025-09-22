@@ -12,7 +12,7 @@ import {
     serverTimestamp,
     limit,
     writeBatch
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 import {
     ref,
@@ -25,6 +25,7 @@ class FirebaseService {
         this.storage = window.firebase.storage;
     }
     
+
     // ===================
     // 테마(Themes) 관리
     // ===================
@@ -60,6 +61,7 @@ class FirebaseService {
         }
     }
     
+
     async getActiveTheme(establishmentId) {
         if (!establishmentId) return null;
         try {
@@ -90,6 +92,7 @@ class FirebaseService {
         }
     }
     
+
     async updateThemeActivation(establishmentId, themeIdToActivate) {
         const batch = writeBatch(this.db);
         try {
@@ -102,10 +105,12 @@ class FirebaseService {
                 }
             });
             
+
             // 선택한 테마만 활성화
             const activeThemeRef = doc(this.db, 'themes', themeIdToActivate);
             batch.update(activeThemeRef, { isActive: true });
             
+
             await batch.commit();
             console.log('테마 활성화 상태 업데이트 완료');
         } catch(error) {
@@ -167,6 +172,7 @@ class FirebaseService {
             const querySnapshot = await getDocs(q);
             const classes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
+
             classes.sort((a, b) => {
                 const aTime = a.createdAt?.seconds || 0;
                 const bTime = b.createdAt?.seconds || 0;
@@ -248,6 +254,7 @@ class FirebaseService {
                 batch.delete(doc.ref);
             });
             
+
             const themesQuery = query(collection(this.db, 'themes'), where('establishmentId', '==', establishmentId));
             const themesSnapshot = await getDocs(themesQuery);
             themesSnapshot.forEach(doc => {
@@ -294,11 +301,13 @@ class FirebaseService {
             );
             const querySnapshot = await getDocs(q);
     
+
             if (querySnapshot.empty) {
                 console.log('사용자 없음:', name);
                 return null;
             }
     
+
             const userDoc = querySnapshot.docs.find(doc => doc.data().password === password);
             if (!userDoc) {
                 console.log('비밀번호 불일치:', name);
@@ -310,6 +319,7 @@ class FirebaseService {
                 ...userDoc.data()
             };
     
+
             if (userData.establishmentId) {
                 const estDocRef = doc(this.db, 'establishments', userData.establishmentId);
                 const estDoc = await getDoc(estDocRef);
@@ -320,6 +330,7 @@ class FirebaseService {
                 }
             }
     
+
             console.log('사용자 로그인 성공:', userData.name);
             return userData;
         } catch (error) {
@@ -385,6 +396,7 @@ class FirebaseService {
             });
             console.log('사용자 권한 변경 완료:', userId, '->', newRole);
         } catch (error) {
+        } catch (error)
             console.error('사용자 권한 변경 오류:', error);
             throw error;
         }
@@ -462,11 +474,10 @@ class FirebaseService {
                 console.log('교육기관에 사용자가 없음:', establishmentId);
                 return [];
             }
-            
-            // Firestore 'in' 쿼리는 최대 30개의 비교 값을 지원하도록 변경됨
+
             const chunks = [];
-            for (let i = 0; i < userIds.length; i += 30) {
-                chunks.push(userIds.slice(i, i + 30));
+            for (let i = 0; i < userIds.length; i += 10) {
+                chunks.push(userIds.slice(i, i + 10));
             }
 
             const allStories = [];
@@ -562,6 +573,7 @@ class FirebaseService {
         }
     }
     
+
     // ===================
     // 동화책(Storybooks) 관리
     // ===================
@@ -593,6 +605,8 @@ class FirebaseService {
         }
     }
     
+
+    // [추가] 동화책 업데이트 함수
     async updateStorybook(storybookId, storybookData) {
         try {
             await updateDoc(doc(this.db, 'storybooks', storybookId), {
@@ -605,18 +619,23 @@ class FirebaseService {
             throw error;
         }
     }
-    
+
+    // [신규 추가] 모든 동화책을 가져오는 함수
     async getAllStorybooks() {
         try {
-            const q = query(collection(this.db, 'storybooks'), orderBy('createdAt', 'desc'));
+            const q = query(
+                collection(this.db, 'storybooks'),
+                orderBy('createdAt', 'desc')
+            );
             const querySnapshot = await getDocs(q);
             const storybooks = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
+            console.log('전체 동화책 조회:', storybooks.length, '개');
             return storybooks;
         } catch (error) {
-            console.error('모든 동화책 조회 오류:', error);
+            console.error('전체 동화책 조회 오류:', error);
             throw error;
         }
     }
@@ -632,6 +651,7 @@ class FirebaseService {
                 where('name', '==', name)
             );
             
+
             const querySnapshot = await getDocs(q);
             if (querySnapshot.empty) return false;
 
@@ -639,6 +659,7 @@ class FirebaseService {
                 return querySnapshot.docs.some(doc => doc.data().establishmentId === establishmentId);
             }
             
+
             return !querySnapshot.empty;
         } catch (error) {
             console.error('사용자 존재 확인 오류:', error);
