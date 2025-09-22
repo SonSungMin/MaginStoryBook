@@ -253,7 +253,16 @@
                 <h2>동화책 만들기</h2>
                 <div class="form-group">
                     <select id="storybookEstablishmentFilter">
-                        <option value="all">전체보기</option>
+                        <option value="all">전체 교육기관</option>
+                    </select>
+                    <select id="storybookThemeFilter">
+                        <option value="all">전체 테마</option>
+                    </select>
+                    <select id="storybookStatusFilter">
+                        <option value="all">전체 상태</option>
+                        <option value="registered">등록됨</option>
+                        <option value="in_production">제작중</option>
+                        <option value="completed">제작 완료</option>
                     </select>
                     <button id="bulkProductionButton" class="btn-primary">모든 작품 제작 시작</button>
                 </div>
@@ -273,3 +282,4 @@
     <script type="module" src="./admin-initializer.js"></script>
 </body>
 </html>
+
