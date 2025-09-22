@@ -8,6 +8,9 @@ let allUsers = []; // 전체 사용자 목록 캐싱
 let allEstablishments = []; // 전체 교육기관 목록 캐싱
 let themes = []; // 테마 목록 캐싱
 let activeTheme = null; // 활성 테마 캐싱
+let storybookPages = []; // 동화책 미리보기 데이터
+let currentPageIndex = 0;
+
 
 // DOM 요소 캐싱
 const navButtons = document.querySelectorAll('.nav-button');
@@ -67,6 +70,11 @@ window.initializeApp = async function() {
         console.error('필요한 서비스가 모두 로드되지 않았습니다.');
         return;
     }
+
+    // 전역 함수 할당
+    window.openStorybookViewer = openStorybookViewer;
+    window.closeStorybookViewer = closeStorybookViewer;
+    
     try {
         const loggedInUserData = sessionStorage.getItem('loggedInUser');
         if (!loggedInUserData) {
@@ -94,7 +102,6 @@ window.initializeApp = async function() {
         setupUIByRole();
         setupEventListeners();
         await loadAndRenderStories();
-        // [수정] 활성 테마가 있으면 해당 테마를 기본으로 선택
         const initialTheme = activeTheme ? activeTheme.id : 'all';
         themeFilter.value = initialTheme;
         classThemeFilter.value = initialTheme;
@@ -118,16 +125,11 @@ async function loadAndRenderStories() {
         myStories = await window.firebaseService.getStoriesByUser(currentUser.id);
         
         if (currentUser.role === 'admin') {
-            console.log('관리자 권한으로 모든 작품을 로드합니다.');
             classStories = await window.firebaseService.getAllStories();
         } else {
-            console.log(`'${currentUser.establishmentId}' 기관의 작품을 로드합니다.`);
             classStories = await window.firebaseService.getStoriesByEstablishment(currentUser.establishmentId);
         }
         
-        console.log('Firebase에서 가져온 [내 작품] 데이터:', myStories);
-        console.log('Firebase에서 가져온 [우리반] 데이터:', classStories);
-
         renderMyStoryCards(themeFilter.value);
         renderClassStoryCards(classThemeFilter.value);
 
@@ -175,6 +177,10 @@ function setupEventListeners() {
     bulkRegisterButton.addEventListener('click', handleBulkRegister);
     setupDragAndDrop();
     uploadEstablishmentSelect.addEventListener('change', populateStudentOptionsForAdmin);
+    
+    // 동화책 뷰어 컨트롤
+    document.getElementById('prevPageButton').addEventListener('click', showPrevPage);
+    document.getElementById('nextPageButton').addEventListener('click', showNextPage);
 }
 
 /**
@@ -187,7 +193,6 @@ function activateSection(targetId) {
     if (targetSection) {
         targetSection.classList.add('active');
         
-        // 💡 오류 해결의 핵심: 각 탭을 누를 때마다 해당 목록을 새로 렌더링하도록 변경합니다.
         if (targetId === 'my-story') {
             renderMyStoryCards(themeFilter.value);
         } else if (targetId === 'class-story') {
@@ -214,10 +219,6 @@ window.handleLogout = function() {
 
 // --- 스토리 카드 렌더링 ---
 
-/**
- * '내 그림 이야기' 섹션의 카드들을 렌더링
- * @param {string} filterThemeId - 필터링할 테마 ID
- */
 function renderMyStoryCards(filterThemeId = 'all') {
     myStoryGrid.querySelectorAll('.story-card:not(.upload-card)').forEach(card => card.remove());
     
@@ -232,10 +233,6 @@ function renderMyStoryCards(filterThemeId = 'all') {
     });
 }
 
-/**
- * '우리 반 이야기' 섹션의 카드들을 렌더링
- * @param {string} filterThemeId - 필터링할 테마 ID
- */
 function renderClassStoryCards(filterThemeId = 'all') {
     classStoryGrid.innerHTML = '';
 
@@ -245,22 +242,15 @@ function renderClassStoryCards(filterThemeId = 'all') {
     }
 
     filteredStories.forEach(story => {
-        const storyCard = createStoryCardElement(story, true); // isClassStory = true
+        const storyCard = createStoryCardElement(story, true);
         classStoryGrid.appendChild(storyCard);
     });
 }
 
-/**
- * 스토리 카드 DOM 요소를 생성
- * @param {object} story - 스토리 데이터
- * @param {boolean} isClassStory - '우리 반 이야기' 섹션 카드 여부
- * @returns {HTMLElement} - 생성된 스토리 카드 요소
- */
 function createStoryCardElement(story, isClassStory = false) {
     const storyCard = document.createElement('div');
     storyCard.classList.add('story-card');
     storyCard.dataset.storyId = story.id;
-    // 일괄 등록을 위해 미등록 상태 표시
     if (story.status === 'unregistered') {
         storyCard.dataset.unregistered = 'true';
     }
@@ -289,41 +279,42 @@ function createStoryCardElement(story, isClassStory = false) {
     cardInfo.innerHTML = `<span class="story-title">${story.title}</span><span class="story-date">${displayDate} / ${themeName}</span>`;
     storyCard.appendChild(cardInfo);
 
+    const cardActions = document.createElement('div');
+    cardActions.classList.add('card-actions');
+    
     const canModify = currentUser.id === story.uploaderId || ['teacher', 'director', 'admin'].includes(currentUser.role);
-    if (canModify) {
-        const cardActions = document.createElement('div');
-        cardActions.classList.add('card-actions');
-        cardActions.innerHTML = `
+    if (canModify && story.status !== 'completed') {
+        cardActions.innerHTML += `
             <button class="btn-edit" onclick="openEditStoryModal('${story.id}')"><i class="fas fa-edit"></i> 수정</button>
             <button class="btn-delete" onclick="deleteStory('${story.id}')"><i class="fas fa-trash"></i> 삭제</button>
         `;
-        
-        // 선생님/원장이고 '우리 반 이야기' 뷰일 때만 등록 버튼 추가
-        if (isClassStory && ['teacher', 'director'].includes(currentUser.role)) {
-            const registerButton = document.createElement('button');
-            const status = story.status || 'unregistered';
-            registerButton.dataset.storyId = story.id;
-            registerButton.dataset.status = status;
-            
-            if (status === 'registered' || status === 'in_production') {
-                registerButton.textContent = '등록됨';
-                registerButton.classList.add('btn-registered');
-            } else {
-                registerButton.textContent = '등록';
-                registerButton.classList.add('btn-register');
-            }
-            registerButton.onclick = () => handleRegisterToggle(story.id, status);
-            cardActions.appendChild(registerButton);
-        }
-        
-        storyCard.appendChild(cardActions);
     }
+    
+    if (isClassStory && ['teacher', 'director'].includes(currentUser.role) && story.status !== 'completed') {
+        const registerButton = document.createElement('button');
+        const status = story.status || 'unregistered';
+        registerButton.dataset.storyId = story.id;
+        registerButton.dataset.status = status;
+        
+        if (status === 'registered' || status === 'in_production') {
+            registerButton.textContent = '등록됨';
+            registerButton.classList.add('btn-registered');
+        } else {
+            registerButton.textContent = '등록';
+            registerButton.classList.add('btn-register');
+        }
+        registerButton.onclick = () => handleRegisterToggle(story.id, status);
+        cardActions.appendChild(registerButton);
+    }
+
+    if (story.status === 'completed') {
+        cardActions.innerHTML += `<button class="btn-view-book" onclick="openStorybookViewer('${story.id}')"><i class="fas fa-book"></i> 동화책 보기</button>`;
+    }
+    
+    storyCard.appendChild(cardActions);
     return storyCard;
 }
 
-/**
- * '동화책 만들기'의 작품 목록을 렌더링
- */
 function renderTeacherArtworkList() {
     teacherArtworkList.innerHTML = '';
     classStories.forEach(story => {
@@ -344,31 +335,23 @@ function renderTeacherArtworkList() {
     attachDragAndDropListeners();
 }
 
-
 // --- 작품 등록 관련 ---
 
-/**
- * 작품 등록/취소 토글 핸들러
- * @param {string} storyId - 작품 ID
- * @param {string} currentStatus - 현재 작품 상태
- */
 async function handleRegisterToggle(storyId, currentStatus) {
     if (currentStatus === 'in_production') {
         alert('현재 제작중인 작품은 등록을 취소할 수 없습니다.');
         return;
     }
-
     const isRegistering = (currentStatus === 'unregistered');
     const confirmMessage = isRegistering ?
         "이 작품을 동화 제작 목록에 등록하시겠습니까?" :
         "이 작품의 등록을 취소하시겠습니까?";
-
     if (confirm(confirmMessage)) {
         try {
             const newStatus = isRegistering ? 'registered' : 'unregistered';
             await window.firebaseService.updateStory(storyId, { status: newStatus });
             alert(isRegistering ? '작품이 등록되었습니다.' : '작품 등록이 취소되었습니다.');
-            await loadAndRenderStories(); // 목록 새로고침
+            await loadAndRenderStories();
         } catch (error) {
             console.error('작품 상태 변경 오류:', error);
             alert('작품 상태 변경 중 오류가 발생했습니다.');
@@ -376,16 +359,12 @@ async function handleRegisterToggle(storyId, currentStatus) {
     }
 }
 
-/**
- * 미등록 작품 일괄 등록 핸들러
- */
 async function handleBulkRegister() {
     const unregisteredCards = classStoryGrid.querySelectorAll('.story-card[data-unregistered="true"]');
     if (unregisteredCards.length === 0) {
         alert('등록할 작품이 없습니다.');
         return;
     }
-
     if (confirm(`미등록된 ${unregisteredCards.length}개의 작품을 모두 등록하시겠습니까?`)) {
         try {
             const updatePromises = Array.from(unregisteredCards).map(card => {
@@ -406,14 +385,12 @@ async function handleBulkRegister() {
 // --- 새 그림 올리기 / 수정 / 삭제 ---
 
 window.openUploadModal = function() {
-    // [수정] 원생이고 활성 테마가 없으면 업로드 차단
     if (currentUser.role === 'student' && !activeTheme) {
         alert('현재 등록 가능한 활성 테마가 없습니다. 선생님께 문의해주세요.');
         return;
     }
 
     if(drawingFileInput) drawingFileInput.value = '';
-    // document.getElementById('cameraInput').value = '';
     if(previewImage) previewImage.src = 'images/placeholder_preview.png';
     if(drawingTitleInput) drawingTitleInput.value = '';
     if(drawingStoryInput) drawingStoryInput.value = '';
@@ -427,12 +404,9 @@ window.openUploadModal = function() {
         uploadStudentSelect.innerHTML = '';
     }
     
-    // [수정] 사용자 역할에 따른 테마 선택 UI 처리
     if (currentUser.role === 'student') {
-        // 원생은 테마 선택 UI 숨김
         if(themeSelectContainer) themeSelectContainer.style.display = 'none';
     } else {
-        // 교사/관리자는 테마 선택 UI 표시 및 활성 테마 자동 선택
         if(themeSelectContainer) themeSelectContainer.style.display = 'block';
         populateThemeOptions(themeSelect, activeTheme ? activeTheme.id : null);
     }
@@ -520,7 +494,6 @@ window.cancelCrop = function() {
 window.saveStory = async function() {
     const title = drawingTitleInput.value.trim();
     const storyText = drawingStoryInput.value.trim();
-    // [수정] 원생일 경우 활성 테마 ID를, 그 외에는 선택된 테마 ID를 사용
     const selectedThemeId = currentUser.role === 'student' ? activeTheme.id : themeSelect.value;
 
     if (!currentOriginalFile || !title || !selectedThemeId) {
@@ -721,9 +694,46 @@ function attachDragAndDropListeners() {
     });
 }
 
-window.previewStorybook = function() {
-    alert('동화책 미리보기 기능은 동화책 뷰어 개발이 필요합니다!');
-};
-window.exportStorybook = function() {
-    alert('PDF 내보내기 기능은 백엔드에서 PDF 생성 로직이 필요합니다!');
-};
+// --- 동화책 뷰어 관련 (app.html) ---
+async function openStorybookViewer(storyId) {
+    try {
+        const storybook = await window.firebaseService.getStorybookByStoryId(storyId);
+        if (storybook && storybook.pages) {
+            storybookPages = storybook.pages;
+            currentPageIndex = 0;
+            updateViewer();
+            document.getElementById('storybookViewerModal').style.display = 'flex';
+        } else {
+            alert('제작된 동화책을 찾을 수 없습니다.');
+        }
+    } catch (error) {
+        console.error("동화책 로딩 오류:", error);
+        alert("동화책을 불러오는 중 오류가 발생했습니다.");
+    }
+}
+
+function closeStorybookViewer() {
+    document.getElementById('storybookViewerModal').style.display = 'none';
+}
+
+function updateViewer() {
+    if(!storybookPages[currentPageIndex]) return;
+    const page = storybookPages[currentPageIndex];
+    document.getElementById('viewerImage').src = page.image;
+    document.getElementById('viewerText').textContent = page.text;
+    document.getElementById('pageIndicator').textContent = `${currentPageIndex + 1} / ${storybookPages.length}`;
+}
+
+function showPrevPage() {
+    if (currentPageIndex > 0) {
+        currentPageIndex--;
+        updateViewer();
+    }
+}
+
+function showNextPage() {
+    if (currentPageIndex < storybookPages.length - 1) {
+        currentPageIndex++;
+        updateViewer();
+    }
+}
