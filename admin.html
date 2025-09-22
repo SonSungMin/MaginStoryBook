@@ -101,10 +101,40 @@
                 <div class="button-group">
                     <button class="btn-secondary" onclick="closeStorybookProductionModal()">닫기</button>
                     <button class="btn-secondary" onclick="previewStorybook()">미리보기</button>
-                    <button class="btn-primary" onclick="saveStorybook()">저장하기</button>
+                    <button class="btn-primary" onclick="openAiGenerationModal()">AI 생성</button>
+                    <button class="btn-primary" onclick="saveStorybook()">저장</button>
                 </div>
             </div>
         </div>
+        
+        <div id="aiGenerationModal" class="modal">
+            <div class="modal-content large-modal">
+                <span class="close-button" onclick="closeAiGenerationModal()">&times;</span>
+                <h2>AI로 동화 내용 생성</h2>
+                <div class="ai-generation-area">
+                    <div class="ai-input-section">
+                        <h3>원본 정보</h3>
+                        <img id="aiOriginalImage" src="images/placeholder_preview.png" alt="Original Image">
+                        <textarea id="aiStoryText" placeholder="AI에게 전달할 이야기를 수정하거나 추가해보세요."></textarea>
+                    </div>
+                    <div class="ai-output-section">
+                        <h3>AI 생성 결과</h3>
+                        <div id="aiResultArea">
+                            <p>AI 생성 버튼을 눌러 새로운 그림과 이야기를 만들어보세요.</p>
+                        </div>
+                        <div id="aiLoadingSpinner" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> 생성 중...
+                        </div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="closeAiGenerationModal()">취소</button>
+                    <button class="btn-primary" onclick="handleAiGeneration()">AI 생성</button>
+                    <button id="applyAiResultButton" class="btn-primary" style="display:none;" onclick="applyAiResult()">적용하기</button>
+                </div>
+            </div>
+        </div>
+
 
         <div id="storybookViewerModal" class="modal viewer-modal">
             <div class="modal-content large-modal">
