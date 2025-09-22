@@ -743,6 +743,7 @@ function renderStorybookFilterOptions() {
     });
 }
 
+// [수정된 함수]
 async function renderStorybookMakerList() {
     const listElement = document.getElementById('storybookMakerList');
     listElement.innerHTML = '';
@@ -785,7 +786,7 @@ async function renderStorybookMakerList() {
         
         let actionButton;
         if (story.status === 'completed') {
-             actionButton = `<button class="btn-disabled" disabled>제작완료</button>`;
+             actionButton = `<button class="btn-edit" onclick="event.stopPropagation(); openStorybookProductionModal('${story.id}')">수정하기</button>`;
         } else if (story.status === 'in_production') {
             actionButton = `<button class="btn-disabled" disabled>제작중</button>`;
         } else {
@@ -852,24 +853,63 @@ async function startBulkProduction() {
 }
 
 // --- 동화책 제작 팝업 관련 ---
-function openStorybookProductionModal(storyId) {
+// [수정된 함수]
+async function openStorybookProductionModal(storyId) {
     const story = stories.find(s => s.id === storyId);
     if (!story) {
         alert('작품 정보를 찾을 수 없습니다.');
         return;
     }
-    
+
+    // 모달 필드 초기화
     document.getElementById('productionStoryId').value = storyId;
+    document.getElementById('productionStorybookId').value = ''; 
     document.getElementById('originalStoryImg').src = story.originalImgUrl || 'images/placeholder_preview.png';
     document.getElementById('originalStoryTitle').textContent = story.title;
     document.getElementById('originalStoryText').textContent = story.storyText;
     
-    // 내용 초기화
-    document.querySelector('.cover-section .page-image-preview').src = 'images/placeholder_preview.png';
-    document.querySelector('.cover-section .page-text-input').value = '';
-    document.getElementById('content-pages-container').innerHTML = '';
-    addStoryPage(); 
+    const contentContainer = document.getElementById('content-pages-container');
+    contentContainer.innerHTML = '';
 
+    const resetModal = () => {
+        document.querySelector('.cover-section .page-image-preview').src = 'images/placeholder_preview.png';
+        document.querySelector('.cover-section .page-text-input').value = '';
+        contentContainer.innerHTML = '';
+        addStoryPage();
+    };
+
+    if (story.status === 'completed') {
+        const storybook = await window.firebaseService.getStorybookByStoryId(storyId);
+        if (storybook && storybook.pages && storybook.pages.length > 0) {
+            document.getElementById('productionStorybookId').value = storybook.id; // 기존 동화책 ID 저장
+
+            // 표지 채우기
+            const coverPage = storybook.pages[0];
+            const coverImagePreview = document.querySelector('.cover-section .page-image-preview');
+            coverImagePreview.src = coverPage.image || 'images/placeholder_preview.png';
+            coverImagePreview.dataset.isNew = "false";
+            document.querySelector('.cover-section .page-text-input').value = coverPage.text || '';
+
+            // 내용 페이지 채우기
+            const contentPages = storybook.pages.slice(1);
+            contentPages.forEach(page => {
+                const pageItem = document.createElement('div');
+                pageItem.className = 'page-item';
+                pageItem.innerHTML = `
+                    <div class="page-image-area" onclick="this.querySelector('.page-image-input').click()">
+                        <img src="${page.image || 'images/placeholder_preview.png'}" class="page-image-preview" data-is-new="false">
+                        <input type="file" class="page-image-input" accept="image/*" onchange="previewPageImage(this)">
+                    </div>
+                    <textarea class="page-text-input" placeholder="동화 내용을 입력하세요.">${page.text || ''}</textarea>
+                `;
+                contentContainer.appendChild(pageItem);
+            });
+        } else {
+            resetModal();
+        }
+    } else {
+        resetModal();
+    }
     document.getElementById('storybookProductionModal').style.display = 'flex';
 }
 
@@ -899,8 +939,8 @@ function previewPageImage(inputElement) {
         
         reader.onload = function(e) {
             preview.src = e.target.result;
-            preview.dataset.isNew = "true"; // 새 파일이 업로드되었음을 표시
-            preview.dataset.file = file.name; // 파일 추적을 위해 이름 저장 (선택적)
+            preview.dataset.isNew = "true";
+            preview.dataset.file = file.name;
         }
         reader.readAsDataURL(file);
     }
@@ -914,7 +954,6 @@ function openAiGenerationModal() {
     document.getElementById('aiOriginalImage').src = originalImgSrc;
     document.getElementById('aiStoryText').value = originalStoryText;
 
-    // 결과 영역 초기화
     document.getElementById('aiResultArea').innerHTML = '<p>AI 생성 버튼을 눌러 새로운 그림과 이야기를 만들어보세요.</p>';
     document.getElementById('applyAiResultButton').style.display = 'none';
     
@@ -925,51 +964,15 @@ function closeAiGenerationModal() {
     document.getElementById('aiGenerationModal').style.display = 'none';
 }
 
-/**
- * Gemini Nano Banana API를 호출하는 예시 함수
- * @param {string} image - Base64 인코딩된 이미지 또는 이미지 URL
- * @param {string} text - 프롬프트 텍스트
- * @returns {Promise<{imageUrl: string, text: string}>}
- */
 async function callGeminiNanoBananaAPI(image, text) {
-    // =================================================================
-    // === 중요: 이 부분은 실제 서버(백엔드)에서 구현해야 합니다. ===
-    // === 클라이언트에서 직접 API 키를 노출하거나 호출하면 안 됩니다. ===
-    // =================================================================
-
-    // 아래는 서버와 통신하는 예시 코드입니다.
-    // 실제로는 서버의 엔드포인트 URL을 사용해야 합니다.
-    const serverEndpoint = 'https://YOUR_BACKEND_SERVER.com/generate-story';
-
-    try {
-        /*
-        // 실제 서버 호출 예시
-        const response = await fetch(serverEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image, text })
-        });
-        if (!response.ok) {
-            throw new Error('API 호출에 실패했습니다.');
-        }
-        return await response.json();
-        */
-
-        // --- 지금은 시뮬레이션으로 대체 ---
-        console.log("Gemini API 호출 시뮬레이션 시작:", { image, text });
-        return new Promise(resolve => {
-            setTimeout(() => {
-                const generatedImageUrl = 'images/sample_ai_generated_default.png';
-                const generatedText = `(AI가 생성한 새로운 이야기) ${text} 그림 속 아이는 행복하게 웃고 있었어요. 따스한 햇살 아래, 모든 것이 반짝이는 오후였답니다.`;
-                resolve({ imageUrl: generatedImageUrl, text: generatedText });
-            }, 2500);
-        });
-        // --- 시뮬레이션 끝 ---
-
-    } catch (error) {
-        console.error("Gemini API 호출 중 오류 발생:", error);
-        throw error;
-    }
+    console.log("Gemini API 호출 시뮬레이션 시작:", { image, text });
+    return new Promise(resolve => {
+        setTimeout(() => {
+            const generatedImageUrl = 'images/sample_ai_generated_default.png';
+            const generatedText = `(AI가 생성한 새로운 이야기) ${text} 그림 속 아이는 행복하게 웃고 있었어요. 따스한 햇살 아래, 모든 것이 반짝이는 오후였답니다.`;
+            resolve({ imageUrl: generatedImageUrl, text: generatedText });
+        }, 2500);
+    });
 }
 
 async function handleAiGeneration() {
@@ -990,7 +993,6 @@ async function handleAiGeneration() {
     applyButton.style.display = 'none';
 
     try {
-        // 실제 API 호출
         const result = await callGeminiNanoBananaAPI(originalImgSrc, storyText);
 
         resultArea.innerHTML = `
@@ -1012,14 +1014,12 @@ function applyAiResult() {
     const generatedText = document.getElementById('aiGeneratedTextPreview')?.textContent;
 
     if (generatedImgSrc && generatedText) {
-        // 현재 열려있는 첫 번째 내용 페이지에 적용
         const firstPageItem = document.querySelector('#content-pages-container .page-item');
         if (firstPageItem) {
             firstPageItem.querySelector('.page-image-preview').src = generatedImgSrc;
             firstPageItem.querySelector('.page-text-input').value = generatedText;
             firstPageItem.querySelector('.page-image-preview').dataset.isNew = "false";
         } else {
-            // 페이지가 없다면 새로 추가하고 적용
             addStoryPage();
             const newPageItem = document.querySelector('#content-pages-container .page-item:last-child');
             newPageItem.querySelector('.page-image-preview').src = generatedImgSrc;
@@ -1035,68 +1035,59 @@ function applyAiResult() {
 
 
 // --- 동화책 뷰어 및 저장 관련 ---
-// admin-firebase.js 파일의 기존 saveStorybook 함수를 아래 코드로 전체 교체해주세요.
-
+// [수정된 함수]
 async function saveStorybook() {
     const storyId = document.getElementById('productionStoryId').value;
+    const existingStorybookId = document.getElementById('productionStorybookId').value;
     const story = stories.find(s => s.id === storyId);
     if(!story) return alert("원본 작품 정보를 찾을 수 없습니다.");
 
-    if(!confirm("동화책을 저장하시겠습니까? 저장 후에는 수정할 수 없습니다.")) return;
-
-    // 로딩 인디케이터나 버튼 비활성화 (선택 사항)
-    // 예: document.getElementById('saveStorybookButton').disabled = true;
+    if(!confirm("동화책을 저장하시겠습니까?")) return;
 
     const pageElements = document.querySelectorAll('.production-area .page-item');
     const pagesData = [];
     
     try {
-        // 1. 각 페이지의 이미지 업로드를 포함한 모든 비동기 작업을 처리합니다.
-        for (const page of pageElements) {
+        for(const page of pageElements) {
             const text = page.querySelector('.page-text-input').value;
             const imgElement = page.querySelector('.page-image-preview');
             const fileInput = page.querySelector('.page-image-input');
             let imageUrl = imgElement.src;
 
-            // 새로운 이미지가 업로드된 경우에만 스토리지에 업로드합니다.
             if (imgElement.dataset.isNew === "true" && fileInput.files[0]) {
                 const file = fileInput.files[0];
-                
-                // ▼▼▼ 오타 수정된 핵심 로직 ▼▼▼
-                // 파일 확장자를 추출하고, 타임스탬프를 이용해 안전한 파일명 생성
                 const fileExtension = file.name.split('.').pop() || 'png';
                 const imagePath = `storybooks/${storyId}/${Date.now()}_page.${fileExtension}`;
-                // ▲▲▲ 오타 수정된 핵심 로직 ▲▲▲
-
                 imageUrl = await window.supabaseStorageService.uploadImage(file, imagePath);
             }
             pagesData.push({ image: imageUrl, text });
         }
-
-        // 2. Firestore에 동화책 데이터 저장
-        await window.firebaseService.createStorybook({
+        
+        const storybookData = {
             originalStoryId: storyId,
             pages: pagesData,
             authorId: story.uploaderId
-        });
-
-        // 3. 원본 작품 상태를 'completed'로 변경
-        await window.firebaseService.updateStory(storyId, { status: 'completed' });
+        };
         
-        // 4. 로컬 데이터 갱신 및 UI 새로고침
-        const storyIndex = stories.findIndex(s => s.id === storyId);
-        if(storyIndex > -1) stories[storyIndex].status = 'completed';
-        await renderStorybookMakerList();
+        if (existingStorybookId) {
+            await window.firebaseService.updateStorybook(existingStorybookId, storybookData);
+        } else {
+            await window.firebaseService.createStorybook(storybookData);
+        }
 
+        if (story.status !== 'completed') {
+            await window.firebaseService.updateStory(storyId, { status: 'completed' });
+            const storyIndex = stories.findIndex(s => s.id === storyId);
+            if(storyIndex > -1) stories[storyIndex].status = 'completed';
+        }
+        
+        await renderStorybookMakerList();
         alert("동화책이 성공적으로 저장되었습니다!");
         closeStorybookProductionModal();
 
     } catch(error) {
         console.error("동화책 저장 오류:", error);
         alert("동화책 저장 중 오류가 발생했습니다.");
-    } finally {
-        // 로딩 해제 (선택 사항)
-        // 예: document.getElementById('saveStorybookButton').disabled = false;
     }
 }
 
