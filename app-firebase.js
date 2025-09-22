@@ -247,6 +247,7 @@ function renderClassStoryCards(filterThemeId = 'all') {
     });
 }
 
+// [수정된 함수]
 function createStoryCardElement(story, isClassStory = false) {
     const storyCard = document.createElement('div');
     storyCard.classList.add('story-card');
@@ -283,8 +284,8 @@ function createStoryCardElement(story, isClassStory = false) {
     cardActions.classList.add('card-actions');
     
     const canModify = currentUser.id === story.uploaderId || ['teacher', 'director', 'admin'].includes(currentUser.role);
-
-    // [수정] '&& story.status !== 'completed'' 조건을 제거하여 완료된 항목도 수정 가능하게 변경
+    
+    // '제작 완료' 상태와 상관없이 수정/삭제 버튼을 항상 표시하도록 변경
     if (canModify) {
         cardActions.innerHTML += `
             <button class="btn-edit" onclick="openEditStoryModal('${story.id}')"><i class="fas fa-edit"></i> 수정</button>
