@@ -538,10 +538,11 @@
     border-right: 1px solid #ddd;
 }
 .viewer-page.right {
-    font-family: 'Jua', sans-serif;
-    font-size: 1.6em;
+    font-family: 'Gowun Dodum', sans-serif;
+    font-size: clamp(1rem, 2.5vw, 1.8rem);
     line-height: 1.7;
     white-space: pre-wrap;
+    word-break: keep-all;
 }
 .viewer-page img {
     max-width: 100%;
