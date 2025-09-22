@@ -808,6 +808,10 @@ body {
 .viewer-modal {
     background-color: rgba(0,0,0,0.7);
 }
+.viewer-modal .close-button {
+    color: #fff;
+    text-shadow: 0 1px 0 #000;
+}
 .storybook-viewer {
     display: flex;
     width: 100%;
@@ -848,9 +852,15 @@ body {
     border-radius: 20px;
     cursor: pointer;
     margin: 0 10px;
+    transition: background-color 0.3s, color 0.3s;
+}
+.viewer-controls button:hover {
+    background-color: var(--accent-color);
+    color: var(--text-light);
 }
 .viewer-controls span {
     font-weight: bold;
+    color: white;
 }
 
 /* ... (나머지 기존 스타일 유지) ... */
@@ -949,4 +959,5 @@ body {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
 
