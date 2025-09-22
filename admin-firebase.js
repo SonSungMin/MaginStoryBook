@@ -22,6 +22,7 @@ let establishments = [];
 let users = [];
 let classes = [];
 let stories = [];
+let storybooks = []; // 동화책 데이터 저장 변수 추가
 let themes = [];
 let storybookPages = []; 
 let currentPageIndex = 0;
@@ -129,9 +130,10 @@ async function loadDataAndRender() {
         const establishmentDocs = await window.firebaseService.getAllEstablishments();
         establishments = establishmentDocs;
 
-        [users, stories, themes] = await Promise.all([
+        [users, stories, storybooks, themes] = await Promise.all([
             window.firebaseService.getAllUsers(),
             window.firebaseService.getAllStories(),
+            window.firebaseService.getAllStorybooks(), // 모든 동화책 데이터 가져오기
             Promise.all(establishments.map(e => window.firebaseService.getThemesByEstablishment(e.id))).then(results => results.flat())
         ]);
         await renderAll();
@@ -804,6 +806,7 @@ async function renderStorybookMakerList() {
     displayStories.forEach(story => {
         const uploader = users.find(u => u.id === story.uploaderId);
         const establishment = establishments.find(est => est.id === story.establishmentId);
+        const hasStorybook = storybooks.some(sb => sb.originalStoryId === story.id);
         const li = document.createElement('li');
         li.dataset.storyId = story.id;
         
@@ -816,12 +819,12 @@ async function renderStorybookMakerList() {
         
         let actionButtons = '';
         if (story.status === 'completed' || story.status === 'in_production') {
-             actionButtons = `
-                <button class="btn-preview" onclick="event.stopPropagation(); previewStorybookFromList('${story.id}')">미리보기</button>
-                <button class="btn-edit" onclick="event.stopPropagation(); openStorybookProductionModal('${story.id}')">수정하기</button>
-             `;
+            if (hasStorybook) {
+                actionButtons += `<button class="btn-preview" onclick="event.stopPropagation(); previewStorybookFromList('${story.id}')"><i class="fas fa-eye"></i> 미리보기</button>`;
+            }
+            actionButtons += `<button class="btn-edit" onclick="event.stopPropagation(); openStorybookProductionModal('${story.id}')"><i class="fas fa-edit"></i> 수정하기</button>`;
         } else { // registered
-            actionButtons = `<button class="btn-edit" onclick="event.stopPropagation(); startProduction('${story.id}')">제작하기</button>`;
+            actionButtons = `<button class="btn-produce" onclick="event.stopPropagation(); startProduction('${story.id}')"><i class="fas fa-magic"></i> 제작하기</button>`;
         }
 
         li.innerHTML = `
