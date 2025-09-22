@@ -46,7 +46,9 @@ Promise.all([
     import('./admin-firebase.js')
 ]).then(([firebaseServiceModule, adminFirebaseModule]) => {
     console.log('모든 모듈 로드 완료.');
-    adminFirebaseModule.initializeAdminPage();
+    // default로 export된 함수를 변수에 할당하여 호출
+    const initializeAdminPage = adminFirebaseModule.default;
+    initializeAdminPage();
 }).catch(error => {
     console.error('스크립트 모듈 로드 실패:', error);
 });
