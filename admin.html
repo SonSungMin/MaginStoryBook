@@ -75,6 +75,7 @@
                 <span class="close-button" onclick="closeStorybookProductionModal()">&times;</span>
                 <h2>동화책 제작</h2>
                 <input type="hidden" id="productionStoryId">
+                <input type="hidden" id="productionStorybookId">
                 <div class="production-area">
                     <div class="production-section original-info">
                         <h3>원본 정보</h3>
@@ -266,10 +267,8 @@
     <div class="version-footer"></div>
     <script src="js/config.js"></script>
     <script src="js/version-injector.js" defer></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-storage-service.js"></script>
     <script type="module" src="./admin-initializer.js"></script>
 </body>
 </html>
-
