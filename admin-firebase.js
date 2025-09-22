@@ -22,10 +22,13 @@ let establishments = [];
 let users = [];
 let classes = [];
 let stories = [];
+let storybookPages = []; // 동화책 미리보기 데이터
+let currentPageIndex = 0;
 
 export function initializeAdminPage() {
     console.log('관리자 페이지 초기화 시작...');
 
+    // 전역 함수 할당
     window.openEditModal = openEditModal;
     window.deleteEstablishment = deleteEstablishment;
     window.openEditThemeModal = openEditThemeModal;
@@ -37,6 +40,11 @@ export function initializeAdminPage() {
     window.resetPassword = resetPassword;
     window.handleRoleChange = handleRoleChange;
     window.startProduction = startProduction;
+    window.openStorybookProductionModal = openStorybookProductionModal;
+    window.closeStorybookProductionModal = closeStorybookProductionModal;
+    window.previewPageImage = previewPageImage;
+    window.previewStorybook = previewStorybook;
+    window.closeStorybookViewer = closeStorybookViewer;
 
     document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
     document.getElementById('adminLogoutButton').addEventListener('click', handleAdminLogout);
@@ -49,26 +57,29 @@ export function initializeAdminPage() {
         });
     });
 
+    // 각 관리 섹션 이벤트 리스너
     document.getElementById('addEstablishmentButton').addEventListener('click', addEstablishment);
     document.getElementById('addClassButton').addEventListener('click', addClass);
     document.getElementById('addThemeButton').addEventListener('click', addTheme);
     document.getElementById('addMemberButton').addEventListener('click', addMember);
     document.getElementById('updateMemberPermissionButton').addEventListener('click', updateMemberPermission);
     document.getElementById('bulkProductionButton').addEventListener('click', startBulkProduction);
+    document.getElementById('storybookEstablishmentFilter').addEventListener('change', () => renderStorybookMakerList());
+    document.getElementById('addPageButton').addEventListener('click', addStoryPage);
 
 
+    // 모달 저장/닫기 버튼
     document.getElementById('saveEstablishmentChangesButton').addEventListener('click', saveEstablishmentChanges);
     document.getElementById('closeEditEstablishmentModalButton').addEventListener('click', closeEditModal);
     document.getElementById('cancelEditEstablishmentButton').addEventListener('click', closeEditModal);
-
     document.getElementById('saveThemeChangesButton').addEventListener('click', saveThemeChanges);
     document.getElementById('closeEditThemeModalButton').addEventListener('click', closeEditThemeModal);
     document.getElementById('cancelEditThemeButton').addEventListener('click', closeEditThemeModal);
-    
     document.getElementById('saveMemberChangesButton').addEventListener('click', saveMemberChanges);
     document.getElementById('closeEditMemberModalButton').addEventListener('click', closeEditMemberModal);
     document.getElementById('cancelEditMemberButton').addEventListener('click', closeEditMemberModal);
 
+    // 주소 및 필터링 관련
     document.getElementById('establishmentSido').addEventListener('change', updateSigunguOptions);
     document.getElementById('editEstablishmentSido').addEventListener('change', updateEditSigunguOptions);
     document.getElementById('classEstablishmentSelect').addEventListener('change', renderClassList);
@@ -77,6 +88,11 @@ export function initializeAdminPage() {
         filterMembersByEstablishment();
         updateMemberClassOptions();
     });
+    
+    // 동화책 뷰어 컨트롤
+    document.getElementById('prevPageButton').addEventListener('click', showPrevPage);
+    document.getElementById('nextPageButton').addEventListener('click', showNextPage);
+
 
     initializeAddressOptions();
     checkAdminLoginState();
@@ -111,6 +127,7 @@ async function renderAll() {
     renderEstablishmentOptions();
     renderClassEstablishmentOptions();
     renderThemeEstablishmentOptions();
+    renderStorybookFilterOptions();
     await renderMemberList();
     renderMemberPermissionOptions();
     renderPermissionList();
@@ -710,22 +727,63 @@ async function resetPassword(id) {
     }
 }
 
+// --- 동화책 만들기 관련 기능 ---
+
+function renderStorybookFilterOptions() {
+    const select = document.getElementById('storybookEstablishmentFilter');
+    select.innerHTML = '<option value="all">전체보기</option>';
+    establishments.forEach(est => {
+        select.innerHTML += `<option value="${est.id}">${est.name}</option>`;
+    });
+}
+
 async function renderStorybookMakerList() {
     const listElement = document.getElementById('storybookMakerList');
     listElement.innerHTML = '';
+    const selectedEstId = document.getElementById('storybookEstablishmentFilter').value;
 
-    const registeredStories = stories.filter(story => story.status === 'registered');
+    let displayStories = stories.filter(story => ['registered', 'in_production'].includes(story.status));
 
-    if (registeredStories.length === 0) {
+    if (selectedEstId !== 'all') {
+        displayStories = displayStories.filter(story => story.establishmentId === selectedEstId);
+    } else {
+        // 소속별로 정렬
+        displayStories.sort((a, b) => (a.establishmentId || '').localeCompare(b.establishmentId || ''));
+    }
+
+    if (displayStories.length === 0) {
         listElement.innerHTML = '<li>등록된 작품이 없습니다.</li>';
         return;
     }
     
-    registeredStories.forEach(story => {
+    let lastEstablishmentId = null;
+    displayStories.forEach(story => {
+        if (selectedEstId === 'all' && story.establishmentId !== lastEstablishmentId) {
+            if (lastEstablishmentId !== null) {
+                const hr = document.createElement('hr');
+                hr.className = 'establishment-divider';
+                listElement.appendChild(hr);
+            }
+            lastEstablishmentId = story.establishmentId;
+        }
+
         const uploader = users.find(u => u.id === story.uploaderId);
         const establishment = establishments.find(est => est.id === story.establishmentId);
         const li = document.createElement('li');
+        li.dataset.storyId = story.id;
+        li.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON') {
+                openStorybookProductionModal(story.id);
+            }
+        });
         
+        let actionButton;
+        if (story.status === 'in_production') {
+            actionButton = `<button class="btn-disabled" disabled>제작중</button>`;
+        } else {
+            actionButton = `<button class="btn-edit" onclick="event.stopPropagation(); startProduction('${story.id}')">제작하기</button>`;
+        }
+
         li.innerHTML = `
             <div class="item-content">
                 <div class="item-main-info">${story.title}</div>
@@ -736,7 +794,7 @@ async function renderStorybookMakerList() {
             </div>
             <div class="item-actions">
                 <div class="button-group-list">
-                    <button class="btn-edit" onclick="startProduction('${story.id}')">제작하기</button>
+                    ${actionButton}
                 </div>
             </div>
         `;
@@ -750,7 +808,12 @@ async function startProduction(storyId) {
     try {
         await window.firebaseService.updateStory(storyId, { status: 'in_production' });
         alert('작품의 진행 상태가 "제작중"으로 변경되었습니다.');
-        await loadDataAndRender(); 
+        
+        // 실시간 데이터 업데이트
+        const storyIndex = stories.findIndex(s => s.id === storyId);
+        if(storyIndex > -1) stories[storyIndex].status = 'in_production';
+        
+        await renderStorybookMakerList(); 
     } catch (error) {
         console.error('제작 상태 변경 오류:', error);
         alert('상태 변경 중 오류가 발생했습니다.');
@@ -767,15 +830,118 @@ async function startBulkProduction() {
     if (!confirm(`등록된 ${registeredStories.length}개의 모든 작품을 '제작중' 상태로 변경하시겠습니까?`)) return;
 
     try {
-        const updatePromises = registeredStories.map(story => 
-            window.firebaseService.updateStory(story.id, { status: 'in_production' })
-        );
+        const updatePromises = registeredStories.map(story => {
+            story.status = 'in_production'; // 로컬 데이터 우선 변경
+            return window.firebaseService.updateStory(story.id, { status: 'in_production' });
+        });
         await Promise.all(updatePromises);
 
         alert('모든 등록된 작품이 "제작중" 상태로 변경되었습니다.');
-        await loadDataAndRender();
+        await renderStorybookMakerList();
     } catch (error) {
         console.error('일괄 제작 상태 변경 오류:', error);
         alert('일괄 제작 처리 중 오류가 발생했습니다.');
+    }
+}
+
+// --- 동화책 제작 팝업 관련 ---
+function openStorybookProductionModal(storyId) {
+    const story = stories.find(s => s.id === storyId);
+    if (!story) {
+        alert('작품 정보를 찾을 수 없습니다.');
+        return;
+    }
+
+    document.getElementById('originalStoryImg').src = story.originalImgUrl || 'images/placeholder_preview.png';
+    document.getElementById('originalStoryTitle').textContent = story.title;
+    document.getElementById('originalStoryText').textContent = story.storyText;
+    
+    // 내용 초기화
+    document.getElementById('content-pages-container').innerHTML = '';
+    // 기본으로 1개 페이지 추가
+    addStoryPage(); 
+
+    document.getElementById('storybookProductionModal').style.display = 'flex';
+}
+
+function closeStorybookProductionModal() {
+    document.getElementById('storybookProductionModal').style.display = 'none';
+}
+
+function addStoryPage() {
+    const container = document.getElementById('content-pages-container');
+    const pageItem = document.createElement('div');
+    pageItem.className = 'page-item';
+    pageItem.innerHTML = `
+        <div class="page-image-area" onclick="this.querySelector('.page-image-input').click()">
+            <img src="images/placeholder_preview.png" class="page-image-preview">
+            <input type="file" class="page-image-input" accept="image/*" onchange="previewPageImage(this)">
+        </div>
+        <textarea class="page-text-input" placeholder="동화 내용을 입력하세요."></textarea>
+    `;
+    container.appendChild(pageItem);
+}
+
+function previewPageImage(inputElement) {
+    const file = inputElement.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = inputElement.previousElementSibling;
+            preview.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+// --- 동화책 뷰어 관련 ---
+function previewStorybook() {
+    storybookPages = []; // 미리보기 데이터 초기화
+    
+    // 표지 정보 수집
+    const coverImage = document.querySelector('.cover-section .page-image-preview').src;
+    const coverText = document.querySelector('.cover-section .page-text-input').value;
+    storybookPages.push({ image: coverImage, text: coverText });
+
+    // 내용 페이지 정보 수집
+    const contentPages = document.querySelectorAll('#content-pages-container .page-item');
+    contentPages.forEach(page => {
+        const image = page.querySelector('.page-image-preview').src;
+        const text = page.querySelector('.page-text-input').value;
+        storybookPages.push({ image, text });
+    });
+
+    if (storybookPages.length === 0) {
+        alert('미리보기할 페이지가 없습니다.');
+        return;
+    }
+    
+    currentPageIndex = 0;
+    updateViewer();
+    document.getElementById('storybookViewerModal').style.display = 'flex';
+}
+
+function closeStorybookViewer() {
+    document.getElementById('storybookViewerModal').style.display = 'none';
+}
+
+function updateViewer() {
+    const page = storybookPages[currentPageIndex];
+    document.getElementById('viewerImage').src = page.image;
+    document.getElementById('viewerText').textContent = page.text;
+    document.getElementById('pageIndicator').textContent = `${currentPageIndex + 1} / ${storybookPages.length}`;
+}
+
+function showPrevPage() {
+    if (currentPageIndex > 0) {
+        currentPageIndex--;
+        updateViewer();
+    }
+}
+
+function showNextPage() {
+    if (currentPageIndex < storybookPages.length - 1) {
+        currentPageIndex++;
+        updateViewer();
     }
 }
