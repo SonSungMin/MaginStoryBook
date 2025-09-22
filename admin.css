@@ -554,21 +554,7 @@
     background: transparent;
     box-shadow: none;
     padding: 0;
-}
-.viewer-close-button {
-    position: absolute;
-    top: 15px;
-    right: 25px;
-    color: #fff;
-    font-size: 35px;
-    font-weight: bold;
-    cursor: pointer;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    opacity: 0.8;
-    z-index: 1001;
-}
-.viewer-close-button:hover {
-    opacity: 1;
+    position: relative;
 }
 .storybook-viewer {
     display: flex;
@@ -602,6 +588,10 @@
 .viewer-controls {
     text-align: center;
     margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
 }
 .viewer-controls button {
     background: rgba(40, 40, 40, 0.7);
@@ -610,7 +600,6 @@
     padding: 10px 20px;
     border-radius: 25px;
     cursor: pointer;
-    margin: 0 10px;
     transition: background-color 0.2s, color 0.2s;
     font-family: 'Jua', sans-serif;
     font-size: 1em;
@@ -618,6 +607,14 @@
 .viewer-controls button:hover {
     background-color: var(--text-light);
     color: var(--text-dark);
+}
+.viewer-controls .viewer-close-button {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+.viewer-controls .viewer-close-button:hover {
+    background-color: #e05e5e;
+    color: var(--text-light);
 }
 .viewer-controls span {
     font-weight: bold;
