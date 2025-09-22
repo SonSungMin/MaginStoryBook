@@ -1035,6 +1035,8 @@ function applyAiResult() {
 
 
 // --- 동화책 뷰어 및 저장 관련 ---
+// admin-firebase.js 파일의 기존 saveStorybook 함수를 아래 코드로 전체 교체해주세요.
+
 async function saveStorybook() {
     const storyId = document.getElementById('productionStoryId').value;
     const story = stories.find(s => s.id === storyId);
@@ -1042,21 +1044,29 @@ async function saveStorybook() {
 
     if(!confirm("동화책을 저장하시겠습니까? 저장 후에는 수정할 수 없습니다.")) return;
 
-    // 1. 페이지 데이터 수집 및 업로드
     const pageElements = document.querySelectorAll('.production-area .page-item');
     const pagesData = [];
     
     try {
-        for(const page of pageElements) {
+        // 1. 각 페이지의 이미지 업로드를 포함한 모든 비동기 작업을 처리합니다.
+        for (const page of pageElements) {
             const text = page.querySelector('.page-text-input').value;
             const imgElement = page.querySelector('.page-image-preview');
             const fileInput = page.querySelector('.page-image-input');
             let imageUrl = imgElement.src;
 
-            // 새로운 이미지가 업로드된 경우에만 스토리지에 업로드
+            // 새로운 이미지가 업로드된 경우에만 스토리지에 업로드합니다.
             if (imgElement.dataset.isNew === "true" && fileInput.files[0]) {
                 const file = fileInput.files[0];
-                const imagePath = `storybooks/${storyId}/${Date.now()}_${file.name}`;
+                
+                // ▼▼▼ 핵심 수정 사항 ▼▼▼
+                // 파일 확장자를 추출하고, 타임스탬프와 랜덤 문자열을 조합하여
+                // 중복되지 않고 URL에 안전한 파일명을 생성합니다.
+                const fileExtension = file.name.split('.pop() || 'png';
+                const safeFileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
+                const imagePath = `storybooks/${storyId}/${safeFileName}`;
+                // ▲▲▲ 핵심 수정 사항 ▲▲▲
+
                 imageUrl = await window.supabaseStorageService.uploadImage(file, imagePath);
             }
             pagesData.push({ image: imageUrl, text });
@@ -1073,7 +1083,8 @@ async function saveStorybook() {
         await window.firebaseService.updateStory(storyId, { status: 'completed' });
         
         // 4. 로컬 데이터 갱신 및 UI 새로고침
-        story.status = 'completed';
+        const storyIndex = stories.findIndex(s => s.id === storyId);
+        if(storyIndex > -1) stories[storyIndex].status = 'completed';
         await renderStorybookMakerList();
 
         alert("동화책이 성공적으로 저장되었습니다!");
