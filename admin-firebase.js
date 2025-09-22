@@ -925,6 +925,53 @@ function closeAiGenerationModal() {
     document.getElementById('aiGenerationModal').style.display = 'none';
 }
 
+/**
+ * Gemini Nano Banana API를 호출하는 예시 함수
+ * @param {string} image - Base64 인코딩된 이미지 또는 이미지 URL
+ * @param {string} text - 프롬프트 텍스트
+ * @returns {Promise<{imageUrl: string, text: string}>}
+ */
+async function callGeminiNanoBananaAPI(image, text) {
+    // =================================================================
+    // === 중요: 이 부분은 실제 서버(백엔드)에서 구현해야 합니다. ===
+    // === 클라이언트에서 직접 API 키를 노출하거나 호출하면 안 됩니다. ===
+    // =================================================================
+
+    // 아래는 서버와 통신하는 예시 코드입니다.
+    // 실제로는 서버의 엔드포인트 URL을 사용해야 합니다.
+    const serverEndpoint = 'https://YOUR_BACKEND_SERVER.com/generate-story';
+
+    try {
+        /*
+        // 실제 서버 호출 예시
+        const response = await fetch(serverEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image, text })
+        });
+        if (!response.ok) {
+            throw new Error('API 호출에 실패했습니다.');
+        }
+        return await response.json();
+        */
+
+        // --- 지금은 시뮬레이션으로 대체 ---
+        console.log("Gemini API 호출 시뮬레이션 시작:", { image, text });
+        return new Promise(resolve => {
+            setTimeout(() => {
+                const generatedImageUrl = 'images/sample_ai_generated_default.png';
+                const generatedText = `(AI가 생성한 새로운 이야기) ${text} 그림 속 아이는 행복하게 웃고 있었어요. 따스한 햇살 아래, 모든 것이 반짝이는 오후였답니다.`;
+                resolve({ imageUrl: generatedImageUrl, text: generatedText });
+            }, 2500);
+        });
+        // --- 시뮬레이션 끝 ---
+
+    } catch (error) {
+        console.error("Gemini API 호출 중 오류 발생:", error);
+        throw error;
+    }
+}
+
 async function handleAiGeneration() {
     const storyText = document.getElementById('aiStoryText').value;
     const originalImgSrc = document.getElementById('aiOriginalImage').src;
@@ -934,7 +981,6 @@ async function handleAiGeneration() {
         return;
     }
 
-    // 로딩 스피너 표시
     const spinner = document.getElementById('aiLoadingSpinner');
     const resultArea = document.getElementById('aiResultArea');
     const applyButton = document.getElementById('applyAiResultButton');
@@ -943,28 +989,23 @@ async function handleAiGeneration() {
     resultArea.innerHTML = '';
     applyButton.style.display = 'none';
 
-    // Gemini Nano Banana API 호출 시뮬레이션
-    // TODO: 실제 Gemini API 연동 코드로 교체해야 합니다.
-    console.log("--- AI Generation Request ---");
-    console.log("Image:", originalImgSrc);
-    console.log("Text:", storyText);
-    console.log("-----------------------------");
-
-    setTimeout(() => {
-        // 시뮬레이션 결과
-        const generatedImageUrl = 'images/sample_ai_generated_default.png'; // 예시 결과 이미지
-        const generatedText = `(AI가 생성한 새로운 이야기) ${storyText} 그림 속 아이는 행복하게 웃고 있었어요. 따스한 햇살 아래, 모든 것이 반짝이는 오후였답니다.`;
+    try {
+        // 실제 API 호출
+        const result = await callGeminiNanoBananaAPI(originalImgSrc, storyText);
 
         resultArea.innerHTML = `
-            <img src="${generatedImageUrl}" alt="AI Generated Image" id="aiGeneratedImagePreview">
-            <p id="aiGeneratedTextPreview">${generatedText}</p>
+            <img src="${result.imageUrl}" alt="AI Generated Image" id="aiGeneratedImagePreview">
+            <p id="aiGeneratedTextPreview">${result.text}</p>
         `;
-        
-        spinner.style.display = 'none';
-        applyButton.style.display = 'block'; // 적용하기 버튼 표시
+        applyButton.style.display = 'block';
 
-    }, 2500); // 2.5초 후 결과 반환 시뮬레이션
+    } catch (error) {
+        resultArea.innerHTML = `<p style="color: red;">AI 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</p>`;
+    } finally {
+        spinner.style.display = 'none';
+    }
 }
+
 
 function applyAiResult() {
     const generatedImgSrc = document.getElementById('aiGeneratedImagePreview')?.src;
@@ -976,8 +1017,7 @@ function applyAiResult() {
         if (firstPageItem) {
             firstPageItem.querySelector('.page-image-preview').src = generatedImgSrc;
             firstPageItem.querySelector('.page-text-input').value = generatedText;
-            // 새 이미지가 아니므로 isNew 플래그를 false로 설정해야 할 수 있음 (저장 로직에 따라)
-             firstPageItem.querySelector('.page-image-preview').dataset.isNew = "false";
+            firstPageItem.querySelector('.page-image-preview').dataset.isNew = "false";
         } else {
             // 페이지가 없다면 새로 추가하고 적용
             addStoryPage();
@@ -985,7 +1025,6 @@ function applyAiResult() {
             newPageItem.querySelector('.page-image-preview').src = generatedImgSrc;
             newPageItem.querySelector('.page-text-input').value = generatedText;
             newPageItem.querySelector('.page-image-preview').dataset.isNew = "false";
-
         }
         alert("AI 생성 결과가 동화책 내용에 적용되었습니다.");
         closeAiGenerationModal();
