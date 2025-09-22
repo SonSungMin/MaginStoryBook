@@ -12,7 +12,7 @@ import {
     serverTimestamp,
     limit,
     writeBatch
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'; // 경로 수정
 
 import {
     ref,
