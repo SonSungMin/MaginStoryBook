@@ -313,6 +313,30 @@
     margin-top: 20px;
 }
 
+@media (max-width: 768px) {
+    .admin-header .container {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .admin-header h1 {
+        font-size: 1.5em;
+    }
+    .admin-nav {
+        flex-direction: column;
+        align-items: center;
+    }
+    .admin-nav-button {
+        width: 80%;
+    }
+    .form-group {
+        flex-direction: column;
+    }
+    .form-group input, .form-group select, .form-group button {
+        width: 100%;
+        min-width: unset;
+    }
+}
+
 /* 동화책 제작 모달 스타일 */
 .modal-content.large-modal {
     max-width: 800px; /* 세로 모드에 맞게 너비 조정 */
@@ -320,7 +344,7 @@
 }
 .production-area {
     display: flex;
-    flex-direction: column; /* 세로 방향으로 변경 */
+    flex-direction: column; /* 전체 레이아웃을 세로로 변경 */
     gap: 20px;
     height: 70vh; /* 높이 조정 */
     text-align: left;
@@ -339,16 +363,18 @@
     color: var(--accent-color);
     margin-bottom: 15px;
 }
+/* 1. 원본 정보 세로 표시 */
 .original-info {
-    flex-direction: row; /* 원본 정보는 가로로 배치 */
-    gap: 15px;
-    align-items: center;
+    /* flex-direction: row; 삭제 */
+    gap: 10px;
+    align-items: flex-start; /* 좌측 정렬 */
 }
 .original-info img {
-    width: 150px;
-    height: 150px;
-    object-fit: cover;
+    width: 100%; /* 너비를 꽉 채움 */
+    max-height: 200px; /* 최대 높이 지정 */
+    object-fit: contain; /* 비율 유지하며 포함 */
     border-radius: 5px;
+    margin-bottom: 10px; /* 아래 여백 추가 */
 }
 .original-info .text-content {
     flex: 1;
@@ -364,14 +390,15 @@
     overflow-y: auto;
 }
 .cover-section {
-    /* flex-basis, flex-shrink 제거 */
+    /* 특별한 스타일 불필요 */
 }
+/* 2. 동화 내용 제작 스크롤 문제 해결 */
 .content-section {
-    flex: 1;
-    min-height: 0;
+    flex: 1; /* 남은 공간을 모두 차지하도록 설정 */
+    min-height: 0; /* flex item이 부모보다 작아질 수 있도록 허용 */
 }
 #content-pages-container {
-    overflow-y: auto;
+    overflow-y: auto; /* 내용이 넘칠 경우 세로 스크롤 생성 */
     padding-right: 10px;
 }
 .page-item {
@@ -487,30 +514,4 @@
     background: #ccc;
     margin: 15px 0;
 }
-
-
-@media (max-width: 768px) {
-    .admin-header .container {
-        flex-direction: column;
-        gap: 10px;
-    }
-    .admin-header h1 {
-        font-size: 1.5em;
-    }
-    .admin-nav {
-        flex-direction: column;
-        align-items: center;
-    }
-    .admin-nav-button {
-        width: 80%;
-    }
-    .form-group {
-        flex-direction: column;
-    }
-    .form-group input, .form-group select, .form-group button {
-        width: 100%;
-        min-width: unset;
-    }
-}
-
 
