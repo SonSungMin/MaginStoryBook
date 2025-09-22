@@ -1044,6 +1044,9 @@ async function saveStorybook() {
 
     if(!confirm("동화책을 저장하시겠습니까? 저장 후에는 수정할 수 없습니다.")) return;
 
+    // 로딩 인디케이터나 버튼 비활성화 (선택 사항)
+    // 예: document.getElementById('saveStorybookButton').disabled = true;
+
     const pageElements = document.querySelectorAll('.production-area .page-item');
     const pagesData = [];
     
@@ -1059,13 +1062,11 @@ async function saveStorybook() {
             if (imgElement.dataset.isNew === "true" && fileInput.files[0]) {
                 const file = fileInput.files[0];
                 
-                // ▼▼▼ 핵심 수정 사항 ▼▼▼
-                // 파일 확장자를 추출하고, 타임스탬프와 랜덤 문자열을 조합하여
-                // 중복되지 않고 URL에 안전한 파일명을 생성합니다.
-                const fileExtension = file.name.split('.pop() || 'png');
-                const safeFileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
-                const imagePath = `storybooks/${storyId}/${safeFileName}`;
-                // ▲▲▲ 핵심 수정 사항 ▲▲▲
+                // ▼▼▼ 오타 수정된 핵심 로직 ▼▼▼
+                // 파일 확장자를 추출하고, 타임스탬프를 이용해 안전한 파일명 생성
+                const fileExtension = file.name.split('.').pop() || 'png';
+                const imagePath = `storybooks/${storyId}/${Date.now()}_page.${fileExtension}`;
+                // ▲▲▲ 오타 수정된 핵심 로직 ▲▲▲
 
                 imageUrl = await window.supabaseStorageService.uploadImage(file, imagePath);
             }
@@ -1093,6 +1094,9 @@ async function saveStorybook() {
     } catch(error) {
         console.error("동화책 저장 오류:", error);
         alert("동화책 저장 중 오류가 발생했습니다.");
+    } finally {
+        // 로딩 해제 (선택 사항)
+        // 예: document.getElementById('saveStorybookButton').disabled = false;
     }
 }
 
