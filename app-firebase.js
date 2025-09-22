@@ -247,7 +247,6 @@ function renderClassStoryCards(filterThemeId = 'all') {
     });
 }
 
-// [수정된 함수]
 function createStoryCardElement(story, isClassStory = false) {
     const storyCard = document.createElement('div');
     storyCard.classList.add('story-card');
@@ -285,7 +284,6 @@ function createStoryCardElement(story, isClassStory = false) {
     
     const canModify = currentUser.id === story.uploaderId || ['teacher', 'director', 'admin'].includes(currentUser.role);
     
-    // '제작 완료' 상태와 상관없이 수정/삭제 버튼을 항상 표시하도록 변경
     if (canModify) {
         cardActions.innerHTML += `
             <button class="btn-edit" onclick="openEditStoryModal('${story.id}')"><i class="fas fa-edit"></i> 수정</button>
@@ -697,7 +695,7 @@ function attachDragAndDropListeners() {
     });
 }
 
-// --- 동화책 뷰어 관련 (app.html) ---
+// --- 동화책 뷰어 관련 (공통 소스) ---
 async function openStorybookViewer(storyId) {
     try {
         const storybook = await window.firebaseService.getStorybookByStoryId(storyId);
@@ -722,21 +720,15 @@ function closeStorybookViewer() {
 function updateViewer() {
     if(!storybookPages[currentPageIndex]) return;
     const page = storybookPages[currentPageIndex];
-    const viewerImage = document.getElementById('viewerImage');
-    const viewerText = document.getElementById('viewerText');
-    const pageIndicator = document.getElementById('pageIndicator');
+    document.getElementById('viewerImage').src = page.image;
+    document.getElementById('viewerText').textContent = page.text;
+    document.getElementById('pageIndicator').textContent = `${currentPageIndex + 1} / ${storybookPages.length}`;
+
     const nextPageButton = document.getElementById('nextPageButton');
-
-    if(viewerImage) viewerImage.src = page.image;
-    if(viewerText) viewerText.textContent = page.text;
-    if(pageIndicator) pageIndicator.textContent = `${currentPageIndex + 1} / ${storybookPages.length}`;
-
-    if (nextPageButton) {
-        if (currentPageIndex === storybookPages.length - 1) {
-            nextPageButton.innerHTML = '처음으로 <i class="fas fa-redo"></i>';
-        } else {
-            nextPageButton.innerHTML = '다음 <i class="fas fa-arrow-right"></i>';
-        }
+    if (currentPageIndex === storybookPages.length - 1) {
+        nextPageButton.innerHTML = '처음으로 <i class="fas fa-redo"></i>';
+    } else {
+        nextPageButton.innerHTML = '다음 <i class="fas fa-arrow-right"></i>';
     }
 }
 
@@ -751,7 +743,7 @@ function showNextPage() {
     if (currentPageIndex < storybookPages.length - 1) {
         currentPageIndex++;
     } else {
-        currentPageIndex = 0; // 마지막 페이지에서 누르면 처음으로 이동
+        currentPageIndex = 0; // 마지막 페이지에서 누르면 처음으로
     }
     updateViewer();
 }
