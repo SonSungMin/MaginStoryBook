@@ -1126,9 +1126,22 @@ function closeStorybookViewer() {
 function updateViewer() {
     if(!storybookPages[currentPageIndex]) return;
     const page = storybookPages[currentPageIndex];
-    document.getElementById('viewerImage').src = page.image;
-    document.getElementById('viewerText').textContent = page.text;
-    document.getElementById('pageIndicator').textContent = `${currentPageIndex + 1} / ${storybookPages.length}`;
+    const viewerImage = document.getElementById('viewerImage');
+    const viewerText = document.getElementById('viewerText');
+    const pageIndicator = document.getElementById('pageIndicator');
+    const nextPageButton = document.getElementById('nextPageButton');
+
+    if (viewerImage) viewerImage.src = page.image;
+    if (viewerText) viewerText.textContent = page.text;
+    if (pageIndicator) pageIndicator.textContent = `${currentPageIndex + 1} / ${storybookPages.length}`;
+
+    if (nextPageButton) {
+        if (currentPageIndex === storybookPages.length - 1) {
+            nextPageButton.innerHTML = '처음으로 <i class="fas fa-redo"></i>';
+        } else {
+            nextPageButton.innerHTML = '다음 <i class="fas fa-arrow-right"></i>';
+        }
+    }
 }
 
 function showPrevPage() {
@@ -1141,6 +1154,8 @@ function showPrevPage() {
 function showNextPage() {
     if (currentPageIndex < storybookPages.length - 1) {
         currentPageIndex++;
-        updateViewer();
+    } else {
+        currentPageIndex = 0; // 마지막 페이지에서 누르면 처음으로 이동
     }
+    updateViewer();
 }
