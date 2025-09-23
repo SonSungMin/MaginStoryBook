@@ -800,7 +800,7 @@ async function deleteTopic(topicId) {
     if (!confirm('정말 이 주제를 삭제하시겠습니까? 이 주제에 속한 모든 하위 주제도 함께 삭제됩니다.')) return;
     
     try {
-        await window.firebaseService.deleteTopicWithDescendants(topicId);
+        await window.firebaseService.deleteTopic(topicId);
         alert('주제 및 하위 주제가 모두 삭제되었습니다.');
         await loadDataAndRender();
     } catch (error) {
@@ -1289,4 +1289,3 @@ function previewStorybook() {
 
     commonPreviewStorybook(pages);
 }
-
