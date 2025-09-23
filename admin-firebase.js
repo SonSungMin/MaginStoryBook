@@ -835,6 +835,9 @@ function renderTopicList() {
 
             const topicItem = document.createElement('div');
             topicItem.className = 'topic-item';
+            if (topicsByParent[topic.id]) { // 하위 주제가 있으면 is-main-topic 클래스 추가
+                topicItem.classList.add('is-main-topic');
+            }
             topicItem.innerHTML = `
                 <div class="topic-item-content">
                     <span class="topic-name">${topic.name}</span>
@@ -845,6 +848,20 @@ function renderTopicList() {
                     <button class="btn-delete-topic" onclick="deleteTopic('${topic.id}')">삭제</button>
                 </div>
             `;
+            
+            // 하위 주제가 있는 경우에만 클릭 이벤트 리스너 추가
+            if (topicsByParent[topic.id]) {
+                topicItem.addEventListener('click', (e) => {
+                    // 버튼 클릭 시에는 토글되지 않도록
+                    if (e.target.closest('button')) {
+                        return;
+                    }
+                    const subList = topicNode.querySelector('.sub-topic-list');
+                    if (subList) {
+                        topicNode.classList.toggle('expanded');
+                    }
+                });
+            }
             
             topicNode.appendChild(topicItem);
 
@@ -864,6 +881,7 @@ function renderTopicList() {
         container.appendChild(topicTree);
     }
 }
+
 
 // --- 동화책 만들기 관련 기능 ---
 
