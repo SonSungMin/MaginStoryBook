@@ -620,6 +620,72 @@ class FirebaseService {
         }
     }
 
+    // ===================
+    // 주제(Topics) 관리
+    // ===================
+    async createTopic(topicData) {
+        try {
+            const docRef = await addDoc(collection(this.db, 'topics'), {
+                ...topicData, // { name, parentId }
+                createdAt: serverTimestamp(),
+            });
+            console.log('주제 생성 성공:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error("주제 생성 오류:", error);
+            throw error;
+        }
+    }
+
+    async getAllTopics() {
+        try {
+            const q = query(collection(this.db, 'topics'), orderBy('createdAt', 'asc'));
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("주제 조회 오류:", error);
+            throw error;
+        }
+    }
+
+    async updateTopic(topicId, updateData) {
+        try {
+            await updateDoc(doc(this.db, 'topics', topicId), updateData);
+            console.log('주제 업데이트 완료:', topicId);
+        } catch (error) {
+            console.error('주제 업데이트 오류:', error);
+            throw error;
+        }
+    }
+
+    async deleteTopic(topicId) {
+        const batch = writeBatch(this.db);
+        try {
+            const allTopics = await this.getAllTopics();
+            const idsToDelete = this.findAllDescendantIds(topicId, allTopics);
+            
+            idsToDelete.forEach(id => {
+                const topicRef = doc(this.db, 'topics', id);
+                batch.delete(topicRef);
+            });
+            
+            await batch.commit();
+            console.log('주제 및 하위 주제 삭제 완료:', idsToDelete.join(', '));
+        } catch (error) {
+            console.error('주제 삭제 오류:', error);
+            throw error;
+        }
+    }
+
+    findAllDescendantIds(parentId, allTopics) {
+        const children = allTopics.filter(topic => topic.parentId === parentId);
+        let descendantIds = [parentId];
+        for (const child of children) {
+            descendantIds = descendantIds.concat(this.findAllDescendantIds(child.id, allTopics));
+        }
+        return descendantIds;
+    }
+
 
     // ===================
     // 유틸리티 함수들
