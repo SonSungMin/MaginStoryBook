@@ -660,10 +660,20 @@ class FirebaseService {
 
     async deleteTopic(topicId) {
         const batch = writeBatch(this.db);
+        const allTopics = await this.getAllTopics();
+        
+        const findAllDescendantIds = (parentId, topics) => {
+            const children = topics.filter(topic => topic.parentId === parentId);
+            let descendantIds = [parentId];
+            for (const child of children) {
+                descendantIds = descendantIds.concat(findAllDescendantIds(child.id, topics));
+            }
+            return descendantIds;
+        };
+
+        const idsToDelete = findAllDescendantIds(topicId, allTopics);
+        
         try {
-            const allTopics = await this.getAllTopics();
-            const idsToDelete = this.findAllDescendantIds(topicId, allTopics);
-            
             idsToDelete.forEach(id => {
                 const topicRef = doc(this.db, 'topics', id);
                 batch.delete(topicRef);
@@ -675,15 +685,6 @@ class FirebaseService {
             console.error('주제 삭제 오류:', error);
             throw error;
         }
-    }
-
-    findAllDescendantIds(parentId, allTopics) {
-        const children = allTopics.filter(topic => topic.parentId === parentId);
-        let descendantIds = [parentId];
-        for (const child of children) {
-            descendantIds = descendantIds.concat(this.findAllDescendantIds(child.id, allTopics));
-        }
-        return descendantIds;
     }
 
 
