@@ -800,7 +800,7 @@ async function deleteTopic(topicId) {
     if (!confirm('정말 이 주제를 삭제하시겠습니까? 이 주제에 속한 모든 하위 주제도 함께 삭제됩니다.')) return;
     
     try {
-        await window.firebaseService.deleteTopic(topicId);
+        await window.firebaseService.deleteTopicWithDescendants(topicId);
         alert('주제 및 하위 주제가 모두 삭제되었습니다.');
         await loadDataAndRender();
     } catch (error) {
@@ -812,6 +812,7 @@ async function deleteTopic(topicId) {
 function renderTopicList() {
     const container = document.getElementById('topicList');
     container.innerHTML = '';
+
     const topicsByParent = topics.reduce((acc, topic) => {
         const parentId = topic.parentId || 'root';
         if (!acc[parentId]) acc[parentId] = [];
@@ -819,17 +820,22 @@ function renderTopicList() {
         return acc;
     }, {});
 
-    const buildHierarchyHtml = (parentId) => {
-        if (!topicsByParent[parentId]) return '';
+    const buildHierarchyDOM = (parentId) => {
         const children = topicsByParent[parentId];
-        
-        const list = document.createElement(parentId === 'root' ? 'div' : 'div');
-        list.className = parentId === 'root' ? '' : 'sub-topic-list';
+        if (!children || children.length === 0) return null;
+
+        const listContainer = document.createElement('div');
+        if (parentId !== 'root') {
+            listContainer.className = 'sub-topic-list';
+        }
 
         children.forEach(topic => {
-            const item = document.createElement('div');
-            item.className = 'topic-item';
-            item.innerHTML = `
+            const topicNode = document.createElement('div');
+            topicNode.className = 'topic-node';
+
+            const topicItem = document.createElement('div');
+            topicItem.className = 'topic-item';
+            topicItem.innerHTML = `
                 <div class="topic-item-content">
                     <span class="topic-name">${topic.name}</span>
                 </div>
@@ -839,16 +845,24 @@ function renderTopicList() {
                     <button class="btn-delete-topic" onclick="deleteTopic('${topic.id}')">삭제</button>
                 </div>
             `;
-            const subTopicsHtml = buildHierarchyHtml(topic.id);
-            if (subTopicsHtml) {
-                item.appendChild(subTopicsHtml);
+            
+            topicNode.appendChild(topicItem);
+
+            const childrenContainer = buildHierarchyDOM(topic.id);
+            if (childrenContainer) {
+                topicNode.appendChild(childrenContainer);
             }
-            list.appendChild(item);
+
+            listContainer.appendChild(topicNode);
         });
-        return list;
+
+        return listContainer;
     };
 
-    container.appendChild(buildHierarchyHtml('root'));
+    const topicTree = buildHierarchyDOM('root');
+    if (topicTree) {
+        container.appendChild(topicTree);
+    }
 }
 
 // --- 동화책 만들기 관련 기능 ---
@@ -1275,3 +1289,4 @@ function previewStorybook() {
 
     commonPreviewStorybook(pages);
 }
+
