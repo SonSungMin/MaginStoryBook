@@ -669,6 +669,20 @@
 #topicList .topic-item.is-main-topic {
     background-color: #f2f8f2;
     border-left: 3px solid #5cb85c;
+    cursor: pointer; /* 클릭 가능하도록 커서 변경 */
+}
+
+/* 펼침/닫힘 아이콘 추가 */
+#topicList .topic-item.is-main-topic .topic-name::before {
+    content: '▶';
+    display: inline-block;
+    margin-right: 8px;
+    font-size: 0.8em;
+    transition: transform 0.2s;
+}
+
+#topicList .topic-node.expanded > .topic-item.is-main-topic .topic-name::before {
+    transform: rotate(90deg);
 }
 
 #topicList .topic-item-content {
@@ -689,6 +703,12 @@
     padding-left: 20px;
     margin-left: 20px;
     border-left: 2px dashed #e0e0e0;
+    display: none; /* 기본적으로 하위 목록 숨김 */
+}
+
+/* expanded 클래스가 있을 때 하위 목록 표시 */
+#topicList .topic-node.expanded > .sub-topic-list {
+    display: block;
 }
 
 #topicList .topic-actions {
@@ -709,4 +729,3 @@
 #topicList .topic-actions .btn-add-sub { color: #337ab7; border-color: #337ab7; }
 #topicList .topic-actions .btn-edit-topic { color: #5cb85c; border-color: #5cb85c; }
 #topicList .topic-actions .btn-delete-topic { color: #d9534f; border-color: #d9534f; }
-
