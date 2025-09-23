@@ -25,6 +25,7 @@ let classes = [];
 let stories = [];
 let storybooks = [];
 let themes = [];
+let topics = [];
 
 export function initializeAdminPage() {
     console.log('관리자 페이지 초기화 시작...');
@@ -52,6 +53,10 @@ export function initializeAdminPage() {
     window.applyAiResult = applyAiResult;
     window.exportStorybookPDF = exportStorybookPDF;
     window.openStorybookViewer = openStorybookViewer;
+    // 주제 관리 함수
+    window.addSubTopic = addSubTopic;
+    window.editTopic = editTopic;
+    window.deleteTopic = deleteTopic;
 
 
     document.getElementById('adminLoginButton').addEventListener('click', handleAdminLogin);
@@ -72,6 +77,7 @@ export function initializeAdminPage() {
     document.getElementById('addMemberButton').addEventListener('click', addMember);
     document.getElementById('updateMemberPermissionButton').addEventListener('click', updateMemberPermission);
     document.getElementById('bulkProductionButton').addEventListener('click', startBulkProduction);
+    document.getElementById('addTopicButton').addEventListener('click', addTopic);
 
     document.getElementById('storybookEstablishmentFilter').addEventListener('change', async () => {
         await populateThemeFilterOptions();
@@ -124,11 +130,12 @@ async function loadDataAndRender() {
         const establishmentDocs = await window.firebaseService.getAllEstablishments();
         establishments = establishmentDocs;
 
-        [users, stories, storybooks, themes] = await Promise.all([
+        [users, stories, storybooks, themes, topics] = await Promise.all([
             window.firebaseService.getAllUsers(),
             window.firebaseService.getAllStories(),
             window.firebaseService.getAllStorybooks(),
-            Promise.all(establishments.map(e => window.firebaseService.getThemesByEstablishment(e.id))).then(results => results.flat())
+            Promise.all(establishments.map(e => window.firebaseService.getThemesByEstablishment(e.id))).then(results => results.flat()),
+            window.firebaseService.getAllTopics()
         ]);
         await renderAll();
     } catch (error) {
@@ -146,6 +153,7 @@ async function renderAll() {
     await renderMemberList();
     renderMemberPermissionOptions();
     renderPermissionList();
+    renderTopicList();
     await renderStorybookMakerList();
 
     if(document.getElementById('classEstablishmentSelect').value) {
@@ -740,6 +748,107 @@ async function resetPassword(id) {
         console.error('비밀번호 초기화 오류:', error);
         alert('비밀번호 초기화 중 오류가 발생했습니다.');
     }
+}
+
+// --- 주제 관리 관련 기능 ---
+
+async function addTopic() {
+    const nameInput = document.getElementById('topicName');
+    const name = nameInput.value.trim();
+    if (!name) return alert('대주제 이름을 입력해주세요.');
+
+    try {
+        await window.firebaseService.createTopic({ name, parentId: null });
+        nameInput.value = '';
+        alert('새로운 대주제가 추가되었습니다.');
+        await loadDataAndRender();
+    } catch (error) {
+        console.error('대주제 추가 오류:', error);
+        alert('대주제 추가 중 오류가 발생했습니다.');
+    }
+}
+
+async function addSubTopic(parentId) {
+    const name = prompt('추가할 세부 주제의 이름을 입력하세요:');
+    if (!name || name.trim() === '') return;
+
+    try {
+        await window.firebaseService.createTopic({ name: name.trim(), parentId });
+        alert('세부 주제가 추가되었습니다.');
+        await loadDataAndRender();
+    } catch (error) {
+        console.error('세부 주제 추가 오류:', error);
+        alert('세부 주제 추가 중 오류가 발생했습니다.');
+    }
+}
+
+async function editTopic(topicId, currentName) {
+    const newName = prompt('수정할 주제의 이름을 입력하세요:', currentName);
+    if (!newName || newName.trim() === '' || newName.trim() === currentName) return;
+
+    try {
+        await window.firebaseService.updateTopic(topicId, { name: newName.trim() });
+        alert('주제 이름이 수정되었습니다.');
+        await loadDataAndRender();
+    } catch (error) {
+        console.error('주제 수정 오류:', error);
+        alert('주제 수정 중 오류가 발생했습니다.');
+    }
+}
+
+async function deleteTopic(topicId) {
+    if (!confirm('정말 이 주제를 삭제하시겠습니까? 이 주제에 속한 모든 하위 주제도 함께 삭제됩니다.')) return;
+    
+    try {
+        await window.firebaseService.deleteTopic(topicId);
+        alert('주제 및 하위 주제가 모두 삭제되었습니다.');
+        await loadDataAndRender();
+    } catch (error) {
+        console.error('주제 삭제 오류:', error);
+        alert('주제 삭제 중 오류가 발생했습니다.');
+    }
+}
+
+function renderTopicList() {
+    const container = document.getElementById('topicList');
+    container.innerHTML = '';
+    const topicsByParent = topics.reduce((acc, topic) => {
+        const parentId = topic.parentId || 'root';
+        if (!acc[parentId]) acc[parentId] = [];
+        acc[parentId].push(topic);
+        return acc;
+    }, {});
+
+    const buildHierarchyHtml = (parentId) => {
+        if (!topicsByParent[parentId]) return '';
+        const children = topicsByParent[parentId];
+        
+        const list = document.createElement(parentId === 'root' ? 'div' : 'div');
+        list.className = parentId === 'root' ? '' : 'sub-topic-list';
+
+        children.forEach(topic => {
+            const item = document.createElement('div');
+            item.className = 'topic-item';
+            item.innerHTML = `
+                <div class="topic-item-content">
+                    <span class="topic-name">${topic.name}</span>
+                </div>
+                <div class="topic-actions">
+                    <button class="btn-add-sub" onclick="addSubTopic('${topic.id}')">세부+</button>
+                    <button class="btn-edit-topic" onclick="editTopic('${topic.id}', '${topic.name}')">수정</button>
+                    <button class="btn-delete-topic" onclick="deleteTopic('${topic.id}')">삭제</button>
+                </div>
+            `;
+            const subTopicsHtml = buildHierarchyHtml(topic.id);
+            if (subTopicsHtml) {
+                item.appendChild(subTopicsHtml);
+            }
+            list.appendChild(item);
+        });
+        return list;
+    };
+
+    container.appendChild(buildHierarchyHtml('root'));
 }
 
 // --- 동화책 만들기 관련 기능 ---
