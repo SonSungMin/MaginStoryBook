@@ -83,6 +83,7 @@
     justify-content: center;
     margin: 30px 0;
     gap: 15px;
+    flex-wrap: wrap;
 }
 .admin-nav-button {
     background-color: #f0f0f0;
@@ -648,3 +649,55 @@
 .item-main-info .story-status-registered {
     color: var(--accent-color);
 }
+
+/* 주제 관리 스타일 */
+#topicList .topic-item {
+    padding: 10px 15px;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background-color: #fcfcfc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Malgun Gothic', 'Dotum', sans-serif;
+}
+
+#topicList .topic-item-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-grow: 1;
+}
+
+#topicList .topic-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 15px;
+}
+
+#topicList .sub-topic-list {
+    margin-top: 8px;
+    margin-left: 30px;
+    padding-left: 20px;
+    border-left: 2px dashed #e0e0e0;
+}
+
+#topicList .topic-actions {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+#topicList .topic-actions button {
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: #f8f8f8;
+    cursor: pointer;
+    padding: 5px 8px;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+#topicList .topic-actions .btn-add-sub { color: #337ab7; border-color: #337ab7; }
+#topicList .topic-actions .btn-edit-topic { color: #5cb85c; border-color: #5cb85c; }
+#topicList .topic-actions .btn-delete-topic { color: #d9534f; border-color: #d9534f; }
