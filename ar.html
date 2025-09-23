@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 그림이 3D 캐릭터로! AR 세상으로!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <!-- model-viewer 컴포넌트 로드 -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    <style>
+        body {
+            font-family: 'Jua', sans-serif;
+            touch-action: manipulation;
+        }
+        .custom-file-upload {
+            border: 2px dashed #cbd5e1;
+            display: inline-block;
+            padding: 1rem 2rem;
+            cursor: pointer;
+            text-align: center;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .custom-file-upload:hover {
+            background-color: #f1f5f9;
+            border-color: #94a3b8;
+        }
+        .hidden {
+            display: none;
+        }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 8px solid #3b82f6;
+            width: 80px;
+            height: 80px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* model-viewer의 기본 AR 버튼 아이콘이 작아서 잘 안보일 수 있어 안내 문구를 추가합니다. */
+        .ar-guide {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            pointer-events: none; /* 이 요소가 클릭 이벤트를 가로채지 않도록 설정 */
+        }
+    </style>
+</head>
+<body class="bg-blue-50 text-gray-800 flex items-center justify-center min-h-screen">
+
+    <div id="app-container" class="w-full max-w-lg mx-auto p-6 md:p-8 bg-white rounded-2xl shadow-lg text-center">
+
+        <!-- 1. 업로드 화면 -->
+        <div id="upload-screen">
+            <h1 class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">AR 캐릭터 만들기</h1>
+            <p class="text-gray-600 mb-6">내가 그린 멋진 캐릭터 그림을 올려주세요!<br>살아 움직이는 3D 캐릭터로 변신시켜 줄게요.</p>
+            
+            <div class="mb-6">
+                <img id="preview" src="https://placehold.co/400x300/e2e8f0/94a3b8?text=여기에%20그림이%20표시됩니다" alt="업로드 이미지 미리보기" class="w-full h-auto max-h-64 object-contain rounded-lg shadow-inner bg-gray-100">
+            </div>
+
+            <label for="file-upload" class="custom-file-upload w-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <span class="text-blue-600 font-semibold">그림 파일 선택</span>
+            </label>
+            <input id="file-upload" type="file" class="hidden" accept="image/*">
+            
+            <button id="start-button" class="mt-6 w-full bg-blue-500 text-white py-3 rounded-lg text-lg font-bold shadow-md hover:bg-blue-600 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none" disabled>
+                3D 캐릭터로 변신!
+            </button>
+        </div>
+
+        <!-- 2. 로딩 화면 -->
+        <div id="loading-screen" class="hidden">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">그림을 분석하고 있어요...</h2>
+            <p class="text-gray-500 mb-8">캐릭터가 곧 3D 세상으로 나올 거예요!</p>
+            <div class="flex justify-center items-center">
+                <div class="loader"></div>
+            </div>
+        </div>
+
+        <!-- 3. AR 뷰어 화면 -->
+        <div id="ar-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-blue-600 mb-2">짜잔! 캐릭터 변신 완료!</h2>
+            <p class="text-gray-600 mb-4">캐릭터를 돌려보거나 확대/축소할 수 있어요.</p>
+            
+            <!-- 
+              [수정 사항]
+              - environment-image="neutral": 모델에 기본 조명을 비춰줘서 어떤 환경에서든 잘 보이게 합니다.
+              - camera-orbit: 모델의 초기 카메라 각도를 설정하여 더 보기 좋게 만듭니다.
+            -->
+            <div style="position: relative;">
+                <model-viewer 
+                    id="ar-viewer"
+                    src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
+                    alt="A 3D model of an astronaut"
+                    ar
+                    ar-modes="webxr scene-viewer quick-look"
+                    camera-controls
+                    environment-image="neutral"
+                    camera-orbit="-30deg 75deg 105%"
+                    poster="https://modelviewer.dev/shared-assets/models/poster-astronaut.webp"
+                    shadow-intensity="1"
+                    autoplay
+                    style="width: 100%; height: 400px; border-radius: 1rem; background-color: #eef2ff;">
+                    <div class="ar-guide" slot="ar-button">
+                        AR 지원 기기에서는 여기에 AR 버튼이 보여요!
+                    </div>
+                </model-viewer>
+            </div>
+
+             <div class="mt-4 p-3 bg-blue-100 border border-blue-200 rounded-lg text-sm text-blue-800">
+                <strong>AR로 보려면?</strong><br>
+                이 화면을 스마트폰(안드로이드, 아이폰)으로 열면 'AR로 보기' 버튼이 나타납니다. 버튼을 눌러 내 방에 캐릭터를 소환해보세요!
+            </div>
+
+            <button id="reset-button" class="mt-6 w-full bg-gray-500 text-white py-3 rounded-lg text-lg font-bold shadow-md hover:bg-gray-600 transition-transform transform hover:scale-105">
+                새로운 그림으로 다시하기
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        const uploadScreen = document.getElementById('upload-screen');
+        const loadingScreen = document.getElementById('loading-screen');
+        const arScreen = document.getElementById('ar-screen');
+
+        const fileUpload = document.getElementById('file-upload');
+        const preview = document.getElementById('preview');
+        const startButton = document.getElementById('start-button');
+        const resetButton = document.getElementById('reset-button');
+        
+        let file = null;
+
+        fileUpload.addEventListener('change', (event) => {
+            file = event.target.files[0];
+            if (file) {
+                preview.src = URL.createObjectURL(file);
+                startButton.disabled = false;
+            } else {
+                preview.src = "https://placehold.co/400x300/e2e8f0/94a3b8?text=여기에%20그림이%20표시됩니다";
+                startButton.disabled = true;
+            }
+        });
+
+        startButton.addEventListener('click', () => {
+            if (file) {
+                uploadScreen.classList.add('hidden');
+                loadingScreen.classList.remove('hidden');
+
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                    arScreen.classList.remove('hidden');
+                }, 3000);
+            }
+        });
+        
+        resetButton.addEventListener('click', () => {
+            file = null;
+            fileUpload.value = '';
+            preview.src = "https://placehold.co/400x300/e2e8f0/94a3b8?text=여기에%20그림이%20표시됩니다";
+            startButton.disabled = true;
+            
+            arScreen.classList.add('hidden');
+            uploadScreen.classList.remove('hidden');
+        });
+    </script>
+
+</body>
+</html>
+
